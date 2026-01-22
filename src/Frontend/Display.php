@@ -26,19 +26,44 @@ readonly class Display
                 ['in_footer' => true, 'strategy' => 'async']
         );
 
+        $options = $this->api->getApiOptions();
+        $limit = absint($options['grp_review_limit'] ?? 3);
+        if ($limit < 1) $limit = 3;
+        if ($limit > 5) $limit = 5;
+
         wp_localize_script( 'grp-js', 'gprJs', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'buttonText' => __('Load More', 'google-reviews-pro'),
             'loadingText' => __('Loading...', 'google-reviews-pro'),
+            'reviewsLimit' => $limit,
         ]);
 
-        $options = $this->api->getApiOptions();
         $text_color     = sanitize_hex_color($options['grp_text_color'] ?? '#333333');
         $bg_color       = sanitize_hex_color($options['grp_bg_color'] ?? '#ffffff');
         $accent_color   = sanitize_hex_color($options['grp_accent_color'] ?? '#4285F4');
         $btn_text_color = sanitize_hex_color($options['grp_btn_text_color'] ?? '#ffffff');
 
         $custom_css = "
+            .grp-grid {
+                display: grid;
+                gap: 20px;
+                grid-template-columns: repeat({$limit}, 1fr);
+            }
+            
+            /* Responsive: Tablet (2 columns, if limit > 1) */
+            @media (max-width: 900px) {
+                .grp-grid {
+                    grid-template-columns: repeat(" . ($limit > 1 ? 2 : 1) . ", 1fr);
+                }
+            }
+
+            /* Responsive: Mobile (1 column always) */
+            @media (max-width: 600px) {
+                .grp-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+            
             .grp-grid .grp-card, 
             .grp-list-view .grp-card,
             .grp-slider-track .grp-card {
@@ -88,7 +113,7 @@ readonly class Display
             .grp-slider-arrow.next { right: -15px; }
             
             /* Badge */
-            .grp-badge-trigger { position: fixed; bottom: 20px; right: 20px; background: #fff; padding: 10px 15px; border-radius: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; cursor: pointer; z-index: 9998; border: 1px solid #eee; transition: transform 0.2s; }
+            .grp-badge-trigger { position: fixed; bottom: 20px; right: 80px; background: #fff; padding: 10px 15px; border-radius: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; cursor: pointer; z-index: 9998; border: 1px solid #eee; transition: transform 0.2s; }
             .grp-badge-trigger:hover { transform: translateY(-2px); }
             .grp-badge-icon { width: 24px; height: 24px; }
             .grp-badge-modal { display: none; position: fixed; bottom: 80px; right: 20px; width: 320px; max-height: 500px; background: #fff; box-shadow: 0 5px 20px rgba(0,0,0,0.2); border-radius: 8px; z-index: 9999; overflow-y: auto; padding: 15px; }
@@ -112,13 +137,23 @@ readonly class Display
         }
 
         $specific_layout = sanitize_text_field($atts['layout']);
-        $total_reviews = $this->api->count_total_reviews($specific_place_id);
+        $stats = $this->api->get_aggregate_stats($specific_place_id);
+        $total_reviews = $stats['reviewCount'];
 
         if ($total_reviews < 1) {
             return '<p>' . __('No reviews found yet.', 'google-reviews-pro') . '</p>';
         }
 
-        $limit = 6;
+        $options = $this->api->getApiOptions();
+        $limit = absint($options['grp_review_limit'] ?? 3);
+        if ($limit < 1) {
+            $limit = 3;
+        }
+
+        if ($limit > 5) {
+            $limit = 5;
+        }
+
         $reviews = $this->api->get_reviews($limit, 0, $specific_place_id);
         $options = $this->api->getApiOptions();
         $source = $options['data_source'] ?? 'cpt';
@@ -129,7 +164,7 @@ readonly class Display
         $html = '';
 
         if ($layout === 'badge') {
-            $html .= $this->generate_badge_html($reviews);
+            $html .= $this->generate_badge_html($reviews, $stats);
         } else {
             $html .= '<div class="grp-wrapper">';
             $html .= '<div class="grp-container">';
@@ -146,7 +181,8 @@ readonly class Display
                 $nonce = wp_create_nonce('grp_nonce');
                 $html .= '<div class="grp-load-more-container">';
                 $html .= sprintf(
-                    '<button class="grp-load-more-btn" data-offset="%d" data-nonce="%s" data-place-id="%s">%s</button>',
+                    '<button class="grp-load-more-btn" data-offset="%d" data-limit="%d" data-nonce="%s" data-place-id="%s">%s</button>',
+                    $limit,
                     $limit,
                     $nonce,
                     esc_attr($specific_place_id),
@@ -163,7 +199,7 @@ readonly class Display
             $html .= '</div>'; // ./grp-wrapper
         }
 
-        $html .= $this->generate_json_ld($reviews, $specific_place_id);
+        $html .= $this->generate_json_ld($reviews, $specific_place_id, $stats);
         wp_enqueue_script('grp-js'); // enqueue js file
         return $html;
     }
@@ -230,9 +266,8 @@ readonly class Display
         return $html;
     }
 
-    private function generate_badge_html(array $reviews): string
+    private function generate_badge_html(array $reviews, array $stats): string
     {
-        $stats = $this->calculate_aggregate_data($reviews);
         $rating = $stats['ratingValue'] ?? '5.0';
 
         // Google G Icon
@@ -275,7 +310,7 @@ readonly class Display
     private function generate_footer_actions(string $place_id): string
     {
         $write_url = "https://search.google.com/local/writereview?placeid=" . esc_attr($place_id);
-        $view_url  = "https://search.google.com/local/reviews?placeid=" . esc_attr($place_id);
+        $view_url = "https://search.google.com/local/reviews?placeid=" . esc_attr($place_id);
 
         $html = '<div class="grp-footer-actions" style="margin-top: 30px; text-align: center; display: flex; flex-direction: column; align-items: center;">';
 
@@ -296,7 +331,11 @@ readonly class Display
         return $html;
     }
 
-    private function generate_json_ld(array $reviews, string $current_place_id): string
+    /**
+     * @param array<int,array{"rating": int, "author_name": string, "text": string, "time": string}>|array{} $reviews
+     * @param array{"reviewCount": int, "ratingValue": float} $stats
+     */
+    private function generate_json_ld(array $reviews, string $current_place_id, array $stats): string
     {
         if (empty($reviews)) {
             return '';
@@ -357,8 +396,6 @@ readonly class Display
             ];
         }
 
-        $stats = $this->calculate_aggregate_data($reviews);
-
         $schema_payload = [
             '@context' => 'https://schema.org',
             '@type' => 'LocalBusiness',
@@ -399,30 +436,5 @@ readonly class Display
         }
 
         return '<script type="application/ld+json">' . json_encode($schema_payload, JSON_UNESCAPED_UNICODE) . '</script>';
-    }
-
-
-    /**
-     * @param array $reviews
-     * @return array{"ratingValue": float, "reviewCount": int}|null
-     */
-    private function calculate_aggregate_data(array $reviews): ?array
-    {
-        $count = count($reviews);
-        if ($count === 0) {
-            return null;
-        }
-
-        $sum = 0;
-        foreach ($reviews as $review) {
-            $sum += (float) $review['rating'];
-        }
-
-        $average = $sum / $count;
-
-        return [
-            'ratingValue' => round($average, 1),
-            'reviewCount' => $count
-        ];
     }
 }

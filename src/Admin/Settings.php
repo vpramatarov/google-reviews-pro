@@ -90,6 +90,14 @@ readonly class Settings
         );
 
         add_settings_field(
+            'grp_review_limit',
+            __('Initial Reviews Limit', 'google-reviews-pro'),
+            [$this, 'limit_html'],
+            'grp-settings',
+            'grp_styling'
+        );
+
+        add_settings_field(
             'auto_sync',
             __('Enable Auto-Sync', 'google-reviews-pro'),
             [$this, 'auto_sync_html'],
@@ -291,6 +299,7 @@ readonly class Settings
             'serpapi_data_id' => sanitize_text_field($input['serpapi_data_id'] ?? ''),
             'serpapi_key' => sanitize_text_field($input['serpapi_key'] ?? ''),
             'serpapi_pages' => absint($input['serpapi_pages'] ?? 5),
+            'grp_review_limit' => max(1, min(5, absint($input['grp_review_limit'] ?? 3))), // make sure it's between 1-5
             'auto_sync' => isset($input['auto_sync']) ? 1 : 0,
             'sync_frequency' => in_array($input['sync_frequency'], ['daily', 'weekly', 'monthly']) ? $input['sync_frequency'] : 'weekly',
             'grp_min_rating' => absint($input['grp_min_rating'] ?? 0),
@@ -427,6 +436,17 @@ readonly class Settings
         echo '<p class="description">' . __('Limit the number of pages to fetch (1 page ≈ 10 reviews). Warning: High values increase sync time.', 'google-reviews-pro') . '</p>';
     }
 
+    public function limit_html(): void
+    {
+        $val = esc_attr(get_option('grp_settings')['grp_review_limit'] ?? 3);
+        ?>
+        <input type="number" name="grp_settings[grp_review_limit]" value="<?php echo $val; ?>" min="1" max="5" class="small-text">
+        <p class="description">
+            <?php _e('Number of reviews to show initially. For Grid layout, this also determines the number of columns (Max 5).', 'google-reviews-pro'); ?>
+        </p>
+        <?php
+    }
+
     public function auto_sync_html(): void
     {
         $val = esc_attr(get_option('grp_settings')['auto_sync'] ?? 0);
@@ -509,7 +529,7 @@ readonly class Settings
 
     public function sort_order_html(): void
     {
-        $val = get_option('grp_settings')['grp_sort_order'] ?? 'date_desc';
+        $val = esc_attr( get_option('grp_settings')['grp_sort_order'] ?? 'date_desc');
         ?>
         <select name="grp_settings[grp_sort_order]">
             <option value="date_desc" <?php selected($val, 'date_desc'); ?>><?php _e('Newest First', 'google-reviews-pro'); ?></option>

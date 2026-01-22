@@ -23,7 +23,10 @@ readonly class Handler
 
         $place_id = isset($_POST['place_id']) ? sanitize_text_field($_POST['place_id']) : '';
         $offset = isset($_POST['offset']) ? absint($_POST['offset']) : 0;
-        $limit = 6;
+        $options = $this->api->getApiOptions();
+        $reviews_limit = absint($options['grp_review_limit'] ?? 3);
+        $limit_req = isset($_POST['limit']) ? absint($_POST['limit']) : $reviews_limit;
+        $limit = max(1, min(10, $limit_req));
 
         $reviews = $this->api->get_reviews($limit, $offset, $place_id);
         $total = $this->api->count_total_reviews($place_id);

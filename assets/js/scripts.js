@@ -35,6 +35,7 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         const $btn = $(this);
         const offset = $btn.data('offset');
+        const limit = $btn.data('limit') || gprJs.reviewsLimit;
         const nonce = $btn.data('nonce');
         const placeId = $btn.data('place-id');
         const container = $btn.closest('.grp-container').find('.grp-grid, .grp-list-view');
@@ -49,19 +50,22 @@ jQuery(document).ready(function($) {
             action: 'grp_load_more',
             nonce: nonce,
             offset: offset,
+            limit: limit,
             place_id: placeId
         }, function(res) {
             $btn.removeClass('loading').text(gprJs.buttonText);
             if (res.success) {
                 container.append(res.data.html);
-                $btn.data('offset', offset + 6);
+                $btn.data('offset', offset + limit)
 
                 let has_more = res.data.has_more || '';
                 if(!has_more) {
                     $btn.hide();
                 }
             } else {
-                alert(res.data.message || 'Error');
+                // alert(res.data.message || 'Error');
+                console.log(res.data.message || 'Error');
+                $btn.hide();
             }
         });
     });

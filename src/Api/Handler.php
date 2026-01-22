@@ -6,8 +6,34 @@ namespace GRP\Api;
 
 readonly class Handler
 {
+
     /**
-     * @var array{"data_source": string, "google_api_key": string, "place_id": string, "serpapi_key": string, "serpapi_data_id": string}|array{}
+     * @return array{
+     *     "data_source": string,
+     *     "google_api_key": string,
+     *     "place_id": string,
+     *     "serpapi_key": string,
+     *     "serpapi_data_id": string,
+     *     "grp_business_name": string,
+     *     "grp_address": string,
+     *     "grp_phone": string,
+     *     "grp_latitude": float|string,
+     *     "grp_longitude": float|string,
+     *     "grp_price": string,
+     *     "grp_review_limit": int,
+     *     "grp_text_color": string,
+     *     "grp_bg_color": string,
+     *     "grp_accent_color": string,
+     *     "grp_btn_text_color": string,
+     *     "grp_layout": string,
+     *     "grp_min_rating": int,
+     *     "grp_sort_order": string,
+     *     "email_alerts": bool|int,
+     *     "notification_email": string,
+     *     "serpapi_pages": int,
+     *     "auto_sync": bool|int,
+     *     "sync_frequency": string
+     * }|array{}
      */
     private array $options;
 
@@ -16,7 +42,32 @@ readonly class Handler
     }
 
     /**
-     * @return array{"data_source": string, "google_api_key": string, "place_id": string, "serpapi_key": string, "serpapi_data_id": string}|array{}
+     * @return array{
+     *     "data_source": string,
+     *     "google_api_key": string,
+     *     "place_id": string,
+     *     "serpapi_key": string,
+     *     "serpapi_data_id": string,
+     *     "grp_business_name": string,
+     *     "grp_address": string,
+     *     "grp_phone": string,
+     *     "grp_latitude": float|string,
+     *     "grp_longitude": float|string,
+     *     "grp_price": string,
+     *     "grp_review_limit": int,
+     *     "grp_text_color": string,
+     *     "grp_bg_color": string,
+     *     "grp_accent_color": string,
+     *     "grp_btn_text_color": string,
+     *     "grp_layout": string,
+     *     "grp_min_rating": int,
+     *     "grp_sort_order": string,
+     *     "email_alerts": bool|int,
+     *     "notification_email": string,
+     *     "serpapi_pages": int,
+     *     "auto_sync": bool|int,
+     *     "sync_frequency": string
+     * }|array{}
      */
     public function getApiOptions(): array
     {
@@ -229,6 +280,58 @@ readonly class Handler
         update_option('grp_last_sync_time', time());
 
         return $stats;
+    }
+
+    /**
+     * Returns aggregated statistics (Total Count and Average Rating) directly from the database.
+     * This is much faster than WP_Query for calculations.
+     */
+    public function get_aggregate_stats(string $place_id = ''): array
+    {
+        global $wpdb;
+
+        /**
+         * @note: Basic query: We get the average of the rating and the count of the rows.
+         * We join the posts table to make sure that the reviews are 'published'.
+         */
+        $sql = "
+            SELECT 
+                COUNT(pm.post_id) as review_count, 
+                AVG(pm.meta_value) as rating_value
+            FROM {$wpdb->postmeta} pm
+            JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+            WHERE p.post_type = 'grp_review' 
+            AND p.post_status = 'publish'
+            AND pm.meta_key = '_grp_rating'
+        ";
+
+        /**
+         * @note: If we have a specific Place ID, we need to filter.
+         * This requires a JOIN with the meta table itself once more (self-join) to check the other meta field as well
+         */
+        if (!empty($place_id)) {
+            $sql = "
+                SELECT 
+                    COUNT(pm_rating.post_id) as review_count, 
+                    AVG(pm_rating.meta_value) as rating_value
+                FROM {$wpdb->postmeta} pm_rating
+                JOIN {$wpdb->posts} p ON pm_rating.post_id = p.ID
+                JOIN {$wpdb->postmeta} pm_place ON pm_rating.post_id = pm_place.post_id
+                WHERE p.post_type = 'grp_review' 
+                AND p.post_status = 'publish'
+                AND pm_rating.meta_key = '_grp_rating'
+                AND pm_place.meta_key = '_grp_assigned_place_id'
+                AND pm_place.meta_value = %s
+            ";
+            $sql = $wpdb->prepare($sql, $place_id);
+        }
+
+        $result = $wpdb->get_row($sql, ARRAY_A);
+
+        return [
+            'reviewCount' => isset($result['review_count']) ? (int)$result['review_count'] : 0,
+            'ratingValue' => isset($result['rating_value']) ? round((float)$result['rating_value'], 1) : 5.0
+        ];
     }
 
     private function save_location_metadata(string $place_id, array $meta): void
