@@ -355,6 +355,11 @@ readonly class Display
         $default_phone = !empty($seo_data['phone']) ? $seo_data['phone'] : ($options['grp_phone'] ?? '');
         $default_lat = !empty($seo_data['lat']) ? $seo_data['lat'] : ($options['grp_latitude'] ?? '');
         $default_lng = !empty($seo_data['lng']) ? $seo_data['lng'] : ($options['grp_longitude'] ?? '');
+
+        /**
+         * Default: Secondary location, but not yet synced (no metadata).
+         * Safety Mode: We show the name, but hide the address/phone to avoid showing those of the central office.
+         */
         $site_name = $default_name;
         $address = '';
         $phone = '';
@@ -362,12 +367,20 @@ readonly class Display
         $lng = '';
 
         if ($auto_meta) {
+            /**
+             * We have automatic data from Google for this specific location (Sync passed successfully).
+             * This is the ideal case for Multi-Location.
+             */
             $site_name = !empty($auto_meta['name']) ? $auto_meta['name'] : $default_name;
             $address   = $auto_meta['address'];
             $phone     = $auto_meta['phone'];
             $lat       = $auto_meta['lat'];
             $lng       = $auto_meta['lng'];
         } elseif (empty($current_place_id) || $current_place_id === $global_place_id) {
+            /**
+             * This is the main location (or ID is not set).
+             * We use the global settings (from Settings or SEO Plugin)
+             */
             $address   = $default_addr;
             $phone     = $default_phone;
             $lat       = $default_lat;
