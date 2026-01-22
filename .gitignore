@@ -1,0 +1,19 @@
+.git/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# vendor
+vendor/
+
+# Misc
+*.sh
+*.txt
+*.sql

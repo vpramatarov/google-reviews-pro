@@ -1,0 +1,23 @@
+{
+  "name": "grp/google-reviews-pro",
+  "description": "Modern Google Reviews Plugin with OOP",
+  "type": "wordpress-plugin",
+  "autoload": {
+    "psr-4": {
+      "GRP\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Senior Dev"
+    }
+  ],
+  "require": {
+    "php": ">=8.3.0"
+  },
+  "config": {
+    "platform": {
+      "php": "8.3.0"
+    }
+  }
+}
