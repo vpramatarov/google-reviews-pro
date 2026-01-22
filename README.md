@@ -104,6 +104,33 @@ In the **Advanced Settings**, there is a "Uninstall Cleanup" checkbox. If checke
 
 == API Keys ==
 
+= How to get a Google Places API Key (Official Method) =
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new project (e.g., "My Business Reviews").
+3. Navigate to **APIs & Services > Library**.
+4. Search for **"Places API (New)"** or **"Places API"** and click **Enable**.
+5. Go to **APIs & Services > Credentials**.
+6. Click **+ CREATE CREDENTIALS** and select **API key**.
+7. Copy the generated key and paste it into the plugin settings.
+   *Note:* You must have a billing account attached to your Google Cloud project, even if you stay within the free tier limits.
+
+= How to get a SerpApi Key (Alternative Method) =
+
+1. Register an account at [SerpApi.com](https://serpapi.com/).
+2. Verify your email address and phone number.
+3. Once logged in, go to your **Dashboard** or **Account Settings**.
+4. Look for the **"Private API Key"** section.
+5. Copy the key and paste it into the plugin settings.
+
+= How to find your Google Place ID =
+
+The Place ID is a unique identifier for your business on Google Maps.
+1. Visit the official [Google Place ID Finder](https://developers.google.com/maps/documentation/places/web-service/place-id).
+2. Enter your business name and address in the search bar on the map.
+3. Click on your business pin/marker.
+4. A tooltip will appear. Copy the string of characters following **"Place ID:"** (e.g., `ChIJN1t_tDeuEmsRUsoyG83frY4`).
+
 * **Google Places API:** [Get Key](https://console.cloud.google.com/google/maps-apis/credentials) (Official, Real-time).
 * **SerpApi:** [Get Key](https://serpapi.com/) (Scraper, supports deep pagination).
 
