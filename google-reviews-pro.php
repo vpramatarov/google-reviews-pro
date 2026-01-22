@@ -77,6 +77,7 @@ final class GoogleReviewsPro
         new GRP\Admin\Settings($seo, $api);
         new GRP\Ajax\Handler($api, $display);
         new GRP\Core\PostType();
+        new GRP\Core\Blocks($api, $display);
 
         add_action('update_option_grp_settings', function() use ($api) {
             $api->manage_cron();

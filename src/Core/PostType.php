@@ -16,7 +16,7 @@ final readonly class PostType
 
         // --- META BOX (HIDE REVIEW) ---
         add_action('add_meta_boxes', [$this, 'add_moderation_meta_box']);
-        add_action('save_post', [$this, 'save_meta']);
+        add_action('save_post', [$this, 'save_moderation_meta']);
     }
 
     public function register(): void

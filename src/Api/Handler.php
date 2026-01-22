@@ -32,12 +32,24 @@ readonly class Handler
             FROM %s
             WHERE meta_key = '_grp_assigned_place_id'
             AND meta_value != ''
-            GROUP BY meta_value
-            ORDER BY count DESC",
+            GROUP BY meta_value",
             $wpdb->postmeta
         );
 
-        return $wpdb->get_results($sql, ARRAY_A) ?: [];
+        $results = $wpdb->get_results($sql, ARRAY_A) ?: [];
+        $cached_meta = get_option('grp_locations_db', []);
+
+        return array_map(function($item) use ($cached_meta) {
+            $pid = $item['place_id'];
+            // if we have name in the cache, use it. Otherwise, use the place id.
+            $name = !empty($cached_meta[$pid]['name']) ? $cached_meta[$pid]['name'] : $pid;
+
+            return [
+                'place_id' => $pid,
+                'name' => $name,
+                'count' => $item['count']
+            ];
+        }, $results);
     }
 
     public function get_location_metadata(string $place_id): ?array

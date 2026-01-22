@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "grp/reviews",
+  "title": "Google Reviews Pro",
+  "category": "widgets",
+  "icon": "star-filled",
+  "description": "Display your Google Business reviews with modern layouts.",
+  "keywords": ["google", "reviews", "business"],
+  "attributes": {
+    "layout": {
+      "type": "string",
+      "default": "grid"
+    },
+    "place_id": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "textdomain": "google-reviews-pro",
+  "style": "grp-css"
+}

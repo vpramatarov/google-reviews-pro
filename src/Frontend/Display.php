@@ -99,10 +99,19 @@ readonly class Display
         wp_add_inline_style('grp-css', $custom_css);
     }
 
+    /**
+     * @param array{"place_id"?: string, "layout"?: 'grid'|'list'|'badge'|'slider'} $atts
+     */
     public function render_shortcode(array $atts = []): string
     {
-        $atts = shortcode_atts(['place_id' => ''], $atts, 'google_reviews');
+        $atts = shortcode_atts(['place_id' => '', 'layout' => ''], $atts, 'google_reviews');
         $specific_place_id = sanitize_text_field($atts['place_id']);
+
+        if (!is_string($atts['layout']) || !in_array($atts['layout'], ['grid', 'list', 'badge', 'slider'])) {
+            $atts['layout'] = '';
+        }
+
+        $specific_layout = sanitize_text_field($atts['layout']);
         $total_reviews = $this->api->count_total_reviews($specific_place_id);
 
         if ($total_reviews < 1) {
@@ -115,7 +124,7 @@ readonly class Display
         $source = $options['data_source'] ?? 'cpt';
         $global_place_id = $options['place_id'] ?? '';
         $place_id = !empty($specific_place_id) ? $specific_place_id : $global_place_id;
-        $layout = $options['grp_layout'] ?? 'grid';
+        $layout = $specific_layout ?: $options['grp_layout'] ?? 'grid';
 
         $html = '';
 
@@ -230,7 +239,7 @@ readonly class Display
         $g_icon = 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg';
 
         $html = '<div class="grp-badge-trigger">';
-        $html .= sprintf('<img src="%s" class="grp-badge-icon" alt="badge icon">', $g_icon);
+        //$html .= sprintf('<img src="%s" class="grp-badge-icon" alt="badge icon">', $g_icon);
         $html .= '<span><strong>'.$rating.'</strong> ★</span>';
         $html .= '</div>';
 
