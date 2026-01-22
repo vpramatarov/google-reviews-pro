@@ -5,7 +5,7 @@
 * Requires at least: 6.0
 * Tested up to: 6.4
 * Requires PHP: 8.3
-* Stable tag: 1.1.0
+* Stable tag: 1.0.0
 * License: GPLv2 or later
 * License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -13,7 +13,6 @@
 
 Google Reviews Pro is an enterprise-grade WordPress solution for integrating Google Business reviews. Built with a "Sync-to-Database" architecture, it ensures maximum performance, reliability, and SEO benefits by storing reviews locally.
 
-**🚀 New in v1.1.0:**
 * **4 Layout Modes:** Grid, List, Slider (Carousel), and Floating Badge.
 * **Multi-Location Support:** Display reviews for different branches using shortcode attributes.
 * **Reputation Management:** Hide specific reviews and filter by minimum rating (e.g., "4 Stars & Up").
