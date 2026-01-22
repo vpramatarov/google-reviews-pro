@@ -164,7 +164,7 @@ readonly class Display
         $html = '';
 
         if ($layout === 'badge') {
-            $html .= $this->generate_badge_html($reviews, $stats);
+            $html .= $this->generate_badge_html($reviews, $stats, $limit, $place_id);
         } else {
             $html .= '<div class="grp-wrapper">';
             $html .= '<div class="grp-container">';
@@ -178,16 +178,8 @@ readonly class Display
             }
 
             if ($total_reviews > $limit && ($layout === 'grid' || $layout === 'list')) {
-                $nonce = wp_create_nonce('grp_nonce');
                 $html .= '<div class="grp-load-more-container">';
-                $html .= sprintf(
-                    '<button class="grp-load-more-btn" data-offset="%d" data-limit="%d" data-nonce="%s" data-place-id="%s">%s</button>',
-                    $limit,
-                    $limit,
-                    $nonce,
-                    esc_attr($specific_place_id),
-                    __('Load More', 'google-reviews-pro')
-                );
+                $html .= $this->render_load_more_button($limit, $specific_place_id);
                 $html .= '</div>';
             }
 
@@ -225,6 +217,15 @@ readonly class Display
 
         $html .= '</div>'; // ./grp-card
         return $html;
+    }
+
+    private function render_load_more_button(int $limit, string $place_id): string
+    {
+        $nonce = wp_create_nonce('grp_nonce');
+        return sprintf(
+            '<div class="grp-load-more-container"><button class="grp-load-more-btn" data-offset="%d" data-limit="%d" data-nonce="%s" data-place-id="%s">%s</button></div>',
+            $limit, $limit, $nonce, esc_attr($place_id), __('Load More', 'google-reviews-pro')
+        );
     }
 
     private function generate_grid_html(array $reviews): string
@@ -266,29 +267,33 @@ readonly class Display
         return $html;
     }
 
-    private function generate_badge_html(array $reviews, array $stats): string
+    private function generate_badge_html(array $reviews, array $stats, int $limit, string $place_id = ''): string
     {
-        $rating = $stats['ratingValue'] ?? '5.0';
-
+        $rating = $stats['ratingValue'];
+        $total = $stats['reviewCount'];
         // Google G Icon
-        $g_icon = 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg';
+//        $g_icon = 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg';
 
         $html = '<div class="grp-badge-trigger">';
-        //$html .= sprintf('<img src="%s" class="grp-badge-icon" alt="badge icon">', $g_icon);
+//        $html .= '<img src="'.$g_icon.'" class="grp-badge-icon">';
         $html .= '<span><strong>'.$rating.'</strong> ★</span>';
         $html .= '</div>';
 
-        // Modal content
         $html .= '<div class="grp-badge-modal">';
-        $html .= '<span class="grp-badge-close">&times;</span>';
-        $html .= '<div class="grp-list-view">'; // Reuse list style inside modal
-
+        $html .= '<div class="grp-container">';
+        $html .= '<span class="grp-badge-close">×</span>';
+        $html .= '<div class="grp-list-view">';
         foreach ($reviews as $review) {
             $html .= $this->render_card($review);
         }
+        $html .= '</div>'; // /.grp-list-view
 
-        $html .= '</div>';
-        $html .= '</div>';
+        if ($total > $limit) {
+            $html .= $this->render_load_more_button($limit, $place_id);
+        }
+
+        $html .= '</div>'; // /.grp-container
+        $html .= '</div>'; // /.grp-badge-modal
 
         return $html;
     }

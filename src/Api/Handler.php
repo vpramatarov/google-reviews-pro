@@ -285,6 +285,8 @@ readonly class Handler
     /**
      * Returns aggregated statistics (Total Count and Average Rating) directly from the database.
      * This is much faster than WP_Query for calculations.
+     *
+     * @return array{"reviewCount": int, "ratingValue": float}
      */
     public function get_aggregate_stats(string $place_id = ''): array
     {
