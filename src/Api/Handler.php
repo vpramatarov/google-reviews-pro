@@ -567,4 +567,28 @@ readonly class Handler
         // Send
         wp_mail($to_email, $subject, $message, $headers);
     }
+
+    public function manage_cron(): void
+    {
+        $options = $this->getApiOptions();
+        $is_enabled = !empty($options['auto_sync']);
+        $frequency = $options['sync_frequency'] ?? 'weekly';
+
+        // Remove old hook, to be sure there's no duplication
+        // or old schedules when changing frequency.
+        wp_clear_scheduled_hook('grp_daily_sync');
+
+        if ($is_enabled) {
+            wp_schedule_event(time(), $frequency, 'grp_daily_sync');
+        }
+    }
+
+    public function add_custom_cron_schedules(array $schedules): array
+    {
+        $schedules['monthly'] = [
+            'interval' => 2592000, // 30 days in seconds
+            'display'  => __('Once Monthly', 'google-reviews-pro')
+        ];
+        return $schedules;
+    }
 }

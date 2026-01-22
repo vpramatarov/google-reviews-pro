@@ -97,6 +97,14 @@ readonly class Settings
             'grp_main'
         );
 
+        add_settings_field(
+            'sync_frequency',
+            __('Sync Frequency', 'google-reviews-pro'),
+            [$this, 'sync_frequency_html'],
+            'grp-settings',
+            'grp_main'
+        );
+
         add_settings_section(
             'grp_locations',
             __('Multi-Location Reference', 'google-reviews-pro'),
@@ -284,6 +292,7 @@ readonly class Settings
             'serpapi_key' => sanitize_text_field($input['serpapi_key'] ?? ''),
             'serpapi_pages' => absint($input['serpapi_pages'] ?? 5),
             'auto_sync' => isset($input['auto_sync']) ? 1 : 0,
+            'sync_frequency' => in_array($input['sync_frequency'], ['daily', 'weekly', 'monthly']) ? $input['sync_frequency'] : 'weekly',
             'grp_min_rating' => absint($input['grp_min_rating'] ?? 0),
             'grp_sort_order' => sanitize_text_field($input['grp_sort_order'] ?? 'date_desc'),
             'grp_business_name' => sanitize_text_field($input['grp_business_name'] ?? ''),
@@ -426,6 +435,19 @@ readonly class Settings
             checked(1, $val, false)
         );
         echo '<p class="description">' . __('Automatically fetch reviews once every 24 hours.', 'google-reviews-pro') . '</p>';
+    }
+
+    public function sync_frequency_html(): void
+    {
+        $val = esc_attr(get_option('grp_settings')['sync_frequency'] ?? 'weekly');
+        ?>
+        <select name="grp_settings[sync_frequency]" id="grp_sync_frequency">
+            <option value="daily" <?php selected($val, 'daily'); ?>><?php _e('Daily', 'google-reviews-pro'); ?></option>
+            <option value="weekly" <?php selected($val, 'weekly'); ?>><?php _e('Once Weekly', 'google-reviews-pro'); ?></option>
+            <option value="monthly" <?php selected($val, 'monthly'); ?>><?php _e('Once Monthly', 'google-reviews-pro'); ?></option>
+        </select>
+        <p class="description"><?php _e('Choose how often the auto-sync should run.', 'google-reviews-pro'); ?></p>
+        <?php
     }
 
     public function locations_section_desc(): void

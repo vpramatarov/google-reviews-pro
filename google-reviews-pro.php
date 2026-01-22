@@ -51,22 +51,6 @@ final class GoogleReviewsPro
 
         $this->init_components();
 
-        add_action('update_option_grp_settings', function($old_value, $new_value) {
-            if (!empty($new_value['auto_sync']) && $new_value['auto_sync'] == 1) {
-                if (!wp_next_scheduled('grp_daily_sync')) {
-                    wp_schedule_event(time(), 'daily', 'grp_daily_sync');
-                }
-            } else {
-                wp_clear_scheduled_hook('grp_daily_sync');
-            }
-        }, 10, 2);
-
-        add_action('grp_daily_sync', function() {
-            $api = new \GRP\Api\Handler();
-            $api->sync_reviews();
-            update_option('grp_last_sync_time', time());
-        });
-
         register_deactivation_hook(__FILE__, function() {
             wp_clear_scheduled_hook('grp_daily_sync');
         });
@@ -81,10 +65,26 @@ final class GoogleReviewsPro
     {
         $api = new ApiHandler();
         $seo = new SeoIntegrator();
+
+        /**
+         * @note: cron_schedules must be loaded before plugins_loaded
+         */
+        add_filter('cron_schedules', function(array $schedules) use ($api) {
+            return $api->add_custom_cron_schedules($schedules);
+        });
+
         $display = new GRP\Frontend\Display($api, $seo);
         new GRP\Admin\Settings($seo, $api);
         new GRP\Ajax\Handler($api, $display);
         new GRP\Core\PostType();
+
+        add_action('update_option_grp_settings', function() use ($api) {
+            $api->manage_cron();
+        }, 10, 0);
+
+        add_action('grp_daily_sync', function() use ($api) {
+            $api->sync_reviews();
+        });
     }
 }
 
