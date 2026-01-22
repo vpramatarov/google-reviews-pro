@@ -1,12 +1,13 @@
 === Google Reviews Pro ===
-Contributors: vpramatarov
-Tags: google reviews, places api, serpapi, schema.org, seo reviews, business reviews, ajax, slider, badge, rank math
-Requires at least: 6.0
-Tested up to: 6.4
-Requires PHP: 8.3
-Stable tag: 1.1.0
-License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
+* Contributors: vpramatarov
+* Tags: google reviews, places api, serpapi, schema.org, seo reviews, business reviews, ajax, slider, badge, rank math
+* Requires at least: 6.0
+* Tested up to: 6.4
+* Requires PHP: 8.3
+* Stable tag: 1.1.0
+* License: GPLv2 or later
+* License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
 == Description ==
 
@@ -20,6 +21,7 @@ Google Reviews Pro is an enterprise-grade WordPress solution for integrating Goo
 * **Performance:** "Load More" AJAX button for faster initial page loads.
 
 = Key Features =
+
 * **Hybrid Data Source:** Choose between Google Places API, SerpApi (Scraper), or Manual Entry.
 * **Visual Layouts:** Choose between **Grid**, **List**, **Slider**, or a **Floating Trust Badge**.
 * **SEO Integrator:** Auto-syncs business data from **Rank Math**, **Yoast**, **All in One SEO**, **SEOPress**, and **The SEO Framework**.
@@ -44,12 +46,14 @@ Google Reviews Pro is an enterprise-grade WordPress solution for integrating Goo
 == Configuration & Usage ==
 
 = 1. Basic Setup =
+
 1. Go to Settings -> Google Reviews.
 2. Enter your API Key (Google or SerpApi) and **Save**.
 3. Use the **"Find Your Business"** tool to auto-fill your Place ID/Data ID.
 4. Click **"Sync Reviews Now"** to fetch your data.
 
 = 2. Multi-Location Strategy (Chains & Franchises) =
+
 The plugin allows you to store and display reviews for multiple locations (e.g., "Downtown Branch" and "Uptown Branch").
 
 **How to fetch data for multiple locations:**
@@ -65,7 +69,9 @@ Use the `place_id` attribute in the shortcode to filter reviews:
 *Tip:* Check the **"Multi-Location Reference"** table in the settings page to see all stored Place IDs and copy their shortcodes.
 
 = 3. Layouts & Styling =
+
 You can customize the look in the **Styling & Layout** section:
+
 * **Layout Style:** Choose between Grid, List, Slider, or Badge.
 * **Colors:** Customize Text, Background, Accents, and Buttons.
 * **Load More:** In Grid/List view, a "Load More" button appears automatically if there are more reviews than the initial limit (6).
@@ -79,18 +85,22 @@ You can customize the look in the **Styling & Layout** section:
 4. Check **"Hide this review from frontend"** and Update.
 
 = Can I show only 5-star reviews? =
+
 Yes. Go to **Settings -> Google Reviews**, scroll to **Filtering & Moderation**, and set **Minimum Rating** to "5 Stars Only".
 
 = Does it support my SEO plugin? =
+
 Yes! We support bi-directional sync (read-only) for:
 * Rank Math SEO
 * Yoast SEO
 * All in One SEO (AIOSEO)
 * SEOPress
 * The SEO Framework
-  If detected, we automatically pull your Business Name, Address, and Phone from the SEO plugin settings to prevent data conflicts.
+
+If detected, we automatically pull your Business Name, Address, and Phone from the SEO plugin settings to prevent data conflicts.
 
 = What is "Uninstall Cleanup"? =
+
 In the **Advanced Settings**, there is a "Uninstall Cleanup" checkbox. If checked, when you delete the plugin from WordPress, it will **permanently delete** all imported reviews, downloaded images, and settings from your database. Leave unchecked if you plan to reinstall later.
 
 == API Keys ==
