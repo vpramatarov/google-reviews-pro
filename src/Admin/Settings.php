@@ -478,6 +478,7 @@ readonly class Settings
     public function stored_locations_html(): void
     {
         $locations = $this->api->get_stored_locations();
+        $layout = esc_attr(get_option('grp_settings')['grp_layout'] ?? 'grid');
 
         if (empty($locations)) {
             echo '<p class="description">' . __('No locations found yet. Sync some reviews first.', 'google-reviews-pro') . '</p>';
@@ -488,9 +489,9 @@ readonly class Settings
         <table class="widefat fixed striped" style="max-width: 1200px;">
             <thead>
             <tr>
-                <th style="width: 40%; padding-left: 10px;"><?php _e('Place ID', 'google-reviews-pro'); ?></th>
-                <th style="width: 15%; padding-left: 10px;"><?php _e('Reviews Count', 'google-reviews-pro'); ?></th>
-                <th style="width: 45%; padding-left: 10px;"><?php _e('Shortcode Snippet', 'google-reviews-pro'); ?></th>
+                <th style="width: 30%; padding-left: 10px;"><?php _e('Place ID', 'google-reviews-pro'); ?></th>
+                <th style="width: 10%; padding-left: 10px;"><?php _e('Reviews Count', 'google-reviews-pro'); ?></th>
+                <th style="width: 60%; padding-left: 10px;"><?php _e('Shortcode Snippet', 'google-reviews-pro'); ?></th>
             </tr>
             </thead>
             <tbody>
@@ -502,7 +503,7 @@ readonly class Settings
                         <input type="text"
                                readonly
                                class="regular-text"
-                               value='[google_reviews place_id="<?php echo esc_attr($loc['place_id']); ?>"]'
+                               value='[google_reviews place_id="<?php echo esc_attr($loc['place_id']); ?>" layout="<?php echo $layout; ?>"]'
                                style="width: 100%; font-family: monospace; background: #f9f9f9; color: #555;"
                                onclick="this.select();">
                     </td>

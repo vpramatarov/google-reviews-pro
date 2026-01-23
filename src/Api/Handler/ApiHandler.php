@@ -6,5 +6,7 @@ interface ApiHandler
 {
     public function fetch(): \WP_Error|array;
 
+    public function fetch_business_info(string $query): \WP_Error|array;
+
     public function supports(string $source): bool;
 }

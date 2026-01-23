@@ -80,57 +80,16 @@ readonly class Handler
 
         $result = [];
 
-        if ($source === 'google') {
-            $url = sprintf(
-                'https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s&key=%s',
-                urlencode($query),
-                $api_key
-            );
-            $response = wp_remote_get($url);
-
-            if (is_wp_error($response)) wp_send_json_error($response->get_error_message());
-
-            $body = json_decode(wp_remote_retrieve_body($response), true);
-
-            if (!empty($body['results'][0])) {
-                $place = $body['results'][0];
-                $result = [
-                    'place_id' => $place['place_id'],
-                    'name'     => $place['name'],
-                    'address'  => $place['formatted_address'],
-                    'lat'      => $place['geometry']['location']['lat'] ?? '',
-                    'lng'      => $place['geometry']['location']['lng'] ?? '',
-                ];
-            } else {
-                wp_send_json_error($body['error_message'] ?? __('No results found on Google.', 'google-reviews-pro'));
+        foreach ($this->api->getApiHandlers() as $apiHandler) {
+            if (!$apiHandler->supports($source)) {
+                continue;
             }
 
-        } elseif ($source === 'serpapi') {
-            $url = sprintf(
-                'https://serpapi.com/search.json?engine=google_maps&q=%s&api_key=%s&type=search',
-                urlencode($query),
-                $api_key
-            );
-            $response = wp_remote_get($url);
+            $result = $apiHandler->fetch_business_info($query);
+        }
 
-            if (is_wp_error($response)) wp_send_json_error($response->get_error_message());
-
-            $body = json_decode(wp_remote_retrieve_body($response), true);
-
-            $place = $body['local_results'][0] ?? $body['place_results'] ?? null;
-
-            if (!empty($place)) {
-                $result = [
-                    'place_id' => $place['place_id'],
-                    'data_id' => $place['data_id'],
-                    'name'     => $place['title'],
-                    'address'  => $place['address'] ?? '',
-                    'lat'      => $place['gps_coordinates']['latitude'] ?? '',
-                    'lng'      => $place['gps_coordinates']['longitude'] ?? '',
-                ];
-            } else {
-                wp_send_json_error($body['error'] ?? __('No business found via SerpApi.', 'google-reviews-pro'));
-            }
+        if (is_wp_error($result)) {
+            wp_send_json_error($result->get_error_message());
         }
 
         if (!empty($result)) {

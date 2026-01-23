@@ -108,6 +108,45 @@ class SerpApi implements ApiHandler
         ];
     }
 
+    public function fetch_business_info(string $query): \WP_Error|array
+    {
+        $api_key = $this->options['serpapi_key'] ?? '';
+
+        if (empty($api_key)) {
+            return new \WP_Error('api_error', __('Missing API Key.', 'google-reviews-pro'));
+        }
+
+        $url = sprintf(
+            'https://serpapi.com/search.json?engine=google_maps&q=%s&api_key=%s&type=search',
+            urlencode($query),
+            $api_key
+        );
+        $response = wp_remote_get($url);
+
+        if (is_wp_error($response)) {
+            wp_send_json_error($response->get_error_message());
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        $place = $body['local_results'][0] ?? $body['place_results'] ?? null;
+
+        if (!empty($place)) {
+            $result = [
+                'place_id' => $place['place_id'],
+                'data_id' => $place['data_id'],
+                'name'     => $place['title'],
+                'address'  => $place['address'] ?? '',
+                'lat'      => $place['gps_coordinates']['latitude'] ?? '',
+                'lng'      => $place['gps_coordinates']['longitude'] ?? '',
+            ];
+        } else {
+            return new \WP_Error('api_error', $body['error'] ?? __('No business found via SerpApi.', 'google-reviews-pro'));
+        }
+
+        return $result;
+    }
+
     public function supports(string $source): bool
     {
         return self::SOURCE === $source;
