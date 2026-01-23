@@ -24,7 +24,6 @@ jobs:
       - name: Create Deployment Package
         run: |
           mkdir -p google-reviews-pro
-          # Копираме всичко без скриптове и git файлове
           rsync -rr . google-reviews-pro --exclude .git --exclude .github --exclude build.sh --exclude composer.json --exclude composer.lock --exclude .gitignore
           zip -r google-reviews-pro.zip google-reviews-pro
 
