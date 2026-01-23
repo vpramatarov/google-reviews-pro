@@ -65,7 +65,20 @@ Use the `place_id` attribute in the shortcode to filter reviews:
 * **Location A:** `[google_reviews place_id="ChIJ_Location_A_ID"]`
 * **Location B:** `[google_reviews place_id="ChIJ_Location_B_ID"]`
 
+**NB!** If you plan to display multiple locations on single page
+use the `schema` attribute to control for which location structured data is generated
+ti prevent "Competing Entities".
+Default value of schema is `true` so you don't have to specify it for the main location.
+Add `schema=false` to all other locations.
+
+* **Front office location:** `[google_reviews place_id="ChIJ_Location_A_ID"]`
+* **Secondary Location B:** `[google_reviews place_id="ChIJ_Location_B_ID" schema=false]`
+* **Secondary Location C:** `[google_reviews place_id="ChIJ_Location_C_ID" schema=false]`
+
 *Tip:* Check the **"Multi-Location Reference"** table in the settings page to see all stored Place IDs and copy their shortcodes.
+
+Also, if you just want not to show structured data from the widget, just add `schema=false`.
+* **Location A:** `[google_reviews place_id="ChIJ_Location_A_ID" schema=false]`
 
 = 3. Layouts & Styling =
 
@@ -89,7 +102,7 @@ Yes. Go to **Settings -> Google Reviews**, scroll to **Filtering & Moderation**,
 
 = Does it support my SEO plugin? =
 
-Yes! We support bi-directional sync (read-only) for:
+Yes! We support bidirectional sync (read-only) for:
 * Rank Math SEO
 * Yoast SEO
 * All in One SEO (AIOSEO)
@@ -100,7 +113,7 @@ If detected, we automatically pull your Business Name, Address, and Phone from t
 
 = What is "Uninstall Cleanup"? =
 
-In the **Advanced Settings**, there is a "Uninstall Cleanup" checkbox. If checked, when you delete the plugin from WordPress, it will **permanently delete** all imported reviews, downloaded images, and settings from your database. Leave unchecked if you plan to reinstall later.
+In the **Advanced Settings**, there is an "Uninstall Cleanup" checkbox. If checked, when you delete the plugin from WordPress, it will **permanently delete** all imported reviews, downloaded images, and settings from your database. Leave unchecked if you plan to reinstall later.
 
 == API Keys ==
 
@@ -137,10 +150,11 @@ The Place ID is a unique identifier for your business on Google Maps.
 == Changelog ==
 
 = 1.0.0 =
-* **Feature:** 4 Layout Modes (Grid, List, Slider, Badge).
+* **Feature:** 4 Layout Modes (Grid, List, Slider, Badge). Can control widget layout directly `[google_reviews place_id="ChIJ_Location_A_ID" layout="list"]`.
 * **Feature:** Gutenberg block included.
 * **Feature:** Elementor block included.
 * **Feature:** Multi-Location support via shortcode `[google_reviews place_id="..."]`.
+* **Feature:** Disable structured data if needed `[google_reviews place_id="ChIJ_Location_A_ID" schema=false]`.
 * **Feature:** "Stored Locations" reference table in settings.
 * **Feature:** "Load More" button with AJAX loading.
 * **Feature:** Advanced Filtering (Min Rating, Sort Order).

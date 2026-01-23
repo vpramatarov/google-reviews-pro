@@ -140,11 +140,11 @@ readonly class Display
     }
 
     /**
-     * @param array{"place_id"?: string, "layout"?: 'grid'|'list'|'badge'|'slider'} $atts
+     * @param array{"place_id"?: string, "layout"?: 'grid'|'list'|'badge'|'slider', "schema"?: string} $atts
      */
     public function render_shortcode(array $atts = []): string
     {
-        $atts = shortcode_atts(['place_id' => '', 'layout' => ''], $atts, 'google_reviews');
+        $atts = shortcode_atts(['place_id' => '', 'layout' => '', 'schema' => 'true'], $atts, 'google_reviews');
         $specific_place_id = sanitize_text_field($atts['place_id']);
 
         if (!is_string($atts['layout']) || !in_array($atts['layout'], ['grid', 'list', 'badge', 'slider'])) {
@@ -159,6 +159,7 @@ readonly class Display
             return '<p>' . __('No reviews found yet.', 'google-reviews-pro') . '</p>';
         }
 
+        $enable_schema = filter_var($atts['schema'], FILTER_VALIDATE_BOOLEAN);
         $options = $this->api->getApiOptions();
         $limit = absint($options['grp_review_limit'] ?? 3);
         if ($limit < 1) {
@@ -191,7 +192,10 @@ readonly class Display
             $html .= $layoutRender->render($reviews, $stats, $limit, $place_id, $source);
         }
 
-        $html .= $this->generate_json_ld($reviews, $specific_place_id, $stats);
+        if ($enable_schema) {
+            $html .= $this->generate_json_ld($reviews, $specific_place_id, $stats);
+        }
+
         wp_enqueue_script('grp-js'); // enqueue js file
         return $html;
     }
