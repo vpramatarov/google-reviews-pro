@@ -57,6 +57,12 @@ readonly class Handler
         return $this->options;
     }
 
+    /** @return ApiHandler[] */
+    public function getApiHandlers(): array
+    {
+        return $this->apiHandlers;
+    }
+
     public function get_stored_locations(): array
     {
         global $wpdb;
@@ -476,8 +482,8 @@ readonly class Handler
     {
         $notification_email = $this->options['notification_email'] ?? '';
         $to_email = (!empty($notification_email) && is_email($notification_email)) ? $notification_email : get_option('admin_email');
-        $site_name   = get_bloginfo('name');
-        $count       = count($reviews);
+        $site_name = get_bloginfo('name');
+        $count = count($reviews);
 
         $subject = sprintf(
             _n(

@@ -71,6 +71,43 @@ class Google implements ApiHandler
         ];
     }
 
+    public function fetch_business_info(string $query): \WP_Error|array
+    {
+        $api_key = $this->options['google_api_key'] ?? '';
+
+        if (empty($api_key)) {
+            return new \WP_Error('api_error', __('Missing API Key.', 'google-reviews-pro'));
+        }
+
+        $url = sprintf(
+            'https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s&key=%s',
+            urlencode($query),
+            $api_key
+        );
+        $response = wp_remote_get($url);
+
+        if (is_wp_error($response)) {
+            wp_send_json_error($response->get_error_message());
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if (!empty($body['results'][0])) {
+            $place = $body['results'][0];
+            $result = [
+                'place_id' => $place['place_id'],
+                'name'     => $place['name'],
+                'address'  => $place['formatted_address'],
+                'lat'      => $place['geometry']['location']['lat'] ?? '',
+                'lng'      => $place['geometry']['location']['lng'] ?? '',
+            ];
+        } else {
+            return new \WP_Error('api_error', $body['error_message'] ?? __('No results found on Google.', 'google-reviews-pro'));
+        }
+
+        return $result;
+    }
+
     public function supports(string $source): bool
     {
         return self::SOURCE === $source;
