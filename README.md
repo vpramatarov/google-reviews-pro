@@ -138,7 +138,8 @@ The Place ID is a unique identifier for your business on Google Maps.
 
 = 1.0.0 =
 * **Feature:** 4 Layout Modes (Grid, List, Slider, Badge).
-* **Feature:** Gutenberg block.
+* **Feature:** Gutenberg block included.
+* **Feature:** Elementor block included.
 * **Feature:** Multi-Location support via shortcode `[google_reviews place_id="..."]`.
 * **Feature:** "Stored Locations" reference table in settings.
 * **Feature:** "Load More" button with AJAX loading.
