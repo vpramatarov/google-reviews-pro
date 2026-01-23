@@ -6,11 +6,26 @@ namespace GRP\Frontend;
 
 use GRP\Api\Handler as ApiHandler;
 use GRP\Core\SeoIntegrator;
+use GRP\Frontend\Layout\Badge;
+use GRP\Frontend\Layout\Grid;
+use GRP\Frontend\Layout\LayoutRender;
+use GRP\Frontend\Layout\ListLayout;
+use GRP\Frontend\Layout\Slider;
 
 readonly class Display
 {
+    /** @var LayoutRender[] */
+    private array $layoutRender;
+
     public function __construct(private ApiHandler $api, private SeoIntegrator $seo)
     {
+        $this->layoutRender = [
+            new Grid(),
+            new ListLayout(),
+            new Badge(),
+            new Slider()
+        ];
+
         add_shortcode('google_reviews', [$this, 'render_shortcode']);
         add_action('wp_enqueue_scripts', [$this, 'enqueue']);
     }
@@ -154,41 +169,26 @@ readonly class Display
             $limit = 5;
         }
 
-        $reviews = $this->api->get_reviews($limit, 0, $specific_place_id);
-        $options = $this->api->getApiOptions();
         $source = $options['data_source'] ?? 'cpt';
         $global_place_id = $options['place_id'] ?? '';
         $place_id = !empty($specific_place_id) ? $specific_place_id : $global_place_id;
         $layout = $specific_layout ?: $options['grp_layout'] ?? 'grid';
 
+        if ($layout === 'slider') {
+            // if the layout is slider we add more items, so there's something to slide...
+            $limit += $limit;
+        }
+
+        $reviews = $this->api->get_reviews($limit, 0, $specific_place_id);
+
         $html = '';
 
-        if ($layout === 'badge') {
-            $html .= $this->generate_badge_html($reviews, $stats, $limit, $place_id);
-        } else {
-            $html .= '<div class="grp-wrapper">';
-            $html .= '<div class="grp-container">';
-            if ($layout === 'slider') {
-                $html .= $this->generate_slider_html($reviews);
-            } elseif ($layout === 'list') {
-                $html .= $this->generate_list_html($reviews);
-            } else {
-                // Default Grid
-                $html .= $this->generate_grid_html($reviews);
+        foreach ($this->layoutRender as $layoutRender) {
+            if (!$layoutRender->supports($layout)) {
+                continue;
             }
 
-            if ($total_reviews > $limit && ($layout === 'grid' || $layout === 'list')) {
-                $html .= '<div class="grp-load-more-container">';
-                $html .= $this->render_load_more_button($limit, $specific_place_id);
-                $html .= '</div>';
-            }
-
-            if ($source !== 'cpt' && !empty($place_id)) {
-                $html .= $this->generate_footer_actions($place_id);
-            }
-
-            $html .= '</div>'; // ./grp-container
-            $html .= '</div>'; // ./grp-wrapper
+            $html .= $layoutRender->render($reviews, $stats, $limit, $place_id, $source);
         }
 
         $html .= $this->generate_json_ld($reviews, $specific_place_id, $stats);
@@ -196,144 +196,17 @@ readonly class Display
         return $html;
     }
 
-    public function render_card(array $review): string
+    public function render_card(array $review, string $layout): string
     {
-        $text = esc_html($review['text']);
-        $has_more = mb_strlen($text, 'UTF-8') > 150;
-        $default_icon = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCAtNC0xLjc5IDQtNHMtMS43OS00LTQtNC00IDEuNzktNCA0IDEuNzkgNCA0IDR6bTAgMmMtMi42NyAwLTggMS4zNC04IDR2MmgyMHYtMmMtMC0yLjY2LTUuMzMtNC04LTR6Ii8+PC9zdmc+';
-        $photo_url = !empty($review['profile_photo_url']) ? esc_url($review['profile_photo_url']) : $default_icon;
-        $rating = isset($review['rating']) ? (float)$review['rating'] : 5.0;
+        foreach ($this->layoutRender as $layoutRender) {
+            if (!$layoutRender->supports($layout)) {
+                continue;
+            }
 
-        $html = '<div class="grp-card">';
-        $html .= '<div class="grp-card-header">';
-        $html .= sprintf('<img src="%s" alt="%s" class="grp-profile-img" width="40" height="40" loading="lazy">', $photo_url, esc_attr__('User Avatar', 'google-reviews-pro'));
-        $html .= '<div class="grp-header-info"><strong>'.esc_html($review['author_name']).'</strong>' . $this->render_stars($rating) . '</div>';
-        $html .= '</div>'; // ./grp-card-header
-        $html .= sprintf('<div class="grp-review-text">%s</div>', $text);
-
-        if ($has_more) {
-            $html .= '<span class="grp-read-more-btn" data-more="'.__('Read More', 'google-reviews-pro').'" data-less="'.__('Read Less', 'google-reviews-pro').'">'.__('Read More', 'google-reviews-pro').'</span>';
+            return $layoutRender->render_card($review);
         }
 
-        $html .= '</div>'; // ./grp-card
-        return $html;
-    }
-
-    private function render_load_more_button(int $limit, string $place_id): string
-    {
-        $nonce = wp_create_nonce('grp_nonce');
-        return sprintf(
-            '<div class="grp-load-more-container"><button class="grp-load-more-btn" data-offset="%d" data-limit="%d" data-nonce="%s" data-place-id="%s">%s</button></div>',
-            $limit, $limit, $nonce, esc_attr($place_id), __('Load More', 'google-reviews-pro')
-        );
-    }
-
-    private function generate_grid_html(array $reviews): string
-    {
-        $html = '<div class="grp-grid">';
-
-        foreach ($reviews as $review) {
-            $html .= $this->render_card($review);
-        }
-
-        $html .= '</div>';
-        return $html;
-    }
-
-    private function generate_list_html(array $reviews): string {
-        $html = '<div class="grp-list-view">';
-
-        foreach ($reviews as $review) {
-            $html .= $this->render_card($review);
-        }
-
-        $html .= '</div>';
-        return $html;
-    }
-
-    private function generate_slider_html(array $reviews): string
-    {
-        $html = '<div class="grp-slider-wrapper">';
-        $html .= '<button class="grp-slider-arrow prev">&lsaquo;</button>';
-        $html .= '<div class="grp-slider-track">';
-
-        foreach ($reviews as $review) {
-            $html .= $this->render_card($review);
-        }
-
-        $html .= '</div>';
-        $html .= '<button class="grp-slider-arrow next">&rsaquo;</button>';
-        $html .= '</div>';
-        return $html;
-    }
-
-    private function generate_badge_html(array $reviews, array $stats, int $limit, string $place_id = ''): string
-    {
-        $rating = $stats['ratingValue'];
-        $total = $stats['reviewCount'];
-        // Google G Icon
-//        $g_icon = 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg';
-
-        $html = '<div class="grp-badge-trigger">';
-//        $html .= '<img src="'.$g_icon.'" class="grp-badge-icon">';
-        $html .= '<span><strong>'.$rating.'</strong> ★</span>';
-        $html .= '</div>';
-
-        $html .= '<div class="grp-badge-modal">';
-        $html .= '<div class="grp-container">';
-        $html .= '<span class="grp-badge-close">×</span>';
-        $html .= '<div class="grp-list-view">';
-        foreach ($reviews as $review) {
-            $html .= $this->render_card($review);
-        }
-        $html .= '</div>'; // /.grp-list-view
-
-        if ($total > $limit) {
-            $html .= $this->render_load_more_button($limit, $place_id);
-        }
-
-        $html .= '</div>'; // /.grp-container
-        $html .= '</div>'; // /.grp-badge-modal
-
-        return $html;
-    }
-
-    private function render_stars(float $rating): string
-    {
-        $rounded_rating = round($rating);
-        $html = '<div class="grp-stars" aria-label="'.sprintf(__('Rated %s out of 5', 'google-reviews-pro'), $rating).'">';
-
-        for ($i = 1; $i <= 5; $i++) {
-            $class = ($i <= $rounded_rating) ? 'filled' : '';
-            $html .= '<span class="grp-star ' . $class . '">★</span>';
-        }
-
-        $html .= '</div>';
-        return $html;
-    }
-
-    private function generate_footer_actions(string $place_id): string
-    {
-        $write_url = "https://search.google.com/local/writereview?placeid=" . esc_attr($place_id);
-        $view_url = "https://search.google.com/local/reviews?placeid=" . esc_attr($place_id);
-
-        $html = '<div class="grp-footer-actions" style="margin-top: 30px; text-align: center; display: flex; flex-direction: column; align-items: center;">';
-
-        $html .= sprintf(
-            '<a href="%s" target="_blank" rel="noopener noreferrer" class="grp-write-btn">%s</a>',
-            esc_url($write_url),
-            esc_html__('Write a Review', 'google-reviews-pro')
-        );
-
-        $html .= sprintf(
-            '<a href="%s" target="_blank" rel="noopener noreferrer" class="grp-view-all-link">%s</a>',
-            esc_url($view_url),
-            esc_html__('View all reviews on Google', 'google-reviews-pro')
-        );
-
-        $html .= '</div>';
-
-        return $html;
+        return '';
     }
 
     /**

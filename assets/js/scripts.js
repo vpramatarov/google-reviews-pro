@@ -38,7 +38,8 @@ jQuery(document).ready(function($) {
         const limit = $btn.data('limit') || gprJs.reviewsLimit;
         const nonce = $btn.data('nonce');
         const placeId = $btn.data('place-id');
-        const container = $btn.closest('.grp-container').find('.grp-grid, .grp-list-view');
+        const layout = $btn.data('layout');
+        const container = $btn.closest('.grp-container').find('.grp-grid, .grp-list-view, .grp-slider-track');
 
         if($btn.hasClass('loading')) {
             return;
@@ -51,12 +52,18 @@ jQuery(document).ready(function($) {
             nonce: nonce,
             offset: offset,
             limit: limit,
-            place_id: placeId
+            place_id: placeId,
+            layout: layout
         }, function(res) {
             $btn.removeClass('loading').text(gprJs.buttonText);
             if (res.success) {
                 container.append(res.data.html);
-                $btn.data('offset', offset + limit)
+                $btn.data('offset', offset + limit);
+
+                // Slider only logic
+                if (container.hasClass('grp-slider-track')) {
+                    container.animate({scrollLeft: '+=200'}, 500);
+                }
 
                 let has_more = res.data.has_more || '';
                 if(!has_more) {
