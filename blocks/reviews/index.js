@@ -10,6 +10,8 @@
     var InspectorControls = blockEditor.InspectorControls;
     var SelectControl = components.SelectControl;
     var ServerSideRender = wp.serverSideRender;
+    var ToggleControl = components.ToggleControl; // Взимаме Toggle компонента
+    var PanelBody = components.PanelBody;         // По-добре да ползваме променлива
 
     var locationOptions = window.grpData ? window.grpData.locations : [];
 
@@ -20,7 +22,7 @@
 
             return [
                 el( InspectorControls, { key: 'inspector' },
-                    el( components.PanelBody, { title: 'Layout Settings', initialOpen: true },
+                    el( PanelBody, { title: 'Layout Settings', initialOpen: true },
                         el( SelectControl, {
                             label: 'Display Style',
                             value: attributes.layout,
