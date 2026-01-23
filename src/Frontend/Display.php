@@ -53,9 +53,9 @@ readonly class Display
             'reviewsLimit' => $limit,
         ]);
 
-        $text_color     = sanitize_hex_color($options['grp_text_color'] ?? '#333333');
-        $bg_color       = sanitize_hex_color($options['grp_bg_color'] ?? '#ffffff');
-        $accent_color   = sanitize_hex_color($options['grp_accent_color'] ?? '#4285F4');
+        $text_color = sanitize_hex_color($options['grp_text_color'] ?? '#333333');
+        $bg_color = sanitize_hex_color($options['grp_bg_color'] ?? '#ffffff');
+        $accent_color = sanitize_hex_color($options['grp_accent_color'] ?? '#4285F4');
         $btn_text_color = sanitize_hex_color($options['grp_btn_text_color'] ?? '#ffffff');
 
         $custom_css = "

@@ -80,6 +80,7 @@ final class GoogleReviewsPro
         new GRP\Ajax\Handler($api, $display);
         new GRP\Core\PostType();
         new GRP\Core\Blocks($api, $display);
+        new GRP\Integrations\Manager();
 
         add_action('update_option_grp_settings', function() use ($cronManager) {
             $cronManager->manage_cron();
