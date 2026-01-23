@@ -95,6 +95,20 @@ class ReviewWidget extends Widget_Base {
             ]
         );
 
+        $this->add_control(
+            'enable_schema',
+            [
+                'label'        => __('Enable Schema.org', 'google-reviews-pro'),
+                'type'         => \Elementor\Controls_Manager::SWITCHER,
+                'label_on'     => __('Yes', 'google-reviews-pro'),
+                'label_off'    => __('No', 'google-reviews-pro'),
+                'return_value' => 'true',
+                'default'      => 'true',
+                'description'  => __('Disable this if you have multiple review widgets on one page to avoid SEO conflicts.', 'google-reviews-pro'),
+                'separator'    => 'before',
+            ]
+        );
+
         $this->end_controls_section();
     }
 
@@ -104,7 +118,8 @@ class ReviewWidget extends Widget_Base {
 
         $atts = [
             'place_id' => $settings['place_id'],
-            'layout' => $settings['layout']
+            'layout' => $settings['layout'],
+            'schema' => $settings['enable_schema']
         ];
 
         echo $this->display->render_shortcode($atts);

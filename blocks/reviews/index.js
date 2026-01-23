@@ -37,6 +37,12 @@
                             value: attributes.place_id,
                             options: locationOptions,
                             onChange: function( val ) { setAttributes( { place_id: val } ); }
+                        } ),
+                        el( ToggleControl, {
+                            label: 'Enable SEO Schema',
+                            help: attributes.schema ? 'Structured data is enabled.' : 'Structured data is disabled (recommended for secondary widgets).',
+                            checked: attributes.schema,
+                            onChange: function( val ) { setAttributes( { schema: val } ); }
                         } )
                     )
                 ),
