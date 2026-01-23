@@ -4,41 +4,24 @@ declare(strict_types=1);
 
 namespace GRP\Api;
 
+use GRP\Api\Handler\ApiHandler;
+use GRP\Api\Handler\Google;
+use GRP\Api\Handler\SerpApi;
+
 readonly class Handler
 {
-
-    /**
-     * @return array{
-     *     "data_source": string,
-     *     "google_api_key": string,
-     *     "place_id": string,
-     *     "serpapi_key": string,
-     *     "serpapi_data_id": string,
-     *     "grp_business_name": string,
-     *     "grp_address": string,
-     *     "grp_phone": string,
-     *     "grp_latitude": float|string,
-     *     "grp_longitude": float|string,
-     *     "grp_price": string,
-     *     "grp_review_limit": int,
-     *     "grp_text_color": string,
-     *     "grp_bg_color": string,
-     *     "grp_accent_color": string,
-     *     "grp_btn_text_color": string,
-     *     "grp_layout": string,
-     *     "grp_min_rating": int,
-     *     "grp_sort_order": string,
-     *     "email_alerts": bool|int,
-     *     "notification_email": string,
-     *     "serpapi_pages": int,
-     *     "auto_sync": bool|int,
-     *     "sync_frequency": string
-     * }|array{}
-     */
     private array $options;
 
-    public function __construct() {
+    /** @var ApiHandler[] */
+    private array $apiHandlers;
+
+    public function __construct()
+    {
         $this->options = empty(get_option('grp_settings')) ? [] : get_option('grp_settings');
+        $this->apiHandlers = [
+            new Google($this->options),
+            new SerpApi($this->options),
+        ];
     }
 
     /**
@@ -253,14 +236,16 @@ readonly class Handler
     {
         $source = $this->options['data_source'] ?? 'google';
         $current_place_id = '';
+        $data = null;
 
-        if ($source === 'google') {
-            $current_place_id = $this->options['place_id'] ?? '';
-            $data = $this->fetch_google();
-        } elseif ($source === 'serpapi') {
-            $current_place_id = $this->options['place_id'] ?? '';
-            $data = $this->fetch_serpapi();
-        } else {
+        foreach ($this->apiHandlers as $apiHandler) {
+            if ($apiHandler->supports($source)) {
+                $current_place_id = $this->options['place_id'] ?? '';
+                $data = $apiHandler->fetch();
+            }
+        }
+
+        if ($data === null) {
             return ['success' => true, 'count' => 0, 'message' => __('Manual mode active.', 'google-reviews-pro')];
         }
 
@@ -349,153 +334,6 @@ readonly class Handler
         ];
 
         update_option('grp_locations_db', $db);
-    }
-
-    private function fetch_google(): \WP_Error|array
-    {
-        $api_key = $this->options['google_api_key'] ?? '';
-        $place_id = $this->options['place_id'] ?? '';
-
-        if (!$api_key || !$place_id) {
-            return new \WP_Error('config_missing', __('Missing Google Config', 'google-reviews-pro'));
-        }
-
-        $fields = 'reviews,rating,formatted_address,international_phone_number,geometry,name';
-        $url = sprintf("https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=%s&key=%s", $place_id, $fields, $api_key);
-        $response = wp_remote_get($url);
-
-        if (is_wp_error($response)) {
-            return $response;
-        }
-
-        $body = json_decode(wp_remote_retrieve_body($response), true);
-        if (($body['status'] ?? '') !== 'OK') {
-            return new \WP_Error('api_error', $body['status'] ?? __('Unknown API Error', 'google-reviews-pro'));
-        }
-
-        $result = $body['result'];
-
-        $normalized_reviews = [];
-        if (!empty($result['reviews'])) {
-            foreach ($result['reviews'] as $review) {
-                $unique_id = md5(($review['author_name'] ?? '') . ($review['time'] ?? ''));
-                $normalized_reviews[] = [
-                    'external_id' => $unique_id,
-                    'author_name' => $review['author_name'] ?? 'Anonymous',
-                    'photo_url'   => $review['profile_photo_url'] ?? '',
-                    'author_url'  => $review['author_url'] ?? '',
-                    'rating'      => $review['rating'] ?? 5,
-                    'text'        => $review['text'] ?? '',
-                    'time'        => $review['time'] ?? time(),
-                    'source'      => 'google'
-                ];
-            }
-        }
-
-        $meta = [
-            'name'    => $result['name'] ?? '',
-            'address' => $result['formatted_address'] ?? '',
-            'phone'   => $result['international_phone_number'] ?? '',
-            'lat'     => $result['geometry']['location']['lat'] ?? '',
-            'lng'     => $result['geometry']['location']['lng'] ?? '',
-        ];
-
-        return [
-            'reviews' => $normalized_reviews,
-            'meta'    => $meta
-        ];
-    }
-
-    private function fetch_serpapi(): \WP_Error|array
-    {
-        $api_key = $this->options['serpapi_key'] ?? '';
-        $data_id = $this->options['serpapi_data_id'] ?? '';
-
-        if (empty($api_key)) {
-            return new \WP_Error('config_missing', __('Missing SerpApi Key', 'google-reviews-pro'));
-        }
-
-        if (empty($data_id)) {
-            return new \WP_Error('config_missing', __('Missing SerpApi Data ID', 'google-reviews-pro'));
-        }
-
-        $all_reviews = [];
-        $meta_captured = false;
-        $meta = [];
-        $next_page_token = null;
-        $page_count = 0;
-        $max_pages_setting = (int) ($this->options['serpapi_pages'] ?? 5);
-        $max_pages = max(1, min(50, $max_pages_setting));
-
-        do {
-            $url = sprintf("https://serpapi.com/search.json?engine=google_maps_reviews&data_id=%s&api_key=%s", $data_id, $api_key);
-
-            if ($next_page_token) {
-                $url .= "&next_page_token=" . $next_page_token;
-            }
-
-            $response = wp_remote_get($url, ['timeout' => 20]);
-
-            if (is_wp_error($response)) {
-                break;
-            }
-
-            $body = json_decode(wp_remote_retrieve_body($response), true);
-
-            if (isset($body['error'])) {
-                return new \WP_Error('serpapi_error', $body['error']);
-            }
-
-            if (!$meta_captured && !empty($body['place_info'])) {
-                $info = $body['place_info'];
-                $meta = [
-                    'name'    => $info['title'] ?? '',
-                    'address' => $info['address'] ?? '',
-                    'phone'   => $info['phone'] ?? '', // SerpApi понякога не връща телефон тук, но често го има
-                    'lat'     => $info['gps_coordinates']['latitude'] ?? '',
-                    'lng'     => $info['gps_coordinates']['longitude'] ?? '',
-                ];
-                $meta_captured = true;
-            }
-
-            if (empty($body['reviews'])) {
-                break;
-            }
-
-            foreach ($body['reviews'] as $review) {
-                if (!empty($review['review_id'])) {
-                    $unique_id = $review['review_id'];
-                } elseif (!empty($review['link'])) {
-                    $unique_id = md5($review['link']);
-                } else {
-                    $unique_id = md5(($review['user']['name'] ?? 'Anon') . ($review['date'] ?? '') . substr($review['snippet'] ?? '', 0, 20));
-                }
-
-                $all_reviews[] = [
-                    'external_id' => $unique_id,
-                    'author_name' => $review['user']['name'] ?? __('Anonymous', 'google-reviews-pro'),
-                    'photo_url'   => $review['user']['thumbnail'] ?? '',
-                    'author_url'  => $review['link'] ?? '',
-                    'rating'      => $review['rating'] ?? 5,
-                    'text'        => $review['snippet'] ?? '',
-                    'time'        => isset($review['iso_date']) ? strtotime($review['iso_date']) : time(),
-                    'source'      => 'serpapi'
-                ];
-            }
-
-            $next_page_token = $body['serpapi_pagination']['next_page_token'] ?? null;
-            $page_count++;
-
-            if ($next_page_token) {
-                sleep(1);
-            }
-
-        } while ($next_page_token && $page_count < $max_pages);
-
-        return [
-            'reviews' => $all_reviews,
-            'meta'    => $meta
-        ];
     }
 
     private function save_reviews(array $reviews, string $assigned_place_id): array
@@ -685,27 +523,4 @@ readonly class Handler
         wp_mail($to_email, $subject, $message, $headers);
     }
 
-    public function manage_cron(): void
-    {
-        $options = $this->getApiOptions();
-        $is_enabled = !empty($options['auto_sync']);
-        $frequency = $options['sync_frequency'] ?? 'weekly';
-
-        // Remove old hook, to be sure there's no duplication
-        // or old schedules when changing frequency.
-        wp_clear_scheduled_hook('grp_daily_sync');
-
-        if ($is_enabled) {
-            wp_schedule_event(time(), $frequency, 'grp_daily_sync');
-        }
-    }
-
-    public function add_custom_cron_schedules(array $schedules): array
-    {
-        $schedules['monthly'] = [
-            'interval' => 2592000, // 30 days in seconds
-            'display'  => __('Once Monthly', 'google-reviews-pro')
-        ];
-        return $schedules;
-    }
 }

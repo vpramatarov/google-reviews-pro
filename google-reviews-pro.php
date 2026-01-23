@@ -20,6 +20,7 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 }
 
 use GRP\Api\Handler as ApiHandler;
+use GRP\Core\CronManager;
 use GRP\Core\SeoIntegrator;
 
 final class GoogleReviewsPro
@@ -65,12 +66,13 @@ final class GoogleReviewsPro
     {
         $api = new ApiHandler();
         $seo = new SeoIntegrator();
+        $cronManager = new CronManager($api->getApiOptions());
 
         /**
          * @note: cron_schedules must be loaded before plugins_loaded
          */
-        add_filter('cron_schedules', function(array $schedules) use ($api) {
-            return $api->add_custom_cron_schedules($schedules);
+        add_filter('cron_schedules', function(array $schedules) use ($cronManager) {
+            return $cronManager->add_custom_cron_schedules($schedules);
         });
 
         $display = new GRP\Frontend\Display($api, $seo);
@@ -79,8 +81,8 @@ final class GoogleReviewsPro
         new GRP\Core\PostType();
         new GRP\Core\Blocks($api, $display);
 
-        add_action('update_option_grp_settings', function() use ($api) {
-            $api->manage_cron();
+        add_action('update_option_grp_settings', function() use ($cronManager) {
+            $cronManager->manage_cron();
         }, 10, 0);
 
         add_action('grp_daily_sync', function() use ($api) {

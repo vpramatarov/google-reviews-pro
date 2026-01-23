@@ -27,7 +27,13 @@ readonly class Handler
         $reviews_limit = absint($options['grp_review_limit'] ?? 3);
         $limit_req = isset($_POST['limit']) ? absint($_POST['limit']) : $reviews_limit;
         $limit = max(1, min(10, $limit_req));
+        $req_layout = isset($_POST['layout']) ? sanitize_text_field($_POST['layout']) : '';
 
+        if (!in_array($req_layout, ['grid', 'list', 'badge', 'slider'])) {
+            $req_layout = '';
+        }
+
+        $layout = $req_layout ?: $options['grp_layout'] ?? 'grid';
         $reviews = $this->api->get_reviews($limit, $offset, $place_id);
         $total = $this->api->count_total_reviews($place_id);
 
@@ -37,7 +43,7 @@ readonly class Handler
 
         $html = '';
         foreach ($reviews as $review) {
-            $html .= $this->display->render_card($review);
+            $html .= $this->display->render_card($review, $layout);
         }
 
         $has_more = ($offset + $limit) < $total;
