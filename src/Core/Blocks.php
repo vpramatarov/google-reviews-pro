@@ -33,7 +33,7 @@ final readonly class Blocks
             'grp-block-editor-js',
             plugin_dir_url(dirname(__DIR__)) . 'blocks/reviews/index.js',
             ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-server-side-render'],
-            '1.1.0',
+            GRP_VERSION,
             ['in_footer' => true, 'strategy' => 'async']
         );
 

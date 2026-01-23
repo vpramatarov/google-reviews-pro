@@ -39,8 +39,6 @@ class Manager
 
     public function register_widgets($widgets_manager): void
     {
-        require_once __DIR__ . '/Elementor/ReviewWidget.php';
-
         $widgets_manager->register(new ReviewWidget());
     }
 }

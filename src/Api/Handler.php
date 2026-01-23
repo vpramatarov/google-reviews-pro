@@ -243,16 +243,19 @@ readonly class Handler
         if (function_exists('set_time_limit')) {
             set_time_limit(300);
         }
-        
+
         $source = $this->options['data_source'] ?? 'google';
         $current_place_id = '';
         $data = null;
 
         foreach ($this->apiHandlers as $apiHandler) {
-            if ($apiHandler->supports($source)) {
-                $current_place_id = $this->options['place_id'] ?? '';
-                $data = $apiHandler->fetch();
+            if (!$apiHandler->supports($source)) {
+                continue;
             }
+
+            $current_place_id = $this->options['place_id'] ?? '';
+            $data = $apiHandler->fetch();
+            break;
         }
 
         if ($data === null) {
@@ -289,7 +292,7 @@ readonly class Handler
 
         /**
          * @note: Basic query: We get the average of the rating and the count of the rows.
-         * We join the posts table to make sure that the reviews are 'published'.
+         * We join the posts table to make sure that the reviews are 'published' and not 'hidden'.
          */
         $sql = "
             SELECT 
@@ -297,9 +300,13 @@ readonly class Handler
                 AVG(pm.meta_value) as rating_value
             FROM {$wpdb->postmeta} pm
             JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+            LEFT JOIN {$wpdb->postmeta} pm_hidden ON (
+                p.ID = pm_hidden.post_id AND pm_hidden.meta_key = '_grp_is_hidden'
+            )
             WHERE p.post_type = 'grp_review' 
             AND p.post_status = 'publish'
             AND pm.meta_key = '_grp_rating'
+            AND pm_hidden.post_id IS NULL
         ";
 
         /**
@@ -314,11 +321,15 @@ readonly class Handler
                 FROM {$wpdb->postmeta} pm_rating
                 JOIN {$wpdb->posts} p ON pm_rating.post_id = p.ID
                 JOIN {$wpdb->postmeta} pm_place ON pm_rating.post_id = pm_place.post_id
+                LEFT JOIN {$wpdb->postmeta} pm_hidden ON (
+                    p.ID = pm_hidden.post_id AND pm_hidden.meta_key = '_grp_is_hidden'
+                )
                 WHERE p.post_type = 'grp_review' 
                 AND p.post_status = 'publish'
                 AND pm_rating.meta_key = '_grp_rating'
                 AND pm_place.meta_key = '_grp_assigned_place_id'
                 AND pm_place.meta_value = %s
+                AND pm_hidden.post_id IS NULL
             ";
             $sql = $wpdb->prepare($sql, $place_id);
         }

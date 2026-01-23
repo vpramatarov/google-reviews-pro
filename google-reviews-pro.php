@@ -15,6 +15,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+const GRP_VERSION = '1.0.0';
+
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {
     require_once __DIR__ . '/vendor/autoload.php';
 }

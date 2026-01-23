@@ -19,7 +19,9 @@ readonly class Handler
 
     public function handle_load_more(): void
     {
-        check_ajax_referer('grp_nonce', 'nonce');
+        if (!check_ajax_referer('grp_nonce', 'nonce', false)) {
+            wp_send_json_error(['message' => __('Security check failed.', 'google-reviews-pro')]);
+        }
 
         $place_id = isset($_POST['place_id']) ? sanitize_text_field($_POST['place_id']) : '';
         $offset = isset($_POST['offset']) ? absint($_POST['offset']) : 0;
@@ -53,7 +55,13 @@ readonly class Handler
 
     public function handle(): void
     {
-        check_ajax_referer('grp_nonce', 'nonce');
+        if (!check_ajax_referer('grp_nonce', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized action.', 'google-reviews-pro'));
+        }
 
         $sync_result = $this->api->sync_reviews();
 
@@ -67,7 +75,13 @@ readonly class Handler
 
     public function handle_find(): void
     {
-        check_ajax_referer('grp_nonce', 'nonce');
+        if (!check_ajax_referer('grp_nonce', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized action.', 'google-reviews-pro'));
+        }
 
         $query = sanitize_text_field($_POST['query'] ?? '');
         $api_options = $this->api->getApiOptions();
@@ -86,6 +100,7 @@ readonly class Handler
             }
 
             $result = $apiHandler->fetch_business_info($query);
+            break;
         }
 
         if (is_wp_error($result)) {
