@@ -240,6 +240,10 @@ readonly class Handler
 
     public function sync_reviews(): \WP_Error|array
     {
+        if (function_exists('set_time_limit')) {
+            set_time_limit(300);
+        }
+        
         $source = $this->options['data_source'] ?? 'google';
         $current_place_id = '';
         $data = null;
