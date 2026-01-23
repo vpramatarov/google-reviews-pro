@@ -8,16 +8,17 @@ abstract class Layout
 {
     public function render_card(array $review): string
     {
-        $text = esc_html($review['text']);
+        $text = esc_html($review['text'] ?? '');
         $has_more = mb_strlen($text, 'UTF-8') > 150;
         $default_icon = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCAtNC0xLjc5IDQtNHMtMS43OS00LTQtNC00IDEuNzktNCA0IDEuNzkgNCA0IDR6bTAgMmMtMi42NyAwLTggMS4zNC04IDR2MmgyMHYtMmMtMC0yLjY2LTUuMzMtNC04LTR6Ii8+PC9zdmc+';
         $photo_url = !empty($review['profile_photo_url']) ? esc_url($review['profile_photo_url']) : $default_icon;
         $rating = isset($review['rating']) ? (float)$review['rating'] : 5.0;
+        $author = esc_html($review['author_name'] ?? __('Anonymous', 'google-reviews-pro'));
 
         $html = '<div class="grp-card">';
         $html .= '<div class="grp-card-header">';
         $html .= sprintf('<img src="%s" alt="%s" class="grp-profile-img" width="40" height="40" loading="lazy">', $photo_url, esc_attr__('User Avatar', 'google-reviews-pro'));
-        $html .= '<div class="grp-header-info"><strong>'.esc_html($review['author_name']).'</strong>' . $this->render_stars($rating) . '</div>';
+        $html .= '<div class="grp-header-info"><strong>'.$author.'</strong>' . $this->render_stars($rating) . '</div>';
         $html .= '</div>'; // ./grp-card-header
         $html .= sprintf('<div class="grp-review-text">%s</div>', $text);
 
@@ -36,7 +37,7 @@ abstract class Layout
             '<div class="grp-load-more-container">
                         <button class="grp-load-more-btn" data-offset="%d" data-limit="%d" data-nonce="%s" data-place-id="%s" data-layout="%s">%s</button>
                     </div>',
-            $limit, $limit, $nonce, esc_attr($place_id), $layout, __('Load More', 'google-reviews-pro')
+            $limit, $limit, $nonce, esc_attr($place_id), esc_attr($layout), __('Load More', 'google-reviews-pro')
         );
     }
 

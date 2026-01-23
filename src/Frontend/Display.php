@@ -32,12 +32,12 @@ readonly class Display
 
     public function enqueue(): void
     {
-        wp_enqueue_style('grp-css', plugin_dir_url(dirname(__DIR__)) . 'assets/css/style.css');
+        wp_enqueue_style('grp-css', plugin_dir_url(dirname(__DIR__)) . 'assets/css/style.css', [], GRP_VERSION);
         wp_register_script(
                 'grp-js',
                 plugin_dir_url(dirname(__DIR__)) . 'assets/js/scripts.js',
                 ['jquery'],
-                false,
+                GRP_VERSION,
                 ['in_footer' => true, 'strategy' => 'async']
         );
 

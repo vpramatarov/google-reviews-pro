@@ -10,7 +10,9 @@ use GRP\Core\SeoIntegrator;
 use GRP\Frontend\Display;
 use GRP\Api\Handler as ApiHandler;
 
-if (!defined('ABSPATH')) exit; // Exit if accessed directly
+if (!defined('ABSPATH')) {
+    exit; // Exit if accessed directly
+}
 
 class ReviewWidget extends Widget_Base {
 
@@ -24,14 +26,6 @@ class ReviewWidget extends Widget_Base {
         $this->api = new ApiHandler();
         $seo = new SeoIntegrator();
         $this->display = new Display($this->api, $seo);
-    }
-
-    // Специален конструктор за Dependency Injection (Elementor съвместим)
-    // Тъй като parent::__construct не позволява лесно DI, ние го подаваме при register() в Manager.php
-    // и го присвояваме тук.
-    public function __construct_with_dependency(Display $display): void
-    {
-        $this->display = $display;
     }
 
     public function get_name(): string
