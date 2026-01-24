@@ -144,7 +144,7 @@ readonly class Settings
         add_settings_section(
             'grp_filtering',
             __('Filtering & Moderation', 'google-reviews-pro'),
-            null,
+            [$this, 'filtering_section_html'],
             'grp-settings'
         );
 
@@ -327,7 +327,7 @@ readonly class Settings
             'serpapi_data_id' => sanitize_text_field($input['serpapi_data_id'] ?? ''),
             'serpapi_key' => sanitize_text_field($input['serpapi_key'] ?? ''),
             'serpapi_pages' => absint($input['serpapi_pages'] ?? 5),
-            'grp_review_limit' => max(1, min(5, absint($input['grp_review_limit'] ?? 3))), // make sure it's between 1-5
+            'grp_review_limit' => max(1, min(GRP_MAX_REVIEW_LIMIT, absint($input['grp_review_limit'] ?? 3))), // make sure it's between 1-5
             'auto_sync' => isset($input['auto_sync']) ? 1 : 0,
             'sync_frequency' => in_array($input['sync_frequency'], ['daily', 'weekly', 'monthly']) ? $input['sync_frequency'] : 'weekly',
             'grp_min_rating' => absint($input['grp_min_rating'] ?? 0),
@@ -501,6 +501,42 @@ readonly class Settings
     public function locations_section_desc(): void
     {
         echo '<p>' . __('This table shows all unique locations (Place IDs) found in your imported reviews database. Use these IDs in your shortcodes to display specific reviews.', 'google-reviews-pro') . '</p>';
+    }
+
+    public function filtering_section_html(): void
+    {
+        $options = get_option('grp_settings');
+        $hide_empty = isset($options['grp_hide_empty']) && $options['grp_hide_empty'];
+        $min_rating = $options['grp_min_rating'] ?? '1';
+        ?>
+        <fieldset>
+            <label for="grp_hide_empty">
+                <input type="checkbox" id="grp_hide_empty" name="grp_settings[grp_hide_empty]" value="1" <?php checked($hide_empty, true); ?>>
+                <?php _e('Hide reviews without text (Star-only ratings)', 'google-reviews-pro'); ?>
+            </label>
+            <p class="description">
+                <?php _e('Enable this to show only reviews that contain actual comments.', 'google-reviews-pro'); ?>
+            </p>
+        </fieldset>
+        <table class="form-table" role="presentation">
+            <tbody>
+                <tr>
+                    <th scope="row">
+                        <label for="grp_min_rating">
+                            <?php _e('Minimum Rating to Show:', 'google-reviews-pro'); ?>
+                        </label>
+                    </th>
+                    <td>
+                        <select name="grp_settings[grp_min_rating]" id="grp_min_rating">
+                            <?php for($i = 1; $i <= 5; $i++): ?>
+                                <option value="<?php echo $i; ?>" <?php selected($min_rating, $i); ?>><?php echo $i; ?> Stars</option>
+                            <?php endfor; ?>
+                        </select>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <?php
     }
 
     public function stored_locations_html(): void
@@ -733,7 +769,7 @@ readonly class Settings
                 'version'      => 5, // Balance between density and readability
                 'outputType'   => QROutputInterface::GDIMAGE_PNG,
                 'eccLevel'     => EccLevel::L, // Low error correction for cleaner code
-                'scale'        => 5, // Pixel size
+                'scale'        => 20, // Pixel size
                 'imageBase64'  => true, // returns data:image/png;base64...
             ]);
 

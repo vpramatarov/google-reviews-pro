@@ -43,8 +43,13 @@ readonly class Display
 
         $options = $this->api->getApiOptions();
         $limit = absint($options['grp_review_limit'] ?? 3);
-        if ($limit < 1) $limit = 3;
-        if ($limit > 5) $limit = 5;
+        if ($limit < 1) {
+            $limit = 3;
+        }
+
+        if ($limit > GRP_MAX_REVIEW_LIMIT) {
+            $limit = GRP_MAX_REVIEW_LIMIT;
+        }
 
         wp_localize_script( 'grp-js', 'gprJs', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
@@ -166,8 +171,8 @@ readonly class Display
             $limit = 3;
         }
 
-        if ($limit > 5) {
-            $limit = 5;
+        if ($limit > GRP_MAX_REVIEW_LIMIT) {
+            $limit = GRP_MAX_REVIEW_LIMIT;
         }
 
         $source = $options['data_source'] ?? 'cpt';

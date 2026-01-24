@@ -91,6 +91,12 @@ class ReviewImporter
             return $stats;
         }
 
+        $required_headers = ['external_id', 'author_name'];
+        if (count(array_intersect($required_headers, $headers)) !== count($required_headers)) {
+            fclose($handle);
+            return ['success' => 0, 'skipped' => 0, 'errors' => 1];
+        }
+
         // Remove BOM (Byte Order Mark), if any
         $headers[0] = preg_replace('/[\xEF\xBB\xBF]/', '', $headers[0]);
 

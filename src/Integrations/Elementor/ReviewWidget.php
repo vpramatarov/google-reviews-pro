@@ -14,13 +14,15 @@ if (!defined('ABSPATH')) {
     exit; // Exit if accessed directly
 }
 
-class ReviewWidget extends Widget_Base {
+class ReviewWidget extends Widget_Base
+{
 
     private Display $display;
 
     private ApiHandler $api;
 
-    public function __construct($data = [], $args = null) {
+    public function __construct($data = [], $args = null)
+    {
         parent::__construct($data, $args);
 
         $this->api = new ApiHandler();

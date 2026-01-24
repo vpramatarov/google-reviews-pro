@@ -16,6 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 const GRP_VERSION = '1.0.0';
+const GRP_MAX_REVIEW_LIMIT = 5;
 
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {
     require_once __DIR__ . '/vendor/autoload.php';
@@ -49,6 +50,10 @@ final class GoogleReviewsPro
                     __('Incompatible PHP version', 'google-reviews-pro'),
                     ['back_link' => true]
                 );
+            }
+
+            if (!extension_loaded('zip') || !extension_loaded('mbstring')) {
+                wp_die(__('This plugin requires PHP Zip and Mbstring extensions.', 'google-reviews-pro'));
             }
         });
 
