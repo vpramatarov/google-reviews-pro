@@ -843,7 +843,7 @@ readonly class Settings
                 <?php wp_nonce_field('grp_import_action', 'grp_import_nonce'); ?>
                 <input type="hidden" name="grp_action" value="import_file">
 
-                <input type="file" name="grp_import_file" accept=".json" required>
+                <input type="file" name="grp_import_file" accept=".json,.zip,.csv" required>
                 <br><br>
                 <button type="submit" class="button button-primary">
                     <?php _e('Import Reviews', 'google-reviews-pro'); ?>
