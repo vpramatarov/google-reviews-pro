@@ -8,15 +8,23 @@ use chillerlan\QRCode\Common\EccLevel;
 use chillerlan\QRCode\Output\QROutputInterface;
 use GRP\Api\Handler as ApiHandler;
 use GRP\Core\SeoIntegrator;
+use GRP\Core\ReviewExporter;
+use GRP\Core\ReviewImporter;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 
 readonly class Settings
 {
-    public function __construct(private SeoIntegrator $seo, private ApiHandler $api)
-    {
+    public function __construct(
+        private SeoIntegrator $seo,
+        private ApiHandler $api,
+        private ReviewExporter $exporter,
+        private ReviewImporter $importer
+    ) {
         add_action('admin_menu', [$this, 'add_menu']);
         add_action('admin_init', [$this, 'register_settings']);
+        add_action('admin_init', [$this, 'handle_export_request']);
+        add_action('admin_init', [$this, 'handle_import_request']);
         add_action('admin_footer', [$this, 'render_admin_scripts']);
     }
 
@@ -266,6 +274,14 @@ readonly class Settings
             'grp_collection',
             __('Review Collection Tools', 'google-reviews-pro'),
             [$this, 'collection_section_html'],
+            'grp-settings'
+        );
+
+        // --- Backup & Migration ---
+        add_settings_section(
+            'grp_backup',
+            __('Backup & Migration', 'google-reviews-pro'),
+            [$this, 'backup_section_html'],
             'grp-settings'
         );
 
@@ -790,6 +806,157 @@ readonly class Settings
         <?php
     }
 
+    public function backup_section_html(): void
+    {
+        ?>
+        <div style="background: #fff; padding: 20px; border: 1px solid #ccd0d4; margin-bottom: 20px;">
+            <h3><?php _e('Export Reviews', 'google-reviews-pro'); ?></h3>
+            <p><?php _e('Download a backup of your current reviews.', 'google-reviews-pro'); ?></p>
+            <div style="display: flex; gap: 15px;">
+                <form method="post" action="">
+                    <?php wp_nonce_field('grp_export_action', 'grp_export_nonce'); ?>
+                    <input type="hidden" name="grp_action" value="export_json">
+                    <button type="submit" class="button button-secondary">
+                        <?php _e('Export JSON', 'google-reviews-pro'); ?>
+                    </button>
+                </form>
+                <form method="post" action="">
+                    <?php wp_nonce_field('grp_export_action', 'grp_export_nonce'); ?>
+                    <input type="hidden" name="grp_action" value="export_csv">
+                    <button type="submit" class="button button-secondary">
+                        <?php _e('Export CSV', 'google-reviews-pro'); ?>
+                    </button>
+                </form>
+                <form method="post" action="">
+                    <?php wp_nonce_field('grp_export_action', 'grp_export_nonce'); ?>
+                    <input type="hidden" name="grp_action" value="export_zip">
+                    <button class="button button-primary"><?php _e('Download Full Backup (.ZIP)', 'google-reviews-pro'); ?></button>
+                </form>
+            </div>
+        </div>
+
+        <div style="background: #fff; padding: 20px; border: 1px solid #ccd0d4;">
+            <h3><?php _e('Import Reviews', 'google-reviews-pro'); ?></h3>
+            <p><?php _e('Upload a JSON or Zip file previously exported from this plugin.', 'google-reviews-pro'); ?></p>
+
+            <form method="post" action="" enctype="multipart/form-data">
+                <?php wp_nonce_field('grp_import_action', 'grp_import_nonce'); ?>
+                <input type="hidden" name="grp_action" value="import_file">
+
+                <input type="file" name="grp_import_file" accept=".json" required>
+                <br><br>
+                <button type="submit" class="button button-primary">
+                    <?php _e('Import Reviews', 'google-reviews-pro'); ?>
+                </button>
+            </form>
+        </div>
+        <?php
+    }
+
+    public function handle_import_request(): void
+    {
+        if (!isset($_POST['grp_action']) || $_POST['grp_action'] !== 'import_file' || !isset($_FILES['grp_import_file'])) {
+            return;
+        }
+
+        if (!check_admin_referer('grp_import_action', 'grp_import_nonce')) {
+            wp_die(__('Security check failed', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Unauthorized', 'google-reviews-pro'));
+        }
+
+        $file = $_FILES['grp_import_file'];
+
+        // check for errors
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            add_settings_error('grp_settings', 'upload_error', __('File upload failed.', 'google-reviews-pro'));
+            return;
+        }
+
+        // Check MIME type (basic)
+        $file_type = wp_check_filetype($file['name']);
+        if ($file_type['ext'] !== 'json') {
+            add_settings_error('grp_settings', 'invalid_type', __('Only JSON files are allowed.', 'google-reviews-pro'));
+            return;
+        }
+
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+
+        if ($ext === 'zip') {
+            $stats = $this->importer->import_zip($file['tmp_name']);
+        } elseif ($ext === 'json') {
+            $stats = $this->importer->import_json($file['tmp_name']);
+        } elseif ($ext === 'csv') {
+            $stats = $this->importer->import_csv($file['tmp_name']);
+        } else {
+            add_settings_error(
+                'grp_settings',
+                'invalid_type',
+                __('Invalid file type. Allowed: .json, .csv, .zip', 'google-reviews-pro')
+            );
+            return;
+        }
+
+        if ($stats['errors'] > 0 && $stats['success'] === 0) {
+            add_settings_error('grp_settings', 'import_fail', __('Failed to parse JSON file.', 'google-reviews-pro'));
+        } else {
+            add_settings_error(
+                'grp_settings',
+                'import_success',
+                sprintf(
+                    __('Import complete! Added: %d, Skipped (Duplicates): %d, Errors: %d', 'google-reviews-pro'),
+                    $stats['success'],
+                    $stats['skipped'],
+                    $stats['errors']
+                ),
+                'success'
+            );
+        }
+    }
+
+    public function handle_export_request(): void
+    {
+        if (!isset($_POST['grp_action']) || !isset($_POST['grp_export_nonce'])) {
+            return;
+        }
+
+        // Check Nonce + Permissions
+        if (!wp_verify_nonce($_POST['grp_export_nonce'], 'grp_export_action')) {
+            wp_die(__('Security check failed', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Unauthorized', 'google-reviews-pro'));
+        }
+
+        if ($_POST['grp_action'] === 'export_zip') {
+            $zip_path = $this->exporter->generate_backup_zip();
+
+            if (file_exists($zip_path)) {
+                header('Content-Type: application/zip');
+                header('Content-Disposition: attachment; filename="grp-backup-full.zip"');
+                header('Content-Length: ' . filesize($zip_path));
+                readfile($zip_path);
+                
+                unlink($zip_path);
+                exit;
+            } else {
+                wp_die('Error creating ZIP file.');
+            }
+        }
+
+        $data = $this->exporter->get_raw_data();
+        $filename = 'google-reviews-' . date('Y-m-d') . '-' . count($data);
+
+        if ($_POST['grp_action'] === 'export_json') {
+            $this->send_json_download($data, $filename . '.json');
+        } elseif ($_POST['grp_action'] === 'export_csv') {
+            $this->send_csv_download($data, $filename . '.csv');
+        }
+    }
+
     public function email_alerts_html(): void
     {
         $val = esc_attr(get_option('grp_settings')['email_alerts'] ?? 0);
@@ -1033,5 +1200,46 @@ readonly class Settings
         echo '<button id="grp-sync-btn" class="button button-secondary">' . __('Sync Reviews Now', 'google-reviews-pro') . '</button>';
         echo '<span id="grp-sync-status" style="margin-left: 10px;"></span>';
         echo '</div></form></div>';
+    }
+
+    private function send_json_download(array $data, string $filename): void
+    {
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/json');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    private function send_csv_download(array $data, string $filename): void
+    {
+        if (empty($data)) {
+            wp_die(__('No reviews to export.', 'google-reviews-pro'));
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+
+        // Add BOM for Excel UTF-8 compatibility
+        fputs($output, "\xEF\xBB\xBF");
+
+        // Headers
+        fputcsv($output, array_keys($data[0]));
+
+        // Rows
+        foreach ($data as $row) {
+            // Formatting the date for CSV to be readable (in JSON we store it as a timestamp)
+            $row['time'] = date('Y-m-d H:i:s', (int)$row['time']);
+            fputcsv($output, $row);
+        }
+
+        fclose($output);
+        exit;
     }
 }

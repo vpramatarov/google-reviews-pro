@@ -77,8 +77,10 @@ final class GoogleReviewsPro
             return $cronManager->add_custom_cron_schedules($schedules);
         });
 
+        $exporter = new GRP\Core\ReviewExporter();
+        $importer = new GRP\Core\ReviewImporter();
         $display = new GRP\Frontend\Display($api, $seo);
-        new GRP\Admin\Settings($seo, $api);
+        new GRP\Admin\Settings($seo, $api, $exporter, $importer);
         new GRP\Ajax\Handler($api, $display);
         new GRP\Core\PostType();
         new GRP\Core\Blocks($api, $display);
