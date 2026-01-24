@@ -939,7 +939,7 @@ readonly class Settings
                 header('Content-Disposition: attachment; filename="grp-backup-full.zip"');
                 header('Content-Length: ' . filesize($zip_path));
                 readfile($zip_path);
-                
+
                 unlink($zip_path);
                 exit;
             } else {
