@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace GRP\Admin;
 
+use chillerlan\QRCode\Common\EccLevel;
+use chillerlan\QRCode\Output\QROutputInterface;
 use GRP\Api\Handler as ApiHandler;
 use GRP\Core\SeoIntegrator;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
 
 readonly class Settings
 {
@@ -255,6 +259,14 @@ readonly class Settings
             [$this, 'price_html'],
             'grp-settings',
             'grp_seo'
+        );
+
+        // --- REVIEW COLLECTION ---
+        add_settings_section(
+            'grp_collection',
+            __('Review Collection Tools', 'google-reviews-pro'),
+            [$this, 'collection_section_html'],
+            'grp-settings'
         );
 
         // --- ADVANCED & NOTIFICATIONS ---
@@ -685,6 +697,99 @@ readonly class Settings
         }
     }
 
+    public function collection_section_html(): void
+    {
+        $options = get_option('grp_settings');
+        $place_id = esc_attr($options['place_id'] ?? '');
+        $business_name = esc_attr($options['grp_business_name'] ?? __('Review Us', 'google-reviews-pro'));
+
+        if (empty($place_id)) {
+            echo '<div class="notice notice-warning inline"><p>' .
+                    __('Please configure and save a Place ID in the "Data Source" section first.', 'google-reviews-pro') .
+                    '</p></div>';
+            return;
+        }
+
+        $review_url = "https://search.google.com/local/writereview?placeid=" . $place_id;
+
+        try {
+            $qr_options = new QROptions([
+                'version'      => 5, // Balance between density and readability
+                'outputType'   => QROutputInterface::GDIMAGE_PNG,
+                'eccLevel'     => EccLevel::L, // Low error correction for cleaner code
+                'scale'        => 5, // Pixel size
+                'imageBase64'  => true, // returns data:image/png;base64...
+            ]);
+
+            $qrcode = new QRCode($qr_options);
+            $qr_image_src = $qrcode->render($review_url);
+        } catch (\Throwable $e) {
+            $qr_image_src = '';
+            echo '<div class="notice notice-error inline"><p>' . sprintf(__('Error generating QR code: %s', 'google-reviews-pro'), $e->getMessage()) . '</p></div>';
+        }
+
+        ?>
+        <div class="grp-qr-wrapper" style="display: flex; gap: 40px; align-items: flex-start; margin-top: 20px;">
+
+            <div style="flex: 1; max-width: 400px;">
+                <p><?php _e('Scan this code to test the experience:', 'google-reviews-pro'); ?></p>
+
+                <div id="grp-qr-code" style="background: #fff; padding: 20px; border: 1px solid #ddd; display: inline-block; border-radius: 8px;">
+                    <?php if ($qr_image_src): ?>
+                        <img src="<?php echo $qr_image_src; ?>" alt="QR Code" style="width: 150px; height: 150px; display: block;">
+                    <?php endif; ?>
+                </div>
+
+                <p style="margin-top: 15px;">
+                    <strong><?php _e('Direct Link:', 'google-reviews-pro'); ?></strong><br>
+                    <input type="text" class="large-text" value="<?php echo esc_url($review_url); ?>" readonly onclick="this.select();">
+                </p>
+            </div>
+
+            <div style="flex: 1;">
+                <h3><?php _e('Printable Card Preview', 'google-reviews-pro'); ?></h3>
+                <p class="description"><?php _e('Print this card and place it on your counter or tables.', 'google-reviews-pro'); ?></p>
+
+                <div id="grp-print-card" style="
+                    border: 1px solid #ccc;
+                    background: white;
+                    width: 300px;
+                    padding: 30px;
+                    text-align: center;
+                    font-family: sans-serif;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                ">
+                    <h2 style="color: #333; margin-top: 0;"><?php _e('Rate Us on Google', 'google-reviews-pro'); ?></h2>
+                    <p style="color: #666;"><?php _e('Loving your experience at', 'google-reviews-pro'); ?> <br><strong><?php echo $business_name; ?></strong>?</p>
+
+                    <div style="margin: 20px auto;">
+                        <?php if ($qr_image_src): ?>
+                            <img src="<?php echo $qr_image_src; ?>" alt="QR Code" style="width: 150px; height: 150px;">
+                        <?php endif; ?>
+                    </div>
+
+                    <p style="font-size: 12px; color: #999;"><?php _e('Scan with your phone camera', 'google-reviews-pro'); ?></p>
+
+                    <div style="margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                        <span style="color: #fbbc04; font-size: 20px;">★★★★★</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <button type="button" class="button button-primary" onclick="printCard()">
+                        <span class="dashicons dashicons-printer" style="line-height: 28px;"></span>
+                        <?php _e('Print Card', 'google-reviews-pro'); ?>
+                    </button>
+                    <a href="<?php echo $qr_image_src; ?>" download="google-review-qr.png" class="button button-secondary">
+                        <span class="dashicons dashicons-download" style="line-height: 28px;"></span>
+                        <?php _e('Download QR Image', 'google-reviews-pro'); ?>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
     public function email_alerts_html(): void
     {
         $val = esc_attr(get_option('grp_settings')['email_alerts'] ?? 0);
@@ -886,6 +991,22 @@ readonly class Settings
                 // On Change
                 $emailCheckbox.on('change', toggleEmailInput);
             });
+
+            function printCard() {
+                const cardContent = document.getElementById('grp-print-card').outerHTML;
+                const win = window.open('', '', 'height=600,width=800');
+                win.document.write('<html><head><title>Print Card</title>');
+                win.document.write('</head><body style="display:flex; justify-content:center; align-items:center; height:100vh;">');
+                win.document.write(cardContent);
+                win.document.write('</body></html>');
+                win.document.close();
+                // We wait a moment for the images to load in the new window before printing.
+                setTimeout(function() {
+                    win.focus();
+                    win.print();
+                    win.close();
+                }, 250);
+            }
         </script>
         <?php
     }
