@@ -102,6 +102,7 @@ readonly class Handler
     {
         $min_rating = absint($this->options['grp_min_rating'] ?? 0);
         $sort_order = $this->options['grp_sort_order'] ?? 'date_desc';
+        $hide_empty = isset($options['grp_hide_empty']) && $options['grp_hide_empty'];
 
         $args = [
             'post_type'      => 'grp_review',
@@ -127,7 +128,7 @@ readonly class Handler
         ];
 
         // Filter: minimum rating
-        if ($min_rating > 0) {
+        if ($min_rating > 1) {
             $args['meta_query'][] = [
                 'key'     => '_grp_rating',
                 'value'   => $min_rating,
@@ -171,7 +172,16 @@ readonly class Handler
                 break;
         }
 
+        if ($hide_empty) {
+            add_filter('posts_where', [$this, 'filter_where_not_empty']);
+        }
+
         $query = new \WP_Query($args);
+
+        // IMPORTANT: We remove the filter immediately so as not to break other WordPress queries!
+        if ($hide_empty) {
+            remove_filter('posts_where', [$this, 'filter_where_not_empty']);
+        }
         $reviews = [];
 
         if ($query->have_posts()) {
@@ -441,7 +451,7 @@ readonly class Handler
      */
     private function download_image(string $url, int $post_id, string $desc): void
     {
-        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        if (!wp_http_validate_url($url)) {
             return;
         }
 
@@ -542,6 +552,18 @@ readonly class Handler
 
         // Send
         wp_mail($to_email, $subject, $message, $headers);
+    }
+
+    /**
+     * SQL Filter: Exclude posts with empty content.
+     * Use TRIM() to avoid showing reviews that only contain spaces.
+     */
+    public function filter_where_not_empty(string $where): string
+    {
+        global $wpdb;
+
+        $where .= " AND TRIM({$wpdb->posts}.post_content) != '' ";
+        return $where;
     }
 
 }
