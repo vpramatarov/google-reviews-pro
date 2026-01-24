@@ -165,3 +165,5 @@ The Place ID is a unique identifier for your business on Google Maps.
 * **Feature:** Admin columns now show Reviewer Avatar and Rating.
 * **Feature:** Reviews use WordPress native "Featured Image" for avatars.
 * **Feature:** "Smart Finder" logic for finding Place IDs.
+* **Feature:** Export & Import options.
+* **Feature:** QRCode generation for writing reviews.
