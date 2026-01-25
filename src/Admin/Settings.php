@@ -62,11 +62,11 @@ readonly class Settings
         );
 
         add_settings_field(
-                'serpapi_key',
-                __('SerpApi Key', 'google-reviews-pro'),
-                [$this, 'serpapi_key_html'],
-                'grp-settings',
-                'grp_main'
+            'serpapi_key',
+            __('SerpApi Key', 'google-reviews-pro'),
+            [$this, 'serpapi_key_html'],
+            'grp-settings',
+            'grp_main'
         );
 
         add_settings_field(
@@ -144,8 +144,16 @@ readonly class Settings
         add_settings_section(
             'grp_filtering',
             __('Filtering & Moderation', 'google-reviews-pro'),
-            [$this, 'filtering_section_html'],
+            null,
             'grp-settings'
+        );
+
+        add_settings_field(
+            'grp_hide_empty',
+            __('Hide reviews without text (Star-only ratings)', 'google-reviews-pro'),
+            [$this, 'hide_empty_reviews_html'],
+            'grp-settings',
+            'grp_filtering'
         );
 
         add_settings_field(
@@ -166,10 +174,10 @@ readonly class Settings
 
         // --- SECTION: STYLING ---
         add_settings_section(
-                'grp_styling',
-                __('Styling Configuration', 'google-reviews-pro'),
-                null,
-                'grp-settings'
+            'grp_styling',
+            __('Styling Configuration', 'google-reviews-pro'),
+            null,
+            'grp-settings'
         );
 
         add_settings_field(
@@ -277,14 +285,6 @@ readonly class Settings
             'grp-settings'
         );
 
-        // --- Backup & Migration ---
-        add_settings_section(
-            'grp_backup',
-            __('Backup & Migration', 'google-reviews-pro'),
-            [$this, 'backup_section_html'],
-            'grp-settings'
-        );
-
         // --- ADVANCED & NOTIFICATIONS ---
         add_settings_section(
             'grp_advanced',
@@ -330,6 +330,7 @@ readonly class Settings
             'grp_review_limit' => max(1, min(GRP_MAX_REVIEW_LIMIT, absint($input['grp_review_limit'] ?? 3))), // make sure it's between 1-5
             'auto_sync' => isset($input['auto_sync']) ? 1 : 0,
             'sync_frequency' => in_array($input['sync_frequency'], ['daily', 'weekly', 'monthly']) ? $input['sync_frequency'] : 'weekly',
+            'grp_hide_empty' => isset($input['grp_hide_empty']) ? 1 : 0,
             'grp_min_rating' => absint($input['grp_min_rating'] ?? 0),
             'grp_sort_order' => sanitize_text_field($input['grp_sort_order'] ?? 'date_desc'),
             'grp_business_name' => sanitize_text_field($input['grp_business_name'] ?? ''),
@@ -354,9 +355,9 @@ readonly class Settings
                 $clean['notification_email'] = $notification_email;
             } else {
                 add_settings_error(
-                        'grp_settings',
-                        'invalid_email',
-                        __('The notification email provided is invalid. Saved with default admin email.', 'google-reviews-pro')
+                    'grp_settings',
+                    'invalid_email',
+                    __('The notification email provided is invalid. Saved with default admin email.', 'google-reviews-pro')
                 );
                 $clean['notification_email'] = '';
             }
@@ -503,39 +504,15 @@ readonly class Settings
         echo '<p>' . __('This table shows all unique locations (Place IDs) found in your imported reviews database. Use these IDs in your shortcodes to display specific reviews.', 'google-reviews-pro') . '</p>';
     }
 
-    public function filtering_section_html(): void
+    public function hide_empty_reviews_html(): void
     {
-        $options = get_option('grp_settings');
-        $hide_empty = isset($options['grp_hide_empty']) && $options['grp_hide_empty'];
-        $min_rating = $options['grp_min_rating'] ?? '1';
+        $hide_empty = esc_attr(get_option('grp_settings')['grp_hide_empty'] ?? 0);
+        printf('<input type="checkbox" id="grp_hide_empty" name="grp_settings[grp_hide_empty]" value="1" %s>', checked(1, $hide_empty, false));
         ?>
-        <fieldset>
-            <label for="grp_hide_empty">
-                <input type="checkbox" id="grp_hide_empty" name="grp_settings[grp_hide_empty]" value="1" <?php checked($hide_empty, true); ?>>
-                <?php _e('Hide reviews without text (Star-only ratings)', 'google-reviews-pro'); ?>
-            </label>
-            <p class="description">
-                <?php _e('Enable this to show only reviews that contain actual comments.', 'google-reviews-pro'); ?>
-            </p>
-        </fieldset>
-        <table class="form-table" role="presentation">
-            <tbody>
-                <tr>
-                    <th scope="row">
-                        <label for="grp_min_rating">
-                            <?php _e('Minimum Rating to Show:', 'google-reviews-pro'); ?>
-                        </label>
-                    </th>
-                    <td>
-                        <select name="grp_settings[grp_min_rating]" id="grp_min_rating">
-                            <?php for($i = 1; $i <= 5; $i++): ?>
-                                <option value="<?php echo $i; ?>" <?php selected($min_rating, $i); ?>><?php echo $i; ?> Stars</option>
-                            <?php endfor; ?>
-                        </select>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+        <p class="description">
+            <?php _e('Enable this to show only reviews that contain actual comments.', 'google-reviews-pro'); ?>
+        </p>
+
         <?php
     }
 
@@ -1230,12 +1207,15 @@ readonly class Settings
         do_settings_sections('grp-settings');
         submit_button();
 
+        echo '</form></div><hr><h3>'.__('Backup & Migration', 'google-reviews-pro').'</h3>';
+        $this->backup_section_html();
+
         echo '<hr><div id="grp-sync-container" style="margin-top: 20px; padding: 15px; background: #fff; border: 1px solid #ccd0d4;">';
         echo '<h3>' . __('Manual Synchronization', 'google-reviews-pro') . '</h3>';
         echo '<p><strong>' . __('Last Synced:', 'google-reviews-pro') . '</strong> <span id="grp-last-sync-time">' . esc_html($display_time) . '</span></p>';
         echo '<button id="grp-sync-btn" class="button button-secondary">' . __('Sync Reviews Now', 'google-reviews-pro') . '</button>';
         echo '<span id="grp-sync-status" style="margin-left: 10px;"></span>';
-        echo '</div></form></div>';
+        echo '</div>';
     }
 
     private function send_json_download(array $data, string $filename): void
@@ -1272,6 +1252,15 @@ readonly class Settings
         foreach ($data as $row) {
             // Formatting the date for CSV to be readable (in JSON we store it as a timestamp)
             $row['time'] = date('Y-m-d H:i:s', (int)$row['time']);
+
+            // sanitization against Excel Injection
+            $row = array_map(function($value) {
+                if (is_string($value) && preg_match('/^[=\+\-@]/', $value)) {
+                    return "'" . $value; // add "'" so it's treated like text
+                }
+                return $value;
+            }, $row);
+
             fputcsv($output, $row);
         }
 

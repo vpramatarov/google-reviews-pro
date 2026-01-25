@@ -24,7 +24,23 @@ class ReviewImporter
 
         $zip = new ZipArchive();
         if ($zip->open($zip_file_path) === true) {
-            $zip->extractTo($extract_path);
+            $allowed_extensions = ['json', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $filename = $zip->getNameIndex($i);
+                $fileinfo = pathinfo($filename);
+
+                // Directory Traversal (Zip Slip)
+                if (str_contains($filename, '..') || str_contains($filename, '__MACOSX')) {
+                    continue;
+                }
+
+                if (!isset($fileinfo['extension']) || !in_array(strtolower($fileinfo['extension']), $allowed_extensions)) {
+                    continue;
+                }
+
+                $zip->extractTo($extract_path, $filename);
+            }
             $zip->close();
         } else {
             // Invalid ZIP
@@ -162,11 +178,11 @@ class ReviewImporter
 
         // file migration if file is archive
         if (!empty($review['zip_image_path']) && !empty($extract_path)) {
-            $image_source_path = $extract_path . '/' . $review['zip_image_path'];
+            $safe_filename = basename($review['zip_image_path']);
+            $image_source_path = $extract_path . '/images/' . $safe_filename;
 
-            if (file_exists($image_source_path)) {
-                $attach_id = $this->insert_image_to_media_library($image_source_path, $post_id);
-                if ($attach_id) {
+            if (file_exists($image_source_path) && str_starts_with(realpath($image_source_path), realpath($extract_path))) {
+                if ($attach_id = $this->insert_image_to_media_library($image_source_path, $post_id)) {
                     $final_photo_url = wp_get_attachment_url($attach_id);
                 }
             }

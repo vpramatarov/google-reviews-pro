@@ -25,10 +25,15 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 use GRP\Api\Handler as ApiHandler;
 use GRP\Core\CronManager;
 use GRP\Core\SeoIntegrator;
+use GRP\Frontend\Display;
 
 final class GoogleReviewsPro
 {
     private static ?self $instance = null;
+
+    private \GRP\Frontend\Display $display;
+
+    private \GRP\Api\Handler $apiHandler;
 
     public static function get_instance(): self
     {
@@ -64,6 +69,16 @@ final class GoogleReviewsPro
         });
     }
 
+    public function get_display(): Display
+    {
+        return $this->display;
+    }
+
+    public function get_api_handler(): ApiHandler
+    {
+        return $this->apiHandler;
+    }
+
     public function load_textdomain(): void
     {
         load_plugin_textdomain('google-reviews-pro', false, dirname(plugin_basename(__FILE__)) . '/languages');
@@ -71,9 +86,9 @@ final class GoogleReviewsPro
 
     private function init_components(): void
     {
-        $api = new ApiHandler();
+        $this->apiHandler = new ApiHandler();
         $seo = new SeoIntegrator();
-        $cronManager = new CronManager($api->getApiOptions());
+        $cronManager = new CronManager($this->apiHandler->getApiOptions());
 
         /**
          * @note: cron_schedules must be loaded before plugins_loaded
@@ -84,19 +99,19 @@ final class GoogleReviewsPro
 
         $exporter = new GRP\Core\ReviewExporter();
         $importer = new GRP\Core\ReviewImporter();
-        $display = new GRP\Frontend\Display($api, $seo);
-        new GRP\Admin\Settings($seo, $api, $exporter, $importer);
-        new GRP\Ajax\Handler($api, $display);
+        $this->display = new GRP\Frontend\Display($this->apiHandler, $seo);
+        new GRP\Admin\Settings($seo, $this->apiHandler, $exporter, $importer);
+        new GRP\Ajax\Handler($this->apiHandler, $this->display);
         new GRP\Core\PostType();
-        new GRP\Core\Blocks($api, $display);
+        new GRP\Core\Blocks($this->apiHandler, $this->display);
         new GRP\Integrations\Manager();
 
         add_action('update_option_grp_settings', function() use ($cronManager) {
             $cronManager->manage_cron();
         }, 10, 0);
 
-        add_action('grp_daily_sync', function() use ($api) {
-            $api->sync_reviews();
+        add_action('grp_daily_sync', function() {
+            $this->apiHandler->sync_reviews();
         });
     }
 }
