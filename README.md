@@ -157,7 +157,7 @@ The Place ID is a unique identifier for your business on Google Maps.
 * **Feature:** Disable structured data if needed `[google_reviews place_id="ChIJ_Location_A_ID" schema=false]`.
 * **Feature:** "Stored Locations" reference table in settings.
 * **Feature:** "Load More" button with AJAX loading.
-* **Feature:** Advanced Filtering (Min Rating, Sort Order).
+* **Feature:** Advanced Filtering (Min Rating, Sort Order, Hide Empty reviews - stars only).
 * **Feature:** Manual Moderation (Hide individual reviews).
 * **Feature:** Email Notifications for new reviews.
 * **Feature:** Uninstall Cleanup option.
