@@ -6,7 +6,6 @@ namespace GRP\Integrations\Elementor;
 
 use \Elementor\Widget_Base;
 use \Elementor\Controls_Manager;
-use GRP\Core\SeoIntegrator;
 use GRP\Frontend\Display;
 use GRP\Api\Handler as ApiHandler;
 
@@ -25,9 +24,9 @@ class ReviewWidget extends Widget_Base
     {
         parent::__construct($data, $args);
 
-        $this->api = new ApiHandler();
-        $seo = new SeoIntegrator();
-        $this->display = new Display($this->api, $seo);
+        $pluginInstance = \GoogleReviewsPro::get_instance();
+        $this->api = $pluginInstance->get_api_handler();
+        $this->display = $pluginInstance->get_display();
     }
 
     public function get_name(): string

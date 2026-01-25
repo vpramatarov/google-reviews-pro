@@ -102,7 +102,7 @@ readonly class Handler
     {
         $min_rating = absint($this->options['grp_min_rating'] ?? 0);
         $sort_order = $this->options['grp_sort_order'] ?? 'date_desc';
-        $hide_empty = isset($options['grp_hide_empty']) && $options['grp_hide_empty'];
+        $hide_empty = isset($this->options['grp_hide_empty']) && $this->options['grp_hide_empty'];
 
         $args = [
             'post_type'      => 'grp_review',
