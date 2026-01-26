@@ -59,11 +59,11 @@ class SerpApi implements ApiHandler
             if (!$meta_captured && !empty($body['place_info'])) {
                 $info = $body['place_info'];
                 $meta = [
-                    'name'    => $info['title'] ?? '',
+                    'name' => $info['title'] ?? '',
                     'address' => $info['address'] ?? '',
-                    'phone'   => $info['phone'] ?? '', // SerpApi понякога не връща телефон тук, но често го има
-                    'lat'     => $info['gps_coordinates']['latitude'] ?? '',
-                    'lng'     => $info['gps_coordinates']['longitude'] ?? '',
+                    'phone' => $info['phone'] ?? '',
+                    'lat' => $info['gps_coordinates']['latitude'] ?? '',
+                    'lng' => $info['gps_coordinates']['longitude'] ?? '',
                 ];
                 $meta_captured = true;
             }
@@ -84,12 +84,12 @@ class SerpApi implements ApiHandler
                 $all_reviews[] = [
                     'external_id' => $unique_id,
                     'author_name' => $review['user']['name'] ?? __('Anonymous', 'google-reviews-pro'),
-                    'photo_url'   => $review['user']['thumbnail'] ?? '',
-                    'author_url'  => $review['link'] ?? '',
-                    'rating'      => $review['rating'] ?? 5,
-                    'text'        => $review['snippet'] ?? '',
-                    'time'        => isset($review['iso_date']) ? strtotime($review['iso_date']) : time(),
-                    'source'      => 'serpapi'
+                    'photo_url' => $review['user']['thumbnail'] ?? '',
+                    'author_url' => $review['link'] ?? '',
+                    'rating' => $review['rating'] ?? 5,
+                    'text' => $review['snippet'] ?? '',
+                    'time' => isset($review['iso_date']) ? strtotime($review['iso_date']) : time(),
+                    'source' => 'serpapi'
                 ];
             }
 
@@ -104,7 +104,7 @@ class SerpApi implements ApiHandler
 
         return [
             'reviews' => $all_reviews,
-            'meta'    => $meta
+            'meta' => $meta
         ];
     }
 
@@ -135,10 +135,10 @@ class SerpApi implements ApiHandler
             $result = [
                 'place_id' => $place['place_id'],
                 'data_id' => $place['data_id'],
-                'name'     => $place['title'],
-                'address'  => $place['address'] ?? '',
-                'lat'      => $place['gps_coordinates']['latitude'] ?? '',
-                'lng'      => $place['gps_coordinates']['longitude'] ?? '',
+                'name' => $place['title'],
+                'address' => $place['address'] ?? '',
+                'lat' => $place['gps_coordinates']['latitude'] ?? '',
+                'lng' => $place['gps_coordinates']['longitude'] ?? '',
             ];
         } else {
             return new \WP_Error('api_error', $body['error'] ?? __('No business found via SerpApi.', 'google-reviews-pro'));

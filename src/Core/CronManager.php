@@ -15,6 +15,7 @@ final class CronManager
      *     "place_id": string,
      *     "serpapi_key": string,
      *     "serpapi_data_id": string,
+     *     "scrapingdog_api_key": string,
      *     "grp_business_name": string,
      *     "grp_address": string,
      *     "grp_phone": string,
@@ -33,7 +34,8 @@ final class CronManager
      *     "notification_email": string,
      *     "serpapi_pages": int,
      *     "auto_sync": bool|int,
-     *     "sync_frequency": string
+     *     "sync_frequency": string,
+     *     "grp_hide_empty": bool|int
      * }|array{} $options
      */
     public function __construct(array $options) {

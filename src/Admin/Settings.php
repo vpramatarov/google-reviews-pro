@@ -63,8 +63,16 @@ readonly class Settings
 
         add_settings_field(
             'serpapi_key',
-            __('SerpApi Key', 'google-reviews-pro'),
+            __('SerpApi API Key', 'google-reviews-pro'),
             [$this, 'serpapi_key_html'],
+            'grp-settings',
+            'grp_main'
+        );
+
+        add_settings_field(
+            'scrapingdog_api_key',
+            __('ScrapingDog API Key', 'google-reviews-pro'),
+            [$this, 'scrapingdog_key_html'],
             'grp-settings',
             'grp_main'
         );
@@ -327,6 +335,7 @@ readonly class Settings
             'serpapi_data_id' => sanitize_text_field($input['serpapi_data_id'] ?? ''),
             'serpapi_key' => sanitize_text_field($input['serpapi_key'] ?? ''),
             'serpapi_pages' => absint($input['serpapi_pages'] ?? 5),
+            'scrapingdog_api_key' => sanitize_text_field($input['scrapingdog_api_key'] ?? ''),
             'grp_review_limit' => max(1, min(GRP_MAX_REVIEW_LIMIT, absint($input['grp_review_limit'] ?? 3))), // make sure it's between 1-5
             'auto_sync' => isset($input['auto_sync']) ? 1 : 0,
             'sync_frequency' => in_array($input['sync_frequency'], ['daily', 'weekly', 'monthly']) ? $input['sync_frequency'] : 'weekly',
@@ -376,6 +385,7 @@ readonly class Settings
             <option value=""></option>
             <option value="google" <?php selected($val, 'google'); ?>>Google Places API (Official)</option>
             <option value="serpapi" <?php selected($val, 'serpapi'); ?>>SerpApi (Scraper)</option>
+            <option value="scrapingdog" <?php selected($val, 'scrapingdog'); ?>>ScrapingDog (Scraper)</option>
             <option value="cpt" <?php selected($val, 'cpt'); ?>>Manual Entry (Custom Post Type)</option>
         </select>
         <p class="description"><?php _e('Choose where to fetch reviews from.', 'google-reviews-pro'); ?></p>
@@ -463,6 +473,16 @@ readonly class Settings
         $val = esc_attr(get_option('grp_settings')['serpapi_pages'] ?? 5);
         printf('<input type="number" name="grp_settings[serpapi_pages]" value="%d" min="1" max="50" class="small-text">', $val);
         echo '<p class="description">' . __('Limit the number of pages to fetch (1 page ≈ 10 reviews). Warning: High values increase sync time.', 'google-reviews-pro') . '</p>';
+    }
+
+    public function scrapingdog_key_html(): void
+    {
+        $val = esc_attr(get_option('grp_settings')['scrapingdog_api_key'] ?? '');
+        printf(
+            '<input type="text" id="grp_scrapingdog_key" name="grp_settings[scrapingdog_api_key]" value="%s" class="regular-text">',
+            $val
+        );
+        echo '<p class="description">' . __('Get your API key from <a href="https://www.scrapingdog.com/" target="_blank">ScrapingDog</a>.', 'google-reviews-pro') . '</p>';
     }
 
     public function limit_html(): void
@@ -1044,6 +1064,8 @@ readonly class Settings
                 const $findBtn = $('#grp-find-btn');
                 const $spinner = $('#grp-finder-spinner');
                 const $msg = $('#grp-finder-msg');
+                const $inputScrapingDogKey = $('#grp_scrapingdog_key');
+                const $scrapingDogRow = $inputScrapingDogKey.closest('tr');
 
                 function toggleFields() {
                     const val = $sourceSelect.val();
@@ -1053,10 +1075,12 @@ readonly class Settings
                     $serpApiRow.hide();
                     $serpApiDataIdRow.hide();
                     $syncBtn.hide();
+                    $scrapingDogRow.hide();
 
                     $inputGoogleApiKey.prop('required', false);
                     $inputPlaceId.prop('required', false);
                     $inputSerpApiKey.prop('required', false);
+                    $inputScrapingDogKey.prop('required', false);
 
                     if (val === 'google') {
                         $inputGoogleApiKey.prop('required', true);
@@ -1068,6 +1092,12 @@ readonly class Settings
                         $inputSerpApiDataId.prop('required', true);
                         $serpApiRow.show();
                         $serpApiDataIdRow.show();
+                        $syncBtn.show();
+                    } else if (val === 'scrapingdog') {
+                        $inputScrapingDogKey.prop('required', true);
+                        $inputPlaceId.prop('required', true); // ScrapingDog also uses Place ID
+                        $scrapingDogRow.show();
+                        $placeIdRow.show();
                         $syncBtn.show();
                     }
 
@@ -1113,7 +1143,15 @@ readonly class Settings
                     e.preventDefault();
                     const query = $('#grp_finder_query').val();
                     const source = $sourceSelect.val();
-                    const apiKey = (source === 'google') ? $('#grp_google_key').val() : $('#grp_serpapi_key').val();
+                    let apiKey = '';
+
+                    if (source === 'google') {
+                        apiKey = $('#grp_google_key').val();
+                    } else if (source === 'serpapi') {
+                        apiKey = $('#grp_serpapi_key').val();
+                    } else if (source === 'scrapingdog') {
+                        apiKey = $('#grp_scrapingdog_key').val();
+                    }
 
                     if(!query || !apiKey) {
                         alert('<?php _e('Please enter a business name and ensure your API key is filled in.', 'google-reviews-pro'); ?>');

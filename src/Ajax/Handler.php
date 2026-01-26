@@ -86,7 +86,14 @@ readonly class Handler
         $query = sanitize_text_field($_POST['query'] ?? '');
         $api_options = $this->api->getApiOptions();
         $source = $api_options['data_source'] ?? '';
-        $api_key = ($source === 'google') ? $api_options['google_api_key'] : $api_options['serpapi_key'];
+        $api_key = '';
+        if ($source === 'google') {
+            $api_key = $api_options['google_api_key'];
+        } elseif ($source === 'serpapi') {
+            $api_key = $api_options['serpapi_key'];
+        } elseif ($source === 'scrapingdog') {
+            $api_key = $api_options['scrapingdog_api_key'];
+        }
 
         if (!$query || !$source || !$api_key) {
             wp_send_json_error('Missing parameters');

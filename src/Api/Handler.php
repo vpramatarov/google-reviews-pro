@@ -6,6 +6,7 @@ namespace GRP\Api;
 
 use GRP\Api\Handler\ApiHandler;
 use GRP\Api\Handler\Google;
+use GRP\Api\Handler\ScrapingDog;
 use GRP\Api\Handler\SerpApi;
 
 readonly class Handler
@@ -21,6 +22,7 @@ readonly class Handler
         $this->apiHandlers = [
             new Google($this->options),
             new SerpApi($this->options),
+            new ScrapingDog($this->options),
         ];
     }
 
@@ -32,6 +34,7 @@ readonly class Handler
      *     "serpapi_key": string,
      *     "serpapi_data_id": string,
      *     "grp_business_name": string,
+     *     "scrapingdog_api_key": string,
      *     "grp_address": string,
      *     "grp_phone": string,
      *     "grp_latitude": float|string,
@@ -49,7 +52,8 @@ readonly class Handler
      *     "notification_email": string,
      *     "serpapi_pages": int,
      *     "auto_sync": bool|int,
-     *     "sync_frequency": string
+     *     "sync_frequency": string,
+     *     "grp_hide_empty": bool|int
      * }|array{}
      */
     public function getApiOptions(): array
