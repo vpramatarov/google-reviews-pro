@@ -13,8 +13,15 @@ class Grid extends Layout implements LayoutRender
     {
         $rating = $stats['ratingValue'];
         $total = $stats['reviewCount'];
+        $place_meta = get_option('grp_locations_db', [])[$place_id] ?? null;
+
         $html = '<div class="grp-wrapper">';
         $html .= '<div class="grp-container">';
+
+        if ($place_meta) {
+            $html .= sprintf('<div class="grp-business-name"><h2>%s</h2></div>', $place_meta['name']);
+        }
+
         $html .= sprintf(
             '<div class="grp-rating-stats">%s: <span><strong>%s</strong> ★</span> %s %s %s</div>',
             __('Rating', 'google-reviews-pro'),
