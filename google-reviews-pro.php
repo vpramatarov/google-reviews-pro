@@ -70,6 +70,13 @@ final class GoogleReviewsPro
         });
     }
 
+    private function __clone() {}
+
+    public function __wakeup()
+    {
+        throw new \RuntimeException('Cannot unserialize Singleton.');
+    }
+
     public function get_display(): Display
     {
         return $this->display;
