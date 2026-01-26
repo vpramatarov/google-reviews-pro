@@ -25,8 +25,21 @@ class Google implements ApiHandler
             return new \WP_Error('config_missing', __('Missing Google Config', 'google-reviews-pro'));
         }
 
+        /**
+         * NOTE regarding Pagination:
+         * The Google Places API 'Place Details' endpoint has a hard limit of 5 reviews per request.
+         * It DOES NOT support pagination (next_page_token) for reviews.
+         * To get all reviews via official API, one must use Google Business Profile API with OAuth 2.0.
+         * * For bulk import, we recommend using SerpApi or ScrapingDog handlers.
+         */
         $fields = 'reviews,rating,formatted_address,international_phone_number,geometry,name';
-        $url = sprintf("https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=%s&key=%s", $place_id, $fields, $api_key);
+        $url = sprintf(
+            "https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=%s&key=%s&language=%s",
+            $place_id,
+            $fields,
+            $api_key,
+            get_locale()
+        );
         $response = wp_remote_get($url);
 
         if (is_wp_error($response)) {
@@ -47,27 +60,27 @@ class Google implements ApiHandler
                 $normalized_reviews[] = [
                     'external_id' => $unique_id,
                     'author_name' => $review['author_name'] ?? 'Anonymous',
-                    'photo_url'   => $review['profile_photo_url'] ?? '',
-                    'author_url'  => $review['author_url'] ?? '',
-                    'rating'      => $review['rating'] ?? 5,
-                    'text'        => $review['text'] ?? '',
-                    'time'        => $review['time'] ?? time(),
-                    'source'      => 'google'
+                    'photo_url' => $review['profile_photo_url'] ?? '',
+                    'author_url' => $review['author_url'] ?? '',
+                    'rating' => $review['rating'] ?? 5,
+                    'text' => $review['text'] ?? '',
+                    'time' => $review['time'] ?? time(),
+                    'source' => 'google'
                 ];
             }
         }
 
         $meta = [
-            'name'    => $result['name'] ?? '',
+            'name' => $result['name'] ?? '',
             'address' => $result['formatted_address'] ?? '',
-            'phone'   => $result['international_phone_number'] ?? '',
-            'lat'     => $result['geometry']['location']['lat'] ?? '',
-            'lng'     => $result['geometry']['location']['lng'] ?? '',
+            'phone' => $result['international_phone_number'] ?? '',
+            'lat' => $result['geometry']['location']['lat'] ?? '',
+            'lng' => $result['geometry']['location']['lng'] ?? '',
         ];
 
         return [
             'reviews' => $normalized_reviews,
-            'meta'    => $meta
+            'meta' => $meta
         ];
     }
 
@@ -96,10 +109,10 @@ class Google implements ApiHandler
             $place = $body['results'][0];
             $result = [
                 'place_id' => $place['place_id'],
-                'name'     => $place['name'],
-                'address'  => $place['formatted_address'],
-                'lat'      => $place['geometry']['location']['lat'] ?? '',
-                'lng'      => $place['geometry']['location']['lng'] ?? '',
+                'name' => $place['name'],
+                'address' => $place['formatted_address'],
+                'lat' => $place['geometry']['location']['lat'] ?? '',
+                'lng' => $place['geometry']['location']['lng'] ?? '',
             ];
         } else {
             return new \WP_Error('api_error', $body['error_message'] ?? __('No results found on Google.', 'google-reviews-pro'));

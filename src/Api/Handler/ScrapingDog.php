@@ -1,0 +1,178 @@
+<?php
+
+declare(strict_types=1);
+
+namespace GRP\Api\Handler;
+
+class ScrapingDog implements ApiHandler
+{
+    private const string SOURCE = 'scrapingdog';
+    private array $options;
+
+    public function __construct(array $options)
+    {
+        $this->options = $options;
+    }
+
+    public function fetch(): \WP_Error|array
+    {
+        $api_key = $this->options['scrapingdog_key'] ?? '';
+        $place_id = $this->options['place_id'] ?? '';
+
+        if (empty($api_key)) {
+            return new \WP_Error('config_missing', __('Missing ScrapingDog API Key', 'google-reviews-pro'));
+        }
+
+        if (empty($place_id)) {
+            return new \WP_Error('config_missing', __('Missing Place ID', 'google-reviews-pro'));
+        }
+
+        $all_reviews = [];
+        $meta = [];
+        $next_page_token = null;
+        $page_count = 0;
+
+        // We use the page setting (same as for SerpApi or 5 by default)
+        $max_pages_setting = (int) ($this->options['serpapi_pages'] ?? 5);
+        $max_pages = max(1, min(20, $max_pages_setting));
+
+        do {
+            // Documentation: https://docs.scrapingdog.com/google-maps-api/google-maps-reviews-api
+            $url = sprintf(
+                "https://api.scrapingdog.com/google_maps/reviews?api_key=%s&data_id=%s",
+                $api_key,
+                urlencode($place_id)
+            );
+
+            if ($next_page_token) {
+                $url .= "&next_page_token=" . urlencode($next_page_token);
+            }
+
+            $response = wp_remote_get($url, ['timeout' => 30]);
+
+            if (is_wp_error($response)) {
+                if ($page_count === 0) {
+                    return $response;
+                }
+                break;
+            }
+
+            $body = json_decode(wp_remote_retrieve_body($response), true);
+
+            if (isset($body['error'])) {
+                if ($page_count === 0) {
+                    return new \WP_Error('scrapingdog_error', $body['error']);
+                }
+                break;
+            }
+
+            // We only keep the meta data from the first page
+            if ($page_count === 0 && !empty($body['place_info'])) {
+                $info = $body['place_info'];
+                $meta = [
+                    'name'    => $info['title'] ?? '',
+                    'address' => $info['address'] ?? '',
+                    'phone'   => $info['phone'] ?? '',
+                    'lat'     => $info['gps_coordinates']['latitude'] ?? '',
+                    'lng'     => $info['gps_coordinates']['longitude'] ?? '',
+                ];
+            }
+
+            if (!empty($body['reviews'])) {
+                foreach ($body['reviews'] as $review) {
+                    if (!empty($review['review_id'])) {
+                        $unique_id = $review['review_id'];
+                    } else {
+                        // Fallback ID
+                        $unique_id = md5(($review['user']['name'] ?? 'Anon') . ($review['date'] ?? '') . substr($review['body'] ?? '', 0, 20));
+                    }
+
+                    // ScrapingDog often returns a date as the text "2 months ago".
+                    // strtotime works well for these formats.
+                    $time_str = $review['date'] ?? '';
+                    $timestamp = !empty($time_str) ? strtotime($time_str) : time();
+
+                    $all_reviews[] = [
+                        'external_id' => $unique_id,
+                        'author_name' => $review['user']['name'] ?? __('Anonymous', 'google-reviews-pro'),
+                        'photo_url' => $review['user']['thumbnail'] ?? '',
+                        'author_url' => $review['user']['link'] ?? '',
+                        'rating' => isset($review['rating']) ? (float)$review['rating'] : 5.0,
+                        'text' => $review['body'] ?? '',
+                        'time' => $timestamp,
+                        'source' => 'scrapingdog'
+                    ];
+                }
+            } else {
+                break;
+            }
+
+            $next_page_token = $body['next_page_token'] ?? null;
+            $page_count++;
+
+            if ($next_page_token) {
+                sleep(1);
+            }
+
+        } while ($next_page_token && $page_count < $max_pages);
+
+        return [
+            'reviews' => $all_reviews,
+            'meta' => $meta
+        ];
+    }
+
+    public function fetch_business_info(string $query): \WP_Error|array
+    {
+        $api_key = $this->options['scrapingdog_key'] ?? '';
+
+        if (empty($api_key)) {
+            return new \WP_Error('api_error', __('Missing ScrapingDog API Key.', 'google-reviews-pro'));
+        }
+
+        $url = sprintf(
+            'https://api.scrapingdog.com/google_maps?api_key=%s&query=%s&type=search',
+            $api_key,
+            urlencode($query)
+        );
+
+        $response = wp_remote_get($url, ['timeout' => 30]);
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        // ScrapingDog usually returns an array of "search_results" or "place_results"
+        $place = $body['search_results'][0] ?? $body['place_results'] ?? null;
+
+        if (!empty($place)) {
+            $result = [
+                'name' => $place['title'] ?? '',
+                'address' => $place['address'] ?? '',
+                'lat' => $place['gps_coordinates']['latitude'] ?? '',
+                'lng' => $place['gps_coordinates']['longitude'] ?? '',
+            ];
+
+            // ScrapingDog Reviews API requires a 'data_id' (CID), which is usually in the format 0x...
+            // The Search API returns 'data_id' or 'place_id'. Priority is data_id.
+            if (!empty($place['data_id'])) {
+                $result['place_id'] = $place['data_id'];
+            } elseif (!empty($place['place_id'])) {
+                $result['place_id'] = $place['place_id'];
+            } else {
+                $result['place_id'] = '';
+            }
+
+        } else {
+            return new \WP_Error('api_error', $body['message'] ?? __('No business found via ScrapingDog.', 'google-reviews-pro'));
+        }
+
+        return $result;
+    }
+
+    public function supports(string $source): bool
+    {
+        return self::SOURCE === $source;
+    }
+}

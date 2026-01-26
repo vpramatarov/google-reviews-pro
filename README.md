@@ -1,7 +1,7 @@
 === Google Reviews Pro ===
 
 * Contributors: vpramatarov
-* Tags: google reviews, places api, serpapi, schema.org, seo reviews, business reviews, ajax, slider, badge, rank math
+* Tags: google reviews, places api, serpapi, scrapingdog, schema.org, seo reviews, business reviews, ajax, slider, badge, rank math
 * Requires at least: 6.0
 * Tested up to: 6.4
 * Requires PHP: 8.3
@@ -32,23 +32,28 @@ Google Reviews Pro is an enterprise-grade WordPress solution for integrating Goo
 * **Uninstall Cleanup:** Optional setting to wipe all data upon plugin deletion.
 * **PHP 8.3 Optimized:** Built with strict typing and readonly classes for stability.
 
+== Requirements ==
+
+- PHP 8.3+
+- mbstring extension
+- zip extension
+
 == Installation ==
 
 1. Upload the `google-reviews-pro` folder to the `/wp-content/plugins/` directory.
-2. Ensure your server is running **PHP 8.3** or higher.
-3. Run `composer install --no-dev --optimize-autoloader` in the plugin root.
-4. Activate the plugin through the 'Plugins' menu in WordPress.
-5. Navigate to **Settings -> Google Reviews**.
-6. Configure your API key and use the **Smart Finder**.
-7. Place the shortcode `[google_reviews]` on any page.
+2. Ensure your server is running **PHP 8.3** or higher and have `mbstring` and `zip` extensions installed.
+3. Activate the plugin through the 'Plugins' menu in WordPress.
+4. Navigate to **Settings -> Google Reviews**.
+5. Configure your API key and use the **Smart Finder**.
+6. Place the shortcode `[google_reviews]` on any page.
 
 == Configuration & Usage ==
 
 = 1. Basic Setup =
 
 1. Go to Settings -> Google Reviews.
-2. Enter your API Key (Google or SerpApi) and **Save**.
-3. Use the **"Find Your Business"** tool to auto-fill your Place ID/Data ID.
+2. Enter your API Key (Google, SerpApi or Scrapingdog) and **Save**.
+3. Use the **"Find Your Business"** tool to autofill your Place ID/Data ID.
 4. Click **"Sync Reviews Now"** to fetch your data.
 
 = 2. Multi-Location Strategy (Chains & Franchises) =
@@ -126,7 +131,12 @@ In the **Advanced Settings**, there is an "Uninstall Cleanup" checkbox. If check
 5. Go to **APIs & Services > Credentials**.
 6. Click **+ CREATE CREDENTIALS** and select **API key**.
 7. Copy the generated key and paste it into the plugin settings.
+
    *Note:* You must have a billing account attached to your Google Cloud project, even if you stay within the free tier limits.
+   
+   **NB: To get all reviews via official API, one must use *Google Business Profile API* with *OAuth 2.0*.**
+   
+   **For bulk import, we recommend using *SerpApi* or *ScrapingDog* handlers.**
 
 = How to get a SerpApi Key (Alternative Method) =
 
@@ -134,6 +144,14 @@ In the **Advanced Settings**, there is an "Uninstall Cleanup" checkbox. If check
 2. Verify your email address and phone number.
 3. Once logged in, go to your **Dashboard** or **Account Settings**.
 4. Look for the **"Private API Key"** section.
+5. Copy the key and paste it into the plugin settings.
+
+= How to get a Scrapingdog Key (Alternative Method) =
+
+1. Register an account at [Scrapingdog.com](https://www.scrapingdog.com/).
+2. Once logged in, go to your **Dashboard**.
+3. Look for the **"ACCOUNT DETAILS"** section and click on "Account".
+4. Click on "API Key" tab
 5. Copy the key and paste it into the plugin settings.
 
 = How to find your Google Place ID =
@@ -144,8 +162,11 @@ The Place ID is a unique identifier for your business on Google Maps.
 3. Click on your business pin/marker.
 4. A tooltip will appear. Copy the string of characters following **"Place ID:"** (e.g., `ChIJN1t_tDeuEmsRUsoyG83frY4`).
 
-* **Google Places API:** [Get Key](https://console.cloud.google.com/google/maps-apis/credentials) (Official, Real-time).
+* **Google Places API:** [Get Key](https://console.cloud.google.com/google/maps-apis/credentials) (Official, Real-time)<br>
+The Google Places API 'Place Details' endpoint has a hard limit of 5 reviews per request.
+It is useful for people who only want to show "Top 5" reviews or use business data without paying third parties (Scrapers).
 * **SerpApi:** [Get Key](https://serpapi.com/) (Scraper, supports deep pagination).
+* **Scrapingdog:** [Get Key](https://www.scrapingdog.com/) (Scraper, supports deep pagination).
 
 == Changelog ==
 

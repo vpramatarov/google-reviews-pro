@@ -1,7 +1,8 @@
 <?php
 /**
  * Plugin Name: Google Reviews Pro
- * Version: 1.0.0
+ * Plugin URI: https://github.com/vpramatarov/google-reviews-pro
+ * Version: 1.1.0
  * Text Domain: google-reviews-pro
  * Author: Velizar Pramatarov <velizarpramatrov@yahoo.com>
  * Author URI: https://vpramatarov.eu
@@ -15,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const GRP_VERSION = '1.0.0';
+const GRP_VERSION = '1.1.0';
 const GRP_MAX_REVIEW_LIMIT = 5;
 
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {
@@ -31,9 +32,9 @@ final class GoogleReviewsPro
 {
     private static ?self $instance = null;
 
-    private \GRP\Frontend\Display $display;
+    private Display $display;
 
-    private \GRP\Api\Handler $apiHandler;
+    private ApiHandler $apiHandler;
 
     public static function get_instance(): self
     {
