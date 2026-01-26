@@ -44,7 +44,13 @@ readonly class Settings
         register_setting('grp_group', 'grp_settings', [$this, 'sanitize']);
 
         // --- SECTION API CONFIG ---
-        add_settings_section('grp_main', __('Data Source Configuration', 'google-reviews-pro'), null, 'grp-settings');
+        add_settings_section(
+            'grp_main',
+            __('Data Source Configuration', 'google-reviews-pro'),
+            null,
+            'grp-settings'
+        );
+
         add_settings_field(
             'data_source',
             __('Select Source', 'google-reviews-pro'),
@@ -450,7 +456,11 @@ readonly class Settings
     {
         $placeId = esc_attr(get_option('grp_settings')['place_id'] ?? '');
         printf('<p><input type="text" id="place_id" name="grp_settings[place_id]" value="%s" class="regular-text" ></p>', $placeId);
-        echo '<p class="description">Find your Place ID <a href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder" target="_blank">here</a>.</p>';
+        printf(
+            '<p class="description">%s <a href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder" target="_blank">%s</a>.</p>',
+            __('Find your Place ID', 'google-reviews-pro'),
+            __('here', 'google-reviews-pro')
+        );
     }
 
     public function serpapi_key_html(): void
