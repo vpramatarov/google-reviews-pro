@@ -131,6 +131,7 @@ readonly class Display
             .grp-slider-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: #fff; border: 1px solid #ddd; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
             .grp-slider-arrow.prev { left: -15px; }
             .grp-slider-arrow.next { right: -15px; }
+            .grp-slider-arrow:hover { color: {$btn_text_color}; }
             
             /* Badge */
             .grp-badge-trigger { position: fixed; bottom: 20px; right: 80px; background: #fff; padding: 10px 15px; border-radius: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; cursor: pointer; z-index: 9998; border: 1px solid #eee; transition: transform 0.2s; }

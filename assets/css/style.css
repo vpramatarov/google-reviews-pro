@@ -1,3 +1,6 @@
+.grp-business-name {
+    text-align: center;
+}
 .grp-grid {
     display: grid;
     gap: 20px;
