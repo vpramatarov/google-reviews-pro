@@ -32,7 +32,7 @@ class Google implements ApiHandler
          * To get all reviews via official API, one must use Google Business Profile API with OAuth 2.0.
          * * For bulk import, we recommend using SerpApi or ScrapingDog handlers.
          */
-        $fields = 'reviews,rating,formatted_address,international_phone_number,geometry,name';
+        $fields = 'reviews,rating,formatted_address,international_phone_number,geometry,name,opening_hours,price_level,url,website,user_ratings_total,icon';
         $url = sprintf(
             "https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=%s&key=%s&language=%s",
             $place_id,
@@ -71,11 +71,19 @@ class Google implements ApiHandler
         }
 
         $meta = [
-            'name' => $result['name'] ?? '',
-            'address' => $result['formatted_address'] ?? '',
-            'phone' => $result['international_phone_number'] ?? '',
-            'lat' => $result['geometry']['location']['lat'] ?? '',
-            'lng' => $result['geometry']['location']['lng'] ?? '',
+            'name' => $result['name'] ?? null,
+            'address' => $result['formatted_address'] ?? null,
+            'phone' => $result['international_phone_number'] ?? null,
+            'lat' => $result['geometry']['location']['lat'] ?? null,
+            'lng' => $result['geometry']['location']['lng'] ?? null,
+            'price_level' => $result['price_level'] ?? null, // 0-4
+            'maps_url' => $result['url'] ?? null,
+            'website' => $result['website'] ?? get_home_url(),
+            'periods' => $result['opening_hours']['periods'] ?? null,
+            'weekday_text'=> $result['opening_hours']['weekday_text'] ?? null,
+            'icon' => $result['icon'] ?? null,
+            'rating' => $result['rating'] ?? 0,
+            'count' => $result['user_ratings_total'] ?? 0,
         ];
 
         return [
@@ -111,8 +119,17 @@ class Google implements ApiHandler
                 'place_id' => $place['place_id'],
                 'name' => $place['name'],
                 'address' => $place['formatted_address'],
-                'lat' => $place['geometry']['location']['lat'] ?? '',
-                'lng' => $place['geometry']['location']['lng'] ?? '',
+                'lat' => $place['geometry']['location']['lat'] ?? null,
+                'lng' => $place['geometry']['location']['lng'] ?? null,
+                'price_level' => $place['price_level'] ?? null, // 0-4
+                'maps_url' => $place['url'] ?? null,
+                'website' => $place['website'] ?? get_home_url(),
+                'phone_number' => $place['phone'] ?? null,
+                'periods' => $place['opening_hours']['periods'] ?? null,
+                'weekday_text'=> $place['opening_hours']['weekday_text'] ?? null,
+                'icon' => $result['icon'] ?? null,
+                'rating' => $place['rating'] ?? 0,
+                'count' => $place['user_ratings_total'] ?? 0,
             ];
         } else {
             return new \WP_Error('api_error', $body['error_message'] ?? __('No results found on Google.', 'google-reviews-pro'));

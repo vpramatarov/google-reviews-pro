@@ -433,8 +433,9 @@ readonly class Settings
     {
         $google_api_key = esc_attr(get_option('grp_settings')['google_api_key'] ?? '');
         $serpapi_key = esc_attr(get_option('grp_settings')['serpapi_key'] ?? '');
+        $scrapingdog_key = esc_attr(get_option('grp_settings')['scrapingdog_api_key'] ?? '');
 
-        if (empty($google_api_key) && empty($serpapi_key)) {
+        if (empty($google_api_key) && empty($serpapi_key) && empty($scrapingdog_key)) {
             echo '<p class="description">' . __('Please enter and save an API Key first to use the Business Finder.', 'google-reviews-pro') . '</p>';
             return;
         }
@@ -450,6 +451,47 @@ readonly class Settings
             $business_name,
             __('Search & Auto-fill', 'google-reviews-pro')
         );
+        ?>
+        <div id="grp_preview_wrapper" style="display: none; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+            <h4 style="margin: 0 0 10px 0;"><?php _e('Business Preview', 'google-reviews-pro'); ?></h4>
+
+            <div class="grp-preview-card" style="
+                display: flex;
+                background: #fff;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 16px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                max-width: 450px;
+                font-family: Roboto, Arial, sans-serif;
+            ">
+                <div style="margin-right: 15px;">
+                    <img id="grp_prev_icon" src="" alt="Logo" style="width: 50px; height: 50px; border-radius: 4px; object-fit: cover;">
+                </div>
+
+                <div style="flex: 1;">
+                    <div id="grp_prev_name" style="font-weight: 500; font-size: 16px; color: #202124; margin-bottom: 4px;"></div>
+
+                    <div style="display: flex; align-items: center; margin-bottom: 4px; font-size: 13px;">
+                        <span id="grp_prev_rating" style="font-weight: bold; color: #e7711b; margin-right: 4px;"></span>
+                        <div class="grp-stars" style="color: #fbbc04; margin-right: 6px; letter-spacing: 1px;"></div>
+                        <span style="color: #70757a;">(<span id="grp_prev_count"></span>)</span>
+                    </div>
+
+                    <div id="grp_prev_address" style="color: #70757a; font-size: 12px; line-height: 1.4; margin-bottom: 4px;"></div>
+
+                    <div style="font-size: 12px; display: flex; gap: 10px;">
+                        <span id="grp_prev_price" style="color: #555;"></span>
+                        <a id="grp_prev_map_link" href="#" target="_blank" style="text-decoration: none; color: #1a73e8;">View on Maps</a>
+                    </div>
+                </div>
+
+                <div style="width: 24px; margin-left: 10px;">
+                    <svg viewBox="0 0 24 24" style="width: 24px; height: 24px;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                </div>
+            </div>
+        </div>
+        <?php
     }
 
     public function place_id_html(): void
@@ -735,25 +777,58 @@ readonly class Settings
 
     public function price_html(): void
     {
+        // Check for SEO plugin data (Priority #1)
         $local = $this->seo->get_local_data();
         $is_managed = !empty($local['price_range']);
-        $val = $is_managed ? $local['price_range'] : esc_attr(get_option('grp_settings')['grp_price'] ?? '$$');
+        $options = get_option('grp_settings');
 
+        // If it is managed by an SEO plugin, we get its value.
+        // If not - we get our setting (or blank for Auto)
+        $val = $is_managed ? $local['price_range'] : ($options['grp_price'] ?? '');
+
+        // --- SEO plugin is active and price range is set. ---
         if ($is_managed) {
             printf(
                 '<input type="text" value="%s" class="regular-text" disabled style="background:#f0f0f1; color:#555;">',
-                $val
+                esc_attr($val)
             );
-            echo '<p class="description">'.__('Synced from SEO plugin.', 'google-reviews-pro').'</p>';
-        } else { ?>
-            <select name="grp_settings[grp_price]">
-                <option value="$" <?php selected($val, '$'); ?>>$ (Cheap)</option>
-                <option value="$$" <?php selected($val, '$$'); ?>>$$ (Moderate)</option>
-                <option value="$$$" <?php selected($val, '$$$'); ?>>$$$ (Expensive)</option>
-                <option value="$$$$" <?php selected($val, '$$$$'); ?>>$$$$ (Luxury)</option>
-            </select>
-            <?php
+            echo '<p class="description">' . __('Synced from SEO plugin (Yoast/RankMath).', 'google-reviews-pro') . '</p>';
+            return;
         }
+
+        // --- Manual or API integration ---
+        $place_id = $options['place_id'] ?? '';
+        $db = get_option('grp_locations_db', []);
+        $auto_info = '';
+
+        if (!empty($place_id) && isset($db[$place_id]['price_level'])) {
+            $lvl = (int)$db[$place_id]['price_level'];
+
+            if ($lvl > 0) {
+                $symbol = str_repeat('$', $lvl);
+                $auto_info = sprintf(
+                    '<span style="color: #46b450; font-weight: 600; margin-left: 10px;">%s %s</span>',
+                    __('✓ API Detected:', 'google-reviews-pro'),
+                    $symbol
+                );
+            }
+        }
+
+        ?>
+        <select name="grp_settings[grp_price]" id="grp_price">
+            <option value="" <?php selected($val, ''); ?>><?php _e('Auto (Use API Data)', 'google-reviews-pro'); ?></option>
+            <option value="$" <?php selected($val, '$'); ?>>$ (Cheap)</option>
+            <option value="$$" <?php selected($val, '$$'); ?>>$$ (Moderate)</option>
+            <option value="$$$" <?php selected($val, '$$$'); ?>>$$$ (Expensive)</option>
+            <option value="$$$$" <?php selected($val, '$$$$'); ?>>$$$$ (Luxury)</option>
+        </select>
+
+        <?php echo $auto_info; // Show found value from the API ?>
+
+        <p class="description">
+            <?php _e('Select a price range manually to override, or leave "Auto" to use data fetched from Google.', 'google-reviews-pro'); ?>
+        </p>
+        <?php
     }
 
     public function collection_section_html(): void
@@ -1077,6 +1152,18 @@ readonly class Settings
                 const $inputScrapingDogKey = $('#grp_scrapingdog_key');
                 const $scrapingDogRow = $inputScrapingDogKey.closest('tr');
 
+                const $previewWrapper = $('#grp_preview_wrapper');
+
+                // helper for the stars
+                function getStars(rating) {
+                    const r = Math.round(rating);
+                    let stars = '';
+                    for(let i=1; i<=5; i++) {
+                        stars += i <= r ? '★' : '☆';
+                    }
+                    return stars;
+                }
+
                 function toggleFields() {
                     const val = $sourceSelect.val();
 
@@ -1171,6 +1258,7 @@ readonly class Settings
                     $spinner.addClass('is-active');
                     $findBtn.prop('disabled', true);
                     $msg.text('');
+                    $previewWrapper.hide();
 
                     $.post(ajaxurl, {
                         action: 'grp_find_business',
@@ -1184,7 +1272,7 @@ readonly class Settings
                             const data = res.data;
                             if (source === 'google') {
                                 $('#place_id').val(data.place_id).css('background-color', '#e6fffa');
-                            } else if (source === 'serpapi') {
+                            } else if (source === 'serpapi' || source === 'scrapingdog') {
                                 $('#serpapi_data_id').val(data.data_id).css('background-color', '#e6fffa');
                                 $('#place_id').val(data.place_id).css('background-color', '#e6fffa');
                             }
@@ -1196,9 +1284,35 @@ readonly class Settings
                             if(data.address) $('#grp_address').val(data.address).css('background-color', '#e6fffa');
 
                             $msg.css('color', 'green').html('<?php _e('Business found! Fields autofilled. Please <strong>Save Changes</strong>.', 'google-reviews-pro'); ?>');
+
+                            $('#grp_prev_name').text(data.name || 'Unknown');
+                            $('#grp_prev_rating').text(data.rating || '0.0');
+                            $('#grp_prev_count').text(data.count || '0');
+                            $('#grp_prev_address').text(data.address || '');
+                            $('.grp-stars').text(getStars(data.rating || 0));
+
+                            const priceLvl = data.price_level || 0;
+                            const priceStr = priceLvl > 0 ? '$'.repeat(priceLvl) : '';
+                            $('#grp_prev_price').text(priceStr);
+
+                            if (data.maps_url) {
+                                $('#grp_prev_map_link').attr('href', data.maps_url).show();
+                            } else {
+                                $('#grp_prev_map_link').hide();
+                            }
+
+                            const iconUrl = data.icon || data.photo_url || 'https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png';
+                            $('#grp_prev_icon').attr('src', iconUrl);
+
+                            $previewWrapper.slideDown();
                         } else {
                             $msg.css('color', 'red').text('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Not found', 'google-reviews-pro'); ?>'));
+                            $previewWrapper.hide();
                         }
+                    }).fail(function() {
+                        $spinner.removeClass('is-active');
+                        $findBtn.prop('disabled', false);
+                        $msg.css('color', 'red').text('<?php _e('Server error','google-reviews-pro'); ?>.');
                     });
                 });
 

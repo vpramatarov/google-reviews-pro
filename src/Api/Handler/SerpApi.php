@@ -59,11 +59,19 @@ class SerpApi implements ApiHandler
             if (!$meta_captured && !empty($body['place_info'])) {
                 $info = $body['place_info'];
                 $meta = [
-                    'name' => $info['title'] ?? '',
-                    'address' => $info['address'] ?? '',
-                    'phone' => $info['phone'] ?? '',
-                    'lat' => $info['gps_coordinates']['latitude'] ?? '',
-                    'lng' => $info['gps_coordinates']['longitude'] ?? '',
+                    'name' => $info['title'] ?? null,
+                    'address' => $info['address'] ?? null,
+                    'phone' => $info['phone'] ?? null,
+                    'lat' => $info['gps_coordinates']['latitude'] ?? null,
+                    'lng' => $info['gps_coordinates']['longitude'] ?? null,
+                    'price_level' => $this->normalize_price($info['price'] ?? null), // $1–10
+                    'maps_url' => $info['url'] ?? null,
+                    'website' => $info['website'] ?? get_home_url(),
+                    'periods' => $info['operating_hours'] ?? null,
+                    'weekday_text'=> $info['hours']  ?? null,
+                    'icon' => $place['thumbnail'] ?? null,
+                    'rating' => $info['rating'] ?? 0,
+                    'count' => $info['reviews'] ?? 0,
                 ];
                 $meta_captured = true;
             }
@@ -130,15 +138,25 @@ class SerpApi implements ApiHandler
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         $place = $body['local_results'][0] ?? $body['place_results'] ?? null;
+        $response_meta = $body['search_metadata'] ?? null;
 
         if (!empty($place)) {
             $result = [
                 'place_id' => $place['place_id'],
                 'data_id' => $place['data_id'],
                 'name' => $place['title'],
-                'address' => $place['address'] ?? '',
-                'lat' => $place['gps_coordinates']['latitude'] ?? '',
-                'lng' => $place['gps_coordinates']['longitude'] ?? '',
+                'address' => $place['address'] ?? null,
+                'phone' => $info['phone'] ?? null,
+                'lat' => $place['gps_coordinates']['latitude'] ?? null,
+                'lng' => $place['gps_coordinates']['longitude'] ?? null,
+                'price_level' => $this->normalize_price($place['price_level'] ?? null), // $1–10
+                'maps_url' => $response_meta['google_maps_url'] ?? null,
+                'website' => $place['website'] ?? get_home_url(),
+                'periods' => $this->normalize_hours($place['hours'] ?? null),
+                'weekday_text'=> $place['open_state'] ?? null,
+                'icon' => $place['thumbnail'] ?? null,
+                'rating' => $place['rating'] ?? 0,
+                'count' => $place['reviews'] ?? 0,
             ];
         } else {
             return new \WP_Error('api_error', $body['error'] ?? __('No business found via SerpApi.', 'google-reviews-pro'));
@@ -150,5 +168,46 @@ class SerpApi implements ApiHandler
     public function supports(string $source): bool
     {
         return self::SOURCE === $source;
+    }
+
+    /**
+     * Normalizes the price to a number from 0 to 4.
+     * Supports formats: 2, "$$", "$1-10", "€€€"
+     */
+    private function normalize_price(?string $price): ?int
+    {
+        if (empty($price)) {
+            return null;
+        }
+
+        // if it's a number (Google API style)
+        if (is_numeric($price)) {
+            return (int)$price;
+        }
+
+        // If it's a string, count the currency symbols
+        // Ex: "$$" -> 2, "$1-10" -> 1, "€€€" -> 3
+        preg_match_all('/[\$\€\£\¥\₩]/', (string)$price, $matches);
+        $count = count($matches[0]);
+
+        if ($count > 0) {
+            // Limit to 4 (Google max)
+            return min(4, $count);
+        }
+
+        return null;
+    }
+
+    private function normalize_hours(?array $hours): array
+    {
+        if (empty($hours)) {
+            return [];
+        }
+
+        if (isset($hours[0])) {
+            return array_merge(...$hours);
+        }
+
+        return $hours;
     }
 }

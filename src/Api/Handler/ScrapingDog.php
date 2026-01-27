@@ -70,11 +70,19 @@ class ScrapingDog implements ApiHandler
             if ($page_count === 0 && !empty($body['place_info'])) {
                 $info = $body['place_info'];
                 $meta = [
-                    'name'    => $info['title'] ?? '',
-                    'address' => $info['address'] ?? '',
-                    'phone'   => $info['phone'] ?? '',
-                    'lat'     => $info['gps_coordinates']['latitude'] ?? '',
-                    'lng'     => $info['gps_coordinates']['longitude'] ?? '',
+                    'name' => $info['title'] ?? null,
+                    'address' => $info['address'] ?? null,
+                    'phone' => $info['phone'] ?? null,
+                    'lat' => $info['gps_coordinates']['latitude'] ?? null,
+                    'lng' => $info['gps_coordinates']['longitude'] ?? null,
+                    'price_level' => $this->normalize_price($info['price_level'] ?? null), // $1–10
+                    'maps_url' => $info['url'] ?? null,
+                    'website' => $info['website'] ?? get_home_url(),
+                    'periods' => $info['operating_hours'] ?? null,
+                    'weekday_text'=> $info['open_state'] ?? $info['hours'] ?? null,
+                    'icon' => $place['thumbnail'] ?? null,
+                    'rating' => $info['rating'] ?? 0,
+                    'count' => $info['reviews'] ?? 0,
                 ];
             }
 
@@ -148,10 +156,19 @@ class ScrapingDog implements ApiHandler
 
         if (!empty($place)) {
             $result = [
-                'name' => $place['title'] ?? '',
-                'address' => $place['address'] ?? '',
-                'lat' => $place['gps_coordinates']['latitude'] ?? '',
-                'lng' => $place['gps_coordinates']['longitude'] ?? '',
+                'name' => $place['title'] ?? null,
+                'address' => $place['address'] ?? null,
+                'phone' => $place['phone'] ?? null,
+                'lat' => $place['gps_coordinates']['latitude'] ?? null,
+                'lng' => $place['gps_coordinates']['longitude'] ?? null,
+                'price_level' => $this->normalize_price($place['price_level'] ?? null), // $1–10
+                'maps_url' => $place['url'] ?? null,
+                'website' => $place['website'] ?? get_home_url(),
+                'periods' => $place['operating_hours'] ?? null,
+                'weekday_text'=> $place['open_state'] ?? $place['hours'] ?? null,
+                'icon' => $place['thumbnail'] ?? null,
+                'rating' => $place['rating'] ?? 0,
+                'count' => $place['reviews'] ?? 0,
             ];
 
             // ScrapingDog Reviews API requires a 'data_id' (CID), which is usually in the format 0x...
@@ -174,5 +191,33 @@ class ScrapingDog implements ApiHandler
     public function supports(string $source): bool
     {
         return self::SOURCE === $source;
+    }
+
+    /**
+     * Normalizes the price to a number from 0 to 4.
+     * Supports formats: 2, "$$", "$1-10", "€€€"
+     */
+    private function normalize_price(?string $price): ?int
+    {
+        if (empty($price)) {
+            return null;
+        }
+
+        // if it's a number (Google API style)
+        if (is_numeric($price)) {
+            return (int)$price;
+        }
+
+        // If it's a string, count the currency symbols
+        // Ex: "$$" -> 2, "$1-10" -> 1, "€€€" -> 3
+        preg_match_all('/[\$\€\£\¥\₩]/', (string)$price, $matches);
+        $count = count($matches[0]);
+
+        if ($count > 0) {
+            // Limit to 4 (Google max)
+            return min(4, $count);
+        }
+
+        return null;
     }
 }

@@ -109,11 +109,11 @@ readonly class Handler
         $hide_empty = isset($this->options['grp_hide_empty']) && $this->options['grp_hide_empty'];
 
         $args = [
-            'post_type'      => 'grp_review',
+            'post_type' => 'grp_review',
             'posts_per_page' => $limit,
-            'offset'         => $offset,
-            'status'         => 'publish',
-            'meta_query'     => ['relation' => 'AND']
+            'offset' => $offset,
+            'status' => 'publish',
+            'meta_query' => ['relation' => 'AND']
         ];
 
         // Filter: hide manual hidden reviews
@@ -121,12 +121,12 @@ readonly class Handler
         $args['meta_query'][] = [
             'relation' => 'OR',
             [
-                'key'     => '_grp_is_hidden',
+                'key' => '_grp_is_hidden',
                 'compare' => 'NOT EXISTS', // if not exists it means it's not hidden
             ],
             [
-                'key'     => '_grp_is_hidden',
-                'value'   => '1',
+                'key' => '_grp_is_hidden',
+                'value' => '1',
                 'compare' => '!=', // if not 1
             ]
         ];
@@ -134,18 +134,18 @@ readonly class Handler
         // Filter: minimum rating
         if ($min_rating > 1) {
             $args['meta_query'][] = [
-                'key'     => '_grp_rating',
-                'value'   => $min_rating,
+                'key' => '_grp_rating',
+                'value' => $min_rating,
                 'compare' => '>=',
-                'type'    => 'NUMERIC'
+                'type' => 'NUMERIC'
             ];
         }
 
         // Filter by Place ID (if passed as argument to shortcode)
         if (!empty($specific_place_id)) {
             $args['meta_query'][] = [
-                'key'     => '_grp_assigned_place_id',
-                'value'   => $specific_place_id,
+                'key' => '_grp_assigned_place_id',
+                'value' => $specific_place_id,
                 'compare' => '='
             ];
         }
@@ -154,17 +154,17 @@ readonly class Handler
         switch ($sort_order) {
             case 'date_asc':
                 $args['orderby'] = 'date';
-                $args['order']   = 'ASC';
+                $args['order'] = 'ASC';
                 break;
             case 'rating_desc':
                 $args['meta_key'] = '_grp_rating';
-                $args['orderby']  = 'meta_value_num';
-                $args['order']    = 'DESC';
+                $args['orderby'] = 'meta_value_num';
+                $args['order'] = 'DESC';
                 break;
             case 'rating_asc':
                 $args['meta_key'] = '_grp_rating';
-                $args['orderby']  = 'meta_value_num';
-                $args['order']    = 'ASC';
+                $args['orderby'] = 'meta_value_num';
+                $args['order'] = 'ASC';
                 break;
             case 'random':
                 $args['orderby'] = 'rand';
@@ -172,7 +172,7 @@ readonly class Handler
             case 'date_desc':
             default:
                 $args['orderby'] = 'date';
-                $args['order']   = 'DESC';
+                $args['order'] = 'DESC';
                 break;
         }
 
@@ -199,11 +199,11 @@ readonly class Handler
                 }
 
                 $reviews[] = [
-                    'author_name'       => get_the_title(),
-                    'text'              => get_the_content(),
-                    'rating'            => get_post_meta($id, '_grp_rating', true),
+                    'author_name' => get_the_title(),
+                    'text' => get_the_content(),
+                    'rating' => get_post_meta($id, '_grp_rating', true),
                     'profile_photo_url' => $photo_url,
-                    'time'              => (int) get_post_timestamp()
+                    'time' => (int) get_post_timestamp()
                 ];
             }
             wp_reset_postdata();
@@ -217,9 +217,9 @@ readonly class Handler
         $min_rating = absint($this->options['grp_min_rating'] ?? 0);
 
         $args = [
-            'post_type'  => 'grp_review',
-            'status'     => 'publish',
-            'fields'     => 'ids',
+            'post_type' => 'grp_review',
+            'status' => 'publish',
+            'fields' => 'ids',
             'posts_per_page' => -1,
             'meta_query' => [ 'relation' => 'AND' ]
         ];
@@ -242,8 +242,8 @@ readonly class Handler
 
         if (!empty($specific_place_id)) {
             $args['meta_query'][] = [
-                'key'     => '_grp_assigned_place_id',
-                'value'   => $specific_place_id,
+                'key' => '_grp_assigned_place_id',
+                'value' => $specific_place_id,
                 'compare' => '='
             ];
         }
@@ -296,12 +296,26 @@ readonly class Handler
 
     /**
      * Returns aggregated statistics (Total Count and Average Rating) directly from the database.
-     * This is much faster than WP_Query for calculations.
+     *  PRIORITY 1: Real data from API (stored in meta options).
+     *  PRIORITY 2: Calculation from local database (SQL).
      *
      * @return array{"reviewCount": int, "ratingValue": float}
      */
     public function get_aggregate_stats(string $place_id = ''): array
     {
+        if (!empty($place_id)) {
+            $meta = $this->get_location_metadata($place_id);
+
+            // Checking if we have valid data (more than 0 reviews)
+            if (!empty($meta) && !empty($meta['count']) && $meta['count'] > 0) {
+                return [
+                    'reviewCount' => (int) $meta['count'],
+                    'ratingValue' => (float) ($meta['rating'] ?? 5.0)
+                ];
+            }
+        }
+
+        // Fallback
         global $wpdb;
 
         /**
@@ -359,13 +373,20 @@ readonly class Handler
     private function save_location_metadata(string $place_id, array $meta): void
     {
         $db = get_option('grp_locations_db', []);
+        $existing = $db[$place_id] ?? [];
         $db[$place_id] = [
-            'name'      => sanitize_text_field($meta['name'] ?? ''),
-            'address'   => sanitize_text_field($meta['address'] ?? ''),
-            'phone'     => sanitize_text_field($meta['phone'] ?? ''),
-            'lat'       => sanitize_text_field($meta['lat'] ?? ''),
-            'lng'       => sanitize_text_field($meta['lng'] ?? ''),
-            'updated'   => time()
+            'name' => sanitize_text_field($meta['name'] ?? $existing['name'] ?? null),
+            'address' => sanitize_text_field($meta['address'] ?? $existing['address'] ?? null),
+            'phone' => sanitize_text_field($meta['phone'] ?? $existing['phone'] ?? null),
+            'lat' => sanitize_text_field($meta['lat'] ?? $existing['lat'] ?? null),
+            'lng' => sanitize_text_field($meta['lng'] ?? $existing['lng'] ?? null),
+            'price_level' => isset($meta['price_level']) ? (int)$meta['price_level'] : ($existing['price_level'] ?? null),
+            'maps_url' => esc_url_raw($meta['maps_url'] ?? $existing['maps_url'] ?? null),
+            'website' => esc_url_raw($meta['website'] ?? $existing['website'] ?? get_home_url()),
+            'periods' => $meta['periods'] ??  $existing['periods'] ?? null,
+            'rating' => !empty($meta['rating']) ? (float)$meta['rating'] : ($existing['rating'] ?? 0),
+            'count' => !empty($meta['count']) ? (int)$meta['count'] : ($existing['count'] ?? 0),
+            'updated' => time()
         ];
 
         update_option('grp_locations_db', $db);
