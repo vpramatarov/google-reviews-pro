@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Pro
  * Plugin URI: https://github.com/vpramatarov/google-reviews-pro
- * Version: 1.1.0
+ * Version: 1.1.1
  * Text Domain: google-reviews-pro
  * Author: Velizar Pramatarov <velizarpramatrov@yahoo.com>
  * Author URI: https://vpramatarov.eu
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const GRP_VERSION = '1.1.0';
+const GRP_VERSION = '1.1.1';
 const GRP_MAX_REVIEW_LIMIT = 5;
 
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {

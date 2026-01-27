@@ -255,22 +255,33 @@ readonly class Display
              * This is the ideal case for Multi-Location.
              */
             $site_name = !empty($auto_meta['name']) ? $auto_meta['name'] : $default_name;
-            $address   = $auto_meta['address'];
-            $phone     = $auto_meta['phone'];
-            $lat       = $auto_meta['lat'];
-            $lng       = $auto_meta['lng'];
+            $address = $auto_meta['address'];
+            $phone = $auto_meta['phone'];
+            $lat = $auto_meta['lat'];
+            $lng = $auto_meta['lng'];
         } elseif (empty($current_place_id) || $current_place_id === $global_place_id) {
             /**
              * This is the main location (or ID is not set).
              * We use the global settings (from Settings or SEO Plugin)
              */
-            $address   = $default_addr;
-            $phone     = $default_phone;
-            $lat       = $default_lat;
-            $lng       = $default_lng;
+            $address = $default_addr;
+            $phone = $default_phone;
+            $lat = $default_lat;
+            $lng = $default_lng;
         }
 
-        $price_range = !empty($seo_data['price_range']) ? $seo_data['price_range'] : ($options['grp_price'] ?? '$$');
+        $manual_price = $options['grp_price'] ?? '';
+
+        if (!empty($seo_data['price_range'])) {
+            $price_range = $seo_data['price_range'];
+        } elseif (!empty($manual_price)) {
+            $price_range = $manual_price; // user manually choose $$
+        } elseif (!empty($auto_meta['price_level'])) {
+            $price_range = str_repeat('$', max(1, (int)$auto_meta['price_level'])); // Auto fallback
+        } else {
+            $price_range = '$$'; // Default fallback
+        }
+
         $site_url = get_home_url();
         $favicon_url = get_site_icon_url();
         $schema_reviews = [];
@@ -326,6 +337,20 @@ readonly class Display
             ];
         }
 
+        if (!empty($auto_meta['maps_url'])) {
+            $schema_payload['hasMap'] = $auto_meta['maps_url'];
+        }
+
+        if (!empty($auto_meta['periods'])) {
+            $schema_payload['openingHoursSpecification'] = $this->format_opening_hours($auto_meta['periods']);
+        }
+
+        if (!empty($auto_meta['website'])) {
+            $schema_payload['website'] = $auto_meta['website'];
+        } else {
+            $schema_payload['website'] = site_url();
+        }
+
         if ($stats) {
             $schema_payload['aggregateRating'] = [
                 '@type' => 'AggregateRating',
@@ -337,5 +362,60 @@ readonly class Display
         }
 
         return '<script type="application/ld+json">' . json_encode($schema_payload, JSON_UNESCAPED_UNICODE) . '</script>';
+    }
+
+    /**
+     * Schema.org helper method for formatting business hours
+     * Google API format: day (0=Sunday), time ("0900").
+     * Schema format: dayOfWeek ("Sunday"), opens ("09:00"), closes ("17:00")
+     */
+    private function format_opening_hours(array $periods): array
+    {
+        $schema_hours = [];
+        $days_map = [0 => 'Sunday', 1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday'];
+        $days_map_l10n = [
+            0 => __('Sunday', 'google-reviews-pro'),
+            1 => __('Monday', 'google-reviews-pro'),
+            2 => __('Tuesday', 'google-reviews-pro'),
+            3 => __('Wednesday', 'google-reviews-pro'),
+            4 => __('Thursday', 'google-reviews-pro'),
+            5 => __('Friday', 'google-reviews-pro'),
+            6 => __('Saturday', 'google-reviews-pro')
+        ];
+
+        foreach ($periods as $period) {
+            if (empty($period['open'])) {
+                continue;
+            }
+
+            $day_index = $period['open']['day'];
+            $open_time = $period['open']['time']; // "0900"
+
+            // if 24h format
+            if ($open_time === '0000' && empty($period['close'])) {
+                $schema_hours[] = [
+                    '@type' => 'OpeningHoursSpecification',
+                    'dayOfWeek' => $days_map[$day_index] ?? $days_map_l10n[$day_index],
+                    'opens' => '00:00',
+                    'closes' => '23:59'
+                ];
+                continue;
+            }
+
+            if (empty($period['close'])) {
+                continue;
+            }
+
+            $close_time = $period['close']['time']; // "1700"
+
+            $schema_hours[] = [
+                '@type' => 'OpeningHoursSpecification',
+                'dayOfWeek' => $days_map[$day_index],
+                'opens' => substr($open_time, 0, 2) . ':' . substr($open_time, 2),
+                'closes' => substr($close_time, 0, 2) . ':' . substr($close_time, 2),
+            ];
+        }
+
+        return $schema_hours;
     }
 }
