@@ -146,7 +146,7 @@ class SerpApi implements ApiHandler
                 'data_id' => $place['data_id'],
                 'name' => $place['title'],
                 'address' => $place['address'] ?? null,
-                'phone' => $info['phone'] ?? null,
+                'phone' => $place['phone'] ?? null,
                 'lat' => $place['gps_coordinates']['latitude'] ?? null,
                 'lng' => $place['gps_coordinates']['longitude'] ?? null,
                 'price_level' => $this->normalize_price($place['price_level'] ?? null), // $1–10

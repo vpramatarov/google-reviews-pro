@@ -80,7 +80,7 @@ class ScrapingDog implements ApiHandler
                     'website' => $info['website'] ?? get_home_url(),
                     'periods' => $info['operating_hours'] ?? null,
                     'weekday_text'=> $info['open_state'] ?? $info['hours'] ?? null,
-                    'icon' => $place['thumbnail'] ?? null,
+                    'icon' => $info['thumbnail'] ?? null,
                     'rating' => $info['rating'] ?? 0,
                     'count' => $info['reviews'] ?? 0,
                 ];
