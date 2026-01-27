@@ -186,7 +186,7 @@ readonly class Display
             $limit += $limit;
         }
 
-        $reviews = $this->api->get_reviews($limit, 0, $specific_place_id);
+        $reviews = $this->api->get_reviews($limit, 0, $place_id);
 
         $html = '';
 
@@ -196,6 +196,7 @@ readonly class Display
             }
 
             $html .= $layoutRender->render($reviews, $stats, $limit, $place_id, $source);
+            break;
         }
 
         if ($enable_schema) {
@@ -217,6 +218,75 @@ readonly class Display
         }
 
         return '';
+    }
+
+    /**
+     * Returns schema data with source analysis for debugging.
+     */
+    public function get_schema_debug_info(string $place_id): array
+    {
+        $options = $this->api->getApiOptions();
+        $seo_data = $this->seo->get_local_data();
+        $auto_meta = !empty($place_id) ? $this->api->get_location_metadata($place_id) : null; // API data
+
+        $global_place_id = $options['place_id'] ?? '';
+        $is_main_location = (empty($place_id) || $place_id === $global_place_id);
+
+        // Helper function to determine value and source
+        $determine = function($key, $seo_val, $manual_val, $api_val, $is_main) use ($options) {
+            // Priority 1: SEO Plugin
+            if (!empty($seo_val)) {
+                return ['value' => $seo_val, 'source' => 'SEO Plugin (' . $this->seo->get_active_provider() . ')'];
+            }
+
+            // Priority 2: API Data (Auto-Sync) - if data for given location is available
+            if (!empty($api_val)) {
+                return ['value' => $api_val, 'source' => 'API (Auto-Sync)'];
+            }
+
+            // Priority 3: Manual Settings (Fallback) - if main location
+            if ($is_main && !empty($manual_val)) {
+                return ['value' => $manual_val, 'source' => 'Manual Settings'];
+            }
+
+            return ['value' => '-', 'source' => 'Not Set'];
+        };
+
+        // Analyze Basic Fields
+        $fields = [
+            'name' => $determine('name', $seo_data['name'] ?? '', $options['grp_business_name'] ?? '', $auto_meta['name'] ?? '', $is_main_location),
+            'address' => $determine('address', $seo_data['address'] ?? '', $options['grp_address'] ?? '', $auto_meta['address'] ?? '', $is_main_location),
+            'phone' => $determine('phone', $seo_data['phone'] ?? '', $options['grp_phone'] ?? '', $auto_meta['phone'] ?? '', $is_main_location),
+            'latitude' => $determine('lat', $seo_data['lat'] ?? '', $options['grp_latitude'] ?? '', $auto_meta['lat'] ?? '', $is_main_location),
+            'longitude' => $determine('lng', $seo_data['lng'] ?? '', $options['grp_longitude'] ?? '', $auto_meta['lng'] ?? '', $is_main_location),
+        ];
+
+        // Analyze Price Range (Special Logic)
+        $manual_price = $options['grp_price'] ?? '';
+        $api_price = !empty($auto_meta['price_level']) ? str_repeat('$', max(1, (int)$auto_meta['price_level'])) : '';
+
+        if (!empty($seo_data['price_range'])) {
+            $fields['priceRange'] = ['value' => $seo_data['price_range'], 'source' => 'SEO Plugin'];
+        } elseif (!empty($manual_price)) {
+            $fields['priceRange'] = ['value' => $manual_price, 'source' => 'Manual Settings'];
+        } elseif (!empty($api_price)) {
+            $fields['priceRange'] = ['value' => $api_price, 'source' => 'API (Auto-Sync)'];
+        } else {
+            $fields['priceRange'] = ['value' => '$$', 'source' => 'Default'];
+        }
+
+        // Analyze Hours & Maps
+        if (!empty($auto_meta['periods'])) {
+            $fields['openingHours'] = ['value' => 'Yes (Complex Object)', 'source' => 'API (Auto-Sync)'];
+        } else {
+            $fields['openingHours'] = ['value' => 'Missing', 'source' => '-'];
+        }
+
+        if (!empty($auto_meta['maps_url'])) {
+            $fields['maps_url'] = ['value' => $auto_meta['maps_url'], 'source' => 'API (Auto-Sync)'];
+        }
+
+        return $fields;
     }
 
     /**

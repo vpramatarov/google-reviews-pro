@@ -36,9 +36,16 @@ class SerpApi implements ApiHandler
         $page_count = 0;
         $max_pages_setting = (int) ($this->options['serpapi_pages'] ?? 5);
         $max_pages = max(1, min(50, $max_pages_setting));
+        $locales = explode('_', get_locale());
+        $locale = strtolower($locales[0]);
 
         do {
-            $url = sprintf("https://serpapi.com/search.json?engine=google_maps_reviews&data_id=%s&api_key=%s", $data_id, $api_key);
+            $url = sprintf(
+                "https://serpapi.com/search.json?engine=google_maps_reviews&data_id=%s&api_key=%s&hl=%s",
+                $data_id,
+                $api_key,
+                $locale
+            );
 
             if ($next_page_token) {
                 $url .= "&next_page_token=" . $next_page_token;
@@ -124,10 +131,13 @@ class SerpApi implements ApiHandler
             return new \WP_Error('api_error', __('Missing API Key.', 'google-reviews-pro'));
         }
 
+        $locales = explode('_', get_locale());
+
         $url = sprintf(
-            'https://serpapi.com/search.json?engine=google_maps&q=%s&api_key=%s&type=search',
+            'https://serpapi.com/search.json?engine=google_maps&q=%s&api_key=%s&type=search&hl=%s',
             urlencode($query),
-            $api_key
+            $api_key,
+            strtolower($locales[0])
         );
         $response = wp_remote_get($url);
 

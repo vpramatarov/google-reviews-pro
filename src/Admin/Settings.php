@@ -291,6 +291,14 @@ readonly class Settings
             'grp_seo'
         );
 
+        add_settings_field(
+            'grp_periods',
+            __('Working Days', 'google-reviews-pro'),
+            [$this, 'periods_html'],
+            'grp-settings',
+            'grp_seo'
+        );
+
         // --- REVIEW COLLECTION ---
         add_settings_section(
             'grp_collection',
@@ -361,6 +369,7 @@ readonly class Settings
             'grp_btn_text_color' => sanitize_hex_color($input['grp_btn_text_color'] ?? '#ffffff'),
             'email_alerts' => isset($input['email_alerts']) ? 1 : 0,
             'wipe_on_uninstall' => isset($input['wipe_on_uninstall']) ? 1 : 0,
+            'grp_periods' => (!empty($input['grp_periods']) && is_string($input['grp_periods'])) ? sanitize_text_field($input['grp_periods']) : null,
         ];
 
         if ($clean['email_alerts'] === 1 && !empty($input['notification_email'])) {
@@ -378,6 +387,41 @@ readonly class Settings
             }
         } else {
             $clean['notification_email'] = '';
+        }
+
+        $meta = [];
+
+        if (!empty($clean['place_id'])) {
+            if (!empty($clean['grp_address'])) {
+                $meta['address'] = $clean['grp_address'];
+            }
+
+            if (!empty($clean['grp_phone'])) {
+                $meta['phone'] = $clean['grp_phone'];
+            }
+
+            if (!empty($clean['grp_price'])) {
+                $meta['price_level'] = $clean['grp_price'];
+            }
+
+            if (!empty($clean['grp_latitude'])) {
+                $meta['lat'] = $clean['grp_latitude'];
+            }
+
+            if (!empty($clean['grp_longitude'])) {
+                $meta['lng'] = $clean['grp_longitude'];
+            }
+
+            if (!empty($clean['grp_longitude'])) {
+                $meta['lng'] = $clean['grp_longitude'];
+            }
+
+            if (!empty($clean['grp_periods'])) {
+                $working_hours = array_filter(explode("\n", $input['grp_periods']));
+                $meta['periods'] = $working_hours;
+            }
+
+            $this->api->save_location_metadata($clean['place_id'], $meta);
         }
 
         return $clean;
@@ -440,15 +484,13 @@ readonly class Settings
             return;
         }
 
-        $business_name = esc_attr(get_option('grp_settings')['grp_business_name'] ?? '');
         printf('<div id="grp-finder-box" style="display:flex; gap:10px; align-items:center;">
-                <input type="text" id="grp_finder_query" class="regular-text" placeholder="%s" value="%s">
+                <input type="text" id="grp_finder_query" class="regular-text" placeholder="%s" value="">
                 <button type="button" id="grp-find-btn" class="button button-secondary">%s</button>
                 <span class="spinner" id="grp-finder-spinner" style="float:none; margin:0;"></span>
             </div>
             <p class="description" id="grp-finder-msg"></p>',
             __('Enter business name (e.g. Pizza Mario New York)', 'google-reviews-pro'),
-            $business_name,
             __('Search & Auto-fill', 'google-reviews-pro')
         );
         ?>
@@ -480,10 +522,16 @@ readonly class Settings
 
                     <div id="grp_prev_address" style="color: #70757a; font-size: 12px; line-height: 1.4; margin-bottom: 4px;"></div>
 
+                    <div id="grp_prev_phone" style="color: #70757a; font-size: 12px; line-height: 1.4; margin-bottom: 4px;"></div>
+
+                    <div id="grp_prev_coordinates" style="color: #70757a; font-size: 12px; line-height: 1.4; margin-bottom: 4px;"></div>
+
                     <div style="font-size: 12px; display: flex; gap: 10px;">
                         <span id="grp_prev_price" style="color: #555;"></span>
                         <a id="grp_prev_map_link" href="#" target="_blank" style="text-decoration: none; color: #1a73e8;">View on Maps</a>
                     </div>
+
+                    <div id="grp_prev_weekday" style="color: #70757a; font-size: 12px; line-height: 1.4; margin-bottom: 4px;"></div>
                 </div>
 
                 <div style="width: 24px; margin-left: 10px;">
@@ -555,7 +603,7 @@ readonly class Settings
             '<input type="checkbox" name="grp_settings[auto_sync]" value="1" %s>',
             checked(1, $val, false)
         );
-        echo '<p class="description">' . __('Automatically fetch reviews once every 24 hours.', 'google-reviews-pro') . '</p>';
+        echo '<p class="description">' . __('Automatically fetch reviews.', 'google-reviews-pro') . '</p>';
     }
 
     public function sync_frequency_html(): void
@@ -599,19 +647,24 @@ readonly class Settings
         }
 
         ?>
-        <table class="widefat fixed striped" style="max-width: 1200px;">
+        <table class="widefat fixed striped">
             <thead>
             <tr>
-                <th style="width: 30%; padding-left: 10px;"><?php _e('Place ID', 'google-reviews-pro'); ?></th>
+                <th style="width: 25%; padding-left: 10px;"><?php _e('Place ID', 'google-reviews-pro'); ?></th>
                 <th style="width: 10%; padding-left: 10px;"><?php _e('Reviews Count', 'google-reviews-pro'); ?></th>
-                <th style="width: 60%; padding-left: 10px;"><?php _e('Shortcode Snippet', 'google-reviews-pro'); ?></th>
+                <th style="width: 40%; padding-left: 10px;"><?php _e('Shortcode Snippet', 'google-reviews-pro'); ?></th>
+                <th style="width: 20%; text-align: right; padding-right: 15px;"><?php _e('Actions', 'google-reviews-pro'); ?></th>
             </tr>
             </thead>
             <tbody>
             <?php foreach ($locations as $loc): ?>
                 <tr>
-                    <td><code><?php echo esc_html($loc['place_id']); ?></code></td>
-                    <td><?php echo esc_html($loc['count']); ?></td>
+                    <td>
+                        <code><?php echo esc_html($loc['place_id']); ?></code>
+                        <hr>
+                        <code><?php echo esc_html($loc['name']); ?></code>
+                    </td>
+                    <td style="text-align: center"><?php echo esc_html($loc['count']); ?></td>
                     <td>
                         <input type="text"
                                readonly
@@ -620,10 +673,72 @@ readonly class Settings
                                style="width: 100%; font-family: monospace; background: #f9f9f9; color: #555;"
                                onclick="this.select();">
                     </td>
+                    <td style="text-align: right;">
+                        <button type="button" class="button button-secondary grp-schema-btn" data-place-id="<?php echo esc_attr($loc['place_id']); ?>" style="margin-right: 5px;">
+                            <?php _e('Schema Check', 'google-reviews-pro'); ?>
+                        </button>
+
+                        <hr>
+
+                        <button type="button" class="button button-secondary grp-details-btn" data-place-id="<?php echo esc_attr($loc['place_id']); ?>" style="margin-right: 5px;">
+                            <?php _e('Raw Data', 'google-reviews-pro'); ?>
+                        </button>
+
+                        <hr>
+
+                        <button type="button" class="button button-link-delete grp-delete-loc-btn" data-place-id="<?php echo esc_attr($loc['place_id']); ?>">
+                            <?php _e('Delete', 'google-reviews-pro'); ?>
+                        </button>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
         </table>
+
+        <div id="grp-schema-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:100000; align-items:center; justify-content:center;">
+            <div style="background:#fff; width:700px; max-width:90%; max-height:90vh; padding:20px; border-radius:5px; box-shadow:0 0 10px rgba(0,0,0,0.5); display:flex; flex-direction:column;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                    <h3 style="margin:0;"><?php _e('Structured Data Source Analysis', 'google-reviews-pro'); ?></h3>
+                    <button type="button" class="grp-close-schema button button-small">✕</button>
+                </div>
+
+                <div style="overflow-y:auto; flex:1;">
+                    <table class="widefat striped">
+                        <thead>
+                        <tr>
+                            <th><?php _e('Field', 'google-reviews-pro'); ?></th>
+                            <th><?php _e('Current Value', 'google-reviews-pro'); ?></th>
+                            <th><?php _e('Source', 'google-reviews-pro'); ?></th>
+                        </tr>
+                        </thead>
+                        <tbody id="grp-schema-tbody">
+                        </tbody>
+                    </table>
+                    <p class="description" style="margin-top: 10px;">
+                        <?php _e('Note: "SEO Plugin" has priority #1. "API Data" has priority #2. "Manual Settings" has priority #3.', 'google-reviews-pro'); ?>
+                    </p>
+                </div>
+
+                <div style="margin-top:15px; text-align:right;">
+                    <button type="button" class="button button-primary grp-close-schema"><?php _e('Close', 'google-reviews-pro'); ?></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="grp-raw-data-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:100000; align-items:center; justify-content:center;">
+            <div style="background:#fff; width:600px; max-width:90%; max-height:80vh; padding:20px; border-radius:5px; box-shadow:0 0 10px rgba(0,0,0,0.5); display:flex; flex-direction:column;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                    <h3 style="margin:0;"><?php _e('Location Raw Data', 'google-reviews-pro'); ?></h3>
+                    <button type="button" class="grp-close-modal button button-small">✕</button>
+                </div>
+                <div style="overflow-y:auto; flex:1; background:#f5f5f5; padding:10px; border:1px solid #ddd;">
+                    <pre id="grp-raw-content" style="white-space:pre-wrap; word-wrap:break-word; font-size:12px; margin:0;"></pre>
+                </div>
+                <div style="margin-top:15px; text-align:right;">
+                    <button type="button" class="button button-primary grp-close-modal"><?php _e('Close', 'google-reviews-pro'); ?></button>
+                </div>
+            </div>
+        </div>
         <?php
     }
 
@@ -717,7 +832,7 @@ readonly class Settings
         $val = $is_managed ? $local['lat'] : esc_attr(get_option('grp_settings')['grp_latitude'] ?? '');
 
         printf(
-            '<input type="text" id="grp_latitude" name="grp_settings[grp_latitude]" value="%s" class="small-text" %s>',
+            '<input type="text" id="grp_latitude" name="grp_settings[grp_latitude]" value="%s" class="medium-text" %s>',
             $val,
             $is_managed ? 'disabled style="background:#f0f0f1; color:#555;"' : ''
         );
@@ -732,7 +847,7 @@ readonly class Settings
         $val = $is_managed ? $local['lng'] : esc_attr(get_option('grp_settings')['grp_longitude'] ?? '');
 
         printf(
-            '<input type="text" id="grp_longitude" name="grp_settings[grp_longitude]" value="%s" class="small-text" %s>',
+            '<input type="text" id="grp_longitude" name="grp_settings[grp_longitude]" value="%s" class="medium-text" %s>',
             $val,
             $is_managed ? 'disabled style="background:#f0f0f1; color:#555;"' : ''
         );
@@ -748,7 +863,7 @@ readonly class Settings
         $val = $is_managed ? $local['address'] : esc_textarea(get_option('grp_settings')['grp_address'] ?? '');
 
         printf(
-            '<textarea name="grp_settings[grp_address]" class="large-text" rows="3" placeholder="123 Main St..." %s>%s</textarea>',
+            '<textarea id="grp_address" name="grp_settings[grp_address]" class="large-text" rows="3" placeholder="123 Main St..." %s>%s</textarea>',
             $is_managed ? 'disabled style="background:#f0f0f1; color:#555; border-color:#ccc;"' : '',
             $val
         );
@@ -765,7 +880,7 @@ readonly class Settings
         $val = $is_managed ? $local['phone'] : esc_attr(get_option('grp_settings')['grp_phone'] ?? '');
 
         printf(
-            '<input type="text" name="grp_settings[grp_phone]" value="%s" class="regular-text" placeholder="+359888888888" %s>',
+            '<input type="text" id="grp_phone" name="grp_settings[grp_phone]" value="%s" class="regular-text" placeholder="+359888888888" %s>',
             $val,
             $is_managed ? 'disabled style="background:#f0f0f1; color:#555; border-color:#ccc;"' : ''
         );
@@ -792,7 +907,7 @@ readonly class Settings
                 '<input type="text" value="%s" class="regular-text" disabled style="background:#f0f0f1; color:#555;">',
                 esc_attr($val)
             );
-            echo '<p class="description">' . __('Synced from SEO plugin (Yoast/RankMath).', 'google-reviews-pro') . '</p>';
+            echo '<p class="description">' . __('Synced from SEO plugin.', 'google-reviews-pro') . '</p>';
             return;
         }
 
@@ -829,6 +944,31 @@ readonly class Settings
             <?php _e('Select a price range manually to override, or leave "Auto" to use data fetched from Google.', 'google-reviews-pro'); ?>
         </p>
         <?php
+    }
+
+    public function periods_html(): void
+    {
+        $values = get_option('grp_settings')['grp_periods'] ?? [];
+
+        if (is_array($values)) {
+            $working_hours = '';
+
+            foreach ($values as $day => $value) {
+                $working_hours .= sprintf('%s: %s', esc_attr($day), esc_attr($value)).PHP_EOL;
+            }
+
+            printf(
+                '<textarea id="grp_periods" name="grp_settings[grp_periods]" class="large-text" rows="3" style="white-space: pre-wrap;" readonly>%s</textarea>',
+                $working_hours
+            );
+        } else {
+            printf(
+                '<textarea id="grp_periods" name="grp_settings[grp_periods]" class="large-text" rows="3" style="white-space: pre-wrap;" readonly>%s</textarea>',
+                $values
+            );
+        }
+
+
     }
 
     public function collection_section_html(): void
@@ -1238,7 +1378,8 @@ readonly class Settings
 
                 $findBtn.on('click', function(e) {
                     e.preventDefault();
-                    const query = $('#grp_finder_query').val();
+                    const queryInput = $('#grp_finder_query');
+                    const query = queryInput.val();
                     const source = $sourceSelect.val();
                     let apiKey = '';
 
@@ -1279,8 +1420,29 @@ readonly class Settings
 
                             $('#grp_business_name').val(data.name).css('background-color', '#e6fffa');
 
-                            if(data.lat) $('#grp_latitude').val(data.lat).css('background-color', '#e6fffa');
-                            if(data.lng) $('#grp_longitude').val(data.lng).css('background-color', '#e6fffa');
+                            if (data.address) {
+                                $('#grp_address').val(data.address).css('background-color', '#e6fffa');
+                            }
+
+                            if (data.phone) {
+                                $('#grp_phone').val(data.phone).css('background-color', '#e6fffa');
+                            }
+
+                            let coordinates = '';
+
+                            if(data.lat) {
+                                $('#grp_latitude').val(data.lat).css('background-color', '#e6fffa');
+                                coordinates += data.lat;
+                            }
+
+                            if (data.lat && data.lng) {
+                                coordinates += ' / ';
+                            }
+
+                            if(data.lng) {
+                                $('#grp_longitude').val(data.lng).css('background-color', '#e6fffa');
+                                coordinates += data.lng;
+                            }
                             if(data.address) $('#grp_address').val(data.address).css('background-color', '#e6fffa');
 
                             $msg.css('color', 'green').html('<?php _e('Business found! Fields autofilled. Please <strong>Save Changes</strong>.', 'google-reviews-pro'); ?>');
@@ -1289,7 +1451,23 @@ readonly class Settings
                             $('#grp_prev_rating').text(data.rating || '0.0');
                             $('#grp_prev_count').text(data.count || '0');
                             $('#grp_prev_address').text(data.address || '');
+                            $('#grp_prev_phone').text(data.phone || '');
+                            $('#grp_prev_coordinates').text(coordinates);
                             $('.grp-stars').text(getStars(data.rating || 0));
+                            $('#grp_prev_weekday').text(data.weekday_text || '');
+                            console.log(data.periods || 'No working hours');
+                            if (data.periods) {
+                                let working_hours = '';
+                                let periods = data.periods;
+
+                                for (let key in periods) {
+                                    if (periods.hasOwnProperty(key)) {
+                                        working_hours += key + ': ' + periods[key] + "\n";
+                                    }
+                                }
+
+                                $('#grp_periods').val(working_hours);
+                            }
 
                             const priceLvl = data.price_level || 0;
                             const priceStr = priceLvl > 0 ? '$'.repeat(priceLvl) : '';
@@ -1305,6 +1483,8 @@ readonly class Settings
                             $('#grp_prev_icon').attr('src', iconUrl);
 
                             $previewWrapper.slideDown();
+
+                            queryInput.val(''); // clear the input
                         } else {
                             $msg.css('color', 'red').text('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Not found', 'google-reviews-pro'); ?>'));
                             $previewWrapper.hide();
@@ -1332,6 +1512,142 @@ readonly class Settings
 
                 // On Change
                 $emailCheckbox.on('change', toggleEmailInput);
+
+                // Delete location
+                $('.grp-delete-loc-btn').on('click', function(e) {
+                    e.preventDefault();
+                    const $btn = $(this);
+                    const placeId = $btn.data('place-id');
+
+                    if (!confirm('<?php _e('Are you sure you want to delete this location? All associated reviews and images will be permanently removed.', 'google-reviews-pro'); ?>')) {
+                        return;
+                    }
+
+                    $btn.prop('disabled', true).text('...');
+
+                    $.post(ajaxurl, {
+                        action: 'grp_delete_location',
+                        nonce: '<?php echo wp_create_nonce("grp_nonce"); ?>',
+                        place_id: placeId
+                    }, function(res) {
+                        if (res.success) {
+                            alert(res.data.message);
+                            $btn.closest('tr').fadeOut(400, function() {
+                                $(this).remove();
+                            });
+                        } else {
+                            alert('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
+                            $btn.prop('disabled', false).text('<?php _e('Delete', 'google-reviews-pro'); ?>');
+                        }
+                    }).fail(function() {
+                        alert('<?php _e('Server error', 'google-reviews-pro'); ?>.');
+                        $btn.prop('disabled', false).text('<?php _e('Delete', 'google-reviews-pro'); ?>');
+                    });
+                });
+
+                // Show stored raw API data
+                const $rawModal = $('#grp-raw-data-modal');
+                const $rawContent = $('#grp-raw-content');
+
+                // Open Modal & Fetch Data
+                $('.grp-details-btn').on('click', function(e) {
+                    e.preventDefault();
+                    const $btn = $(this);
+                    const placeId = $btn.data('place-id');
+
+                    // Reset & Show Loading
+                    $rawContent.text('<?php _e('Loading data', 'google-reviews-pro'); ?>...');
+                    $rawModal.css('display', 'flex'); // Flex to center
+
+                    $.post(ajaxurl, {
+                        action: 'grp_get_location_details',
+                        nonce: '<?php echo wp_create_nonce("grp_nonce"); ?>',
+                        place_id: placeId
+                    }, function(res) {
+                        if (res.success) {
+                            // Pretty print JSON
+                            $rawContent.text(JSON.stringify(res.data, null, 4));
+                        } else {
+                            $rawContent.text('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
+                        }
+                    }).fail(function() {
+                        $rawContent.text('<?php _e('Server connection failed', 'google-reviews-pro'); ?>.');
+                    });
+                });
+
+                // Close Modal
+                $('.grp-close-modal').on('click', function(e) {
+                    e.preventDefault();
+                    $rawModal.hide();
+                });
+
+                // SCHEMA CHECK LOGIC
+                const $schemaModal = $('#grp-schema-modal');
+                const $schemaBody = $('#grp-schema-tbody');
+
+                $('.grp-schema-btn').on('click', function(e) {
+                    e.preventDefault();
+                    const $btn = $(this);
+                    const placeId = $btn.data('place-id');
+
+                    $schemaBody.html('<tr><td colspan="3"><?php _e('Analyzing...', 'google-reviews-pro'); ?></td></tr>');
+                    $schemaModal.css('display', 'flex');
+
+                    $.post(ajaxurl, {
+                        action: 'grp_get_schema_details',
+                        nonce: '<?php echo wp_create_nonce("grp_nonce"); ?>',
+                        place_id: placeId
+                    }, function(res) {
+                        if (res.success) {
+                            let rows = '';
+                            const fields = res.data;
+
+                            // Map friendly names
+                            const labels = {
+                                'name': 'Business Name',
+                                'address': 'Address',
+                                'phone': 'Telephone',
+                                'latitude': 'Latitude',
+                                'longitude': 'Longitude',
+                                'priceRange': 'Price Range',
+                                'openingHours': 'Opening Hours',
+                                'maps_url': 'Has Map URL'
+                            };
+
+                            for (const [key, info] of Object.entries(fields)) {
+                                const label = labels[key] || key;
+                                const sourceColor = info.source.includes('SEO') ? '#46b450' : (info.source.includes('API') ? '#2271b1' : '#666');
+
+                                rows += `
+                                    <tr>
+                                        <td><strong>${label}</strong></td>
+                                        <td style="word-break:break-word;">${info.value}</td>
+                                        <td><span style="color:${sourceColor}; font-weight:600;">${info.source}</span></td>
+                                    </tr>
+                                `;
+                            }
+                            $schemaBody.html(rows);
+                        } else {
+                            $schemaBody.html('<tr><td colspan="3" style="color:red;"><?php _e('Error loading data', 'google-reviews-pro'); ?>.</td></tr>');
+                        }
+                    }).fail(function() {
+                        $schemaBody.html('<tr><td colspan="3" style="color:red;"><?php _e('Server error', 'google-reviews-pro'); ?>.</td></tr>');
+                    });
+                });
+
+                $('.grp-close-schema').on('click', function() {
+                    $schemaModal.hide();
+                });
+
+                // Close on outside click (for both modals)
+                $(window).on('click', function(e) {
+                    if ($(e.target).is('#grp-raw-data-modal')) {
+                        $('#grp-raw-data-modal').hide();
+                    }
+                    if ($(e.target).is('#grp-schema-modal')) {
+                        $('#grp-schema-modal').hide();
+                    }
+                });
             });
 
             function printCard() {
