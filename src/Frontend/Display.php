@@ -373,29 +373,20 @@ readonly class Display
     {
         $schema_hours = [];
         $days_map = [0 => 'Sunday', 1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday'];
-        $days_map_l10n = [
-            0 => __('Sunday', 'google-reviews-pro'),
-            1 => __('Monday', 'google-reviews-pro'),
-            2 => __('Tuesday', 'google-reviews-pro'),
-            3 => __('Wednesday', 'google-reviews-pro'),
-            4 => __('Thursday', 'google-reviews-pro'),
-            5 => __('Friday', 'google-reviews-pro'),
-            6 => __('Saturday', 'google-reviews-pro')
-        ];
 
         foreach ($periods as $period) {
             if (empty($period['open'])) {
                 continue;
             }
 
-            $day_index = ucfirst(strtolower($period['open']['day']));
+            $day_index = $period['open']['day'];
             $open_time = $period['open']['time']; // "0900"
 
             // if 24h format
             if ($open_time === '0000' && empty($period['close'])) {
                 $schema_hours[] = [
                     '@type' => 'OpeningHoursSpecification',
-                    'dayOfWeek' => $days_map[$day_index] ?? $days_map_l10n[$day_index],
+                    'dayOfWeek' => $days_map[$day_index],
                     'opens' => '00:00',
                     'closes' => '23:59'
                 ];
@@ -410,7 +401,7 @@ readonly class Display
 
             $schema_hours[] = [
                 '@type' => 'OpeningHoursSpecification',
-                'dayOfWeek' => $days_map[$day_index] ?? $days_map_l10n[$day_index],
+                'dayOfWeek' => $days_map[$day_index],
                 'opens' => substr($open_time, 0, 2) . ':' . substr($open_time, 2),
                 'closes' => substr($close_time, 0, 2) . ':' . substr($close_time, 2),
             ];
