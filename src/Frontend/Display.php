@@ -345,12 +345,6 @@ readonly class Display
             $schema_payload['openingHoursSpecification'] = $this->format_opening_hours($auto_meta['periods']);
         }
 
-        if (!empty($auto_meta['website'])) {
-            $schema_payload['website'] = $auto_meta['website'];
-        } else {
-            $schema_payload['website'] = site_url();
-        }
-
         if ($stats) {
             $schema_payload['aggregateRating'] = [
                 '@type' => 'AggregateRating',
