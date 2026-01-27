@@ -46,8 +46,9 @@ final readonly class PostType
     {
         $new_columns = [];
         $new_columns['cb'] = $columns['cb'];
-        $new_columns['grp_avatar'] = __('Photo', 'google-reviews-pro'); // Колона за Featured Image
+        $new_columns['grp_avatar'] = __('Photo', 'google-reviews-pro'); // Featured Image
         $new_columns['title'] = __('Reviewer Name', 'google-reviews-pro');
+        $new_columns['location'] = __('Location', 'google-reviews-pro');
         $new_columns['grp_rating'] = __('Rating', 'google-reviews-pro');
         $new_columns['grp_visible'] = __('Visibility', 'google-reviews-pro');
         $new_columns['date'] = $columns['date'];
@@ -69,6 +70,12 @@ final readonly class PostType
         if ($column === 'grp_rating') {
             $rating = get_post_meta($post_id, '_grp_rating', true);
             echo $rating ? '<strong>' . esc_html($rating) . '</strong> <span style="color:#fbbc04;">★</span>' : '—';
+        }
+
+        if ($column === 'location') {
+            $location = get_post_meta($post_id, '_grp_assigned_place_id', true);
+            $locations = get_option('grp_locations_db', []);
+            echo $location ? '<strong>' . esc_html($locations[$location]['name']) . '</strong>' : '—';
         }
 
         if ($column === 'grp_visible') {
