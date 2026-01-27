@@ -388,7 +388,7 @@ readonly class Display
                 continue;
             }
 
-            $day_index = $period['open']['day'];
+            $day_index = ucfirst(strtolower($period['open']['day']));
             $open_time = $period['open']['time']; // "0900"
 
             // if 24h format
@@ -410,7 +410,7 @@ readonly class Display
 
             $schema_hours[] = [
                 '@type' => 'OpeningHoursSpecification',
-                'dayOfWeek' => $days_map[$day_index],
+                'dayOfWeek' => $days_map[$day_index] ?? $days_map_l10n[$day_index],
                 'opens' => substr($open_time, 0, 2) . ':' . substr($open_time, 2),
                 'closes' => substr($close_time, 0, 2) . ':' . substr($close_time, 2),
             ];
