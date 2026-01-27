@@ -15,6 +15,9 @@ readonly class Handler
         add_action('wp_ajax_grp_find_business', [$this, 'handle_find']);
         add_action('wp_ajax_grp_load_more', [$this, 'handle_load_more']);
         add_action('wp_ajax_nopriv_grp_load_more', [$this, 'handle_load_more']);
+        add_action('wp_ajax_grp_delete_location', [$this, 'handle_delete_location']);
+        add_action('wp_ajax_grp_get_location_details', [$this, 'handle_get_location_details']);
+        add_action('wp_ajax_grp_get_schema_details', [$this, 'handle_get_schema_details']);
     }
 
     public function handle_load_more(): void
@@ -119,5 +122,79 @@ readonly class Handler
         } else {
             wp_send_json_error(__('Unknown error or no data found.', 'google-reviews-pro'));
         }
+    }
+
+    public function handle_delete_location(): void
+    {
+        if (!check_ajax_referer('grp_nonce', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized action.', 'google-reviews-pro'));
+        }
+
+        $place_id = sanitize_text_field($_POST['place_id'] ?? '');
+
+        if (empty($place_id)) {
+            wp_send_json_error(__('Invalid Place ID.', 'google-reviews-pro'));
+        }
+
+        $result = $this->api->delete_location($place_id);
+
+        wp_send_json_success([
+            'message' => sprintf(
+                __('Location deleted. Removed %d reviews and %d images.', 'google-reviews-pro'),
+                $result['reviews_deleted'],
+                $result['images_deleted']
+            )
+        ]);
+    }
+
+    public function handle_get_location_details(): void
+    {
+        if (!check_ajax_referer('grp_nonce', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized action.', 'google-reviews-pro'));
+        }
+
+        $place_id = sanitize_text_field($_POST['place_id'] ?? '');
+
+        if (empty($place_id)) {
+            wp_send_json_error(__('Invalid Place ID.', 'google-reviews-pro'));
+        }
+
+        if ($meta = $this->api->get_location_metadata($place_id)) {
+            if (isset($meta['updated'])) {
+                $meta['updated_human'] = date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $meta['updated']);
+            }
+            wp_send_json_success($meta);
+        } else {
+            wp_send_json_error(__('No data found for this location.', 'google-reviews-pro'));
+        }
+    }
+
+    public function handle_get_schema_details(): void
+    {
+        if (!check_ajax_referer('grp_nonce', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized action.', 'google-reviews-pro'));
+        }
+
+        $place_id = sanitize_text_field($_POST['place_id'] ?? '');
+
+        if (empty($place_id)) {
+            wp_send_json_error(__('Invalid Place ID.', 'google-reviews-pro'));
+        }
+
+        $debug_info = $this->display->get_schema_debug_info($place_id);
+
+        wp_send_json_success($debug_info);
     }
 }

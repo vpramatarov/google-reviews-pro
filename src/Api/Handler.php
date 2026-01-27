@@ -282,7 +282,6 @@ readonly class Handler
 
         $reviews = $data['reviews'] ?? [];
         $meta = $data['meta'] ?? [];
-
         $stats = $this->save_reviews($reviews, $current_place_id);
 
         if (!empty($current_place_id) && !empty($meta)) {
@@ -370,7 +369,57 @@ readonly class Handler
         ];
     }
 
-    private function save_location_metadata(string $place_id, array $meta): void
+    /**
+     * Deletes a location and all associated data (reviews, images, metadata).
+     * @return array{"success": bool, "reviews_deleted": int, "images_deleted": int}
+     */
+    public function delete_location(string $place_id): array
+    {
+        $args = [
+            'post_type' => 'grp_review',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_query' => [
+                [
+                    'key' => '_grp_assigned_place_id',
+                    'value' => $place_id
+                ]
+            ]
+        ];
+
+        $query = new \WP_Query($args);
+        $deleted_reviews = 0;
+        $deleted_images = 0;
+
+        if ($query->have_posts()) {
+            foreach ($query->posts as $post_id) {
+                // Delete attachment (Featured Image), if any
+                $thumb_id = get_post_thumbnail_id($post_id);
+                if ($thumb_id) {
+                    wp_delete_attachment($thumb_id, true);
+                    $deleted_images++;
+                }
+
+                // Delete the review
+                wp_delete_post($post_id, true);
+                $deleted_reviews++;
+            }
+        }
+
+        $db = get_option('grp_locations_db', []);
+        if (isset($db[$place_id])) {
+            unset($db[$place_id]);
+            update_option('grp_locations_db', $db);
+        }
+
+        return [
+            'success' => true,
+            'reviews_deleted' => $deleted_reviews,
+            'images_deleted' => $deleted_images
+        ];
+    }
+
+    public function save_location_metadata(string $place_id, array $meta): void
     {
         $db = get_option('grp_locations_db', []);
         $existing = $db[$place_id] ?? [];
@@ -383,7 +432,7 @@ readonly class Handler
             'price_level' => isset($meta['price_level']) ? (int)$meta['price_level'] : ($existing['price_level'] ?? null),
             'maps_url' => esc_url_raw($meta['maps_url'] ?? $existing['maps_url'] ?? null),
             'website' => esc_url_raw($meta['website'] ?? $existing['website'] ?? get_home_url()),
-            'periods' => $meta['periods'] ??  $existing['periods'] ?? null,
+            'periods' => $meta['periods'] ?? $existing['periods'] ?? null,
             'rating' => !empty($meta['rating']) ? (float)$meta['rating'] : ($existing['rating'] ?? 0),
             'count' => !empty($meta['count']) ? (int)$meta['count'] : ($existing['count'] ?? 0),
             'updated' => time()
