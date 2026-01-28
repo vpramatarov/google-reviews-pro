@@ -1606,6 +1606,8 @@ readonly class Settings
 
                             // Map friendly names
                             const labels = {
+                                'place_id': 'Place ID',
+                                'data_id': 'Data ID',
                                 'name': 'Business Name',
                                 'address': 'Address',
                                 'phone': 'Telephone',

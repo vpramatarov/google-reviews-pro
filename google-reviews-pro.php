@@ -96,7 +96,7 @@ final class GoogleReviewsPro
     {
         $this->apiHandler = new ApiHandler();
         $seo = new SeoIntegrator();
-        $cronManager = new CronManager($this->apiHandler->getApiOptions());
+        $cronManager = new CronManager($this->apiHandler->get_api_options());
 
         /**
          * @note: cron_schedules must be loaded before plugins_loaded
