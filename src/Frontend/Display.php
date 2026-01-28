@@ -227,10 +227,9 @@ readonly class Display
     {
         $options = $this->api->getApiOptions();
         $seo_data = $this->seo->get_local_data();
-        $auto_meta = !empty($place_id) ? $this->api->get_location_metadata($place_id) : null; // API data
-
         $global_place_id = $options['place_id'] ?? '';
         $is_main_location = (empty($place_id) || $place_id === $global_place_id);
+        $auto_meta = !empty($place_id) ? $this->api->get_location_metadata($place_id) : ($this->api->get_location_metadata($global_place_id) ?? null); // API data
 
         // Helper function to determine value and source
         $determine = function($key, $seo_val, $manual_val, $api_val, $is_main) use ($options) {
