@@ -277,7 +277,8 @@ readonly class Display
 
         // Analyze Hours & Maps
         if (!empty($auto_meta['periods'])) {
-            $fields['openingHours'] = ['value' => 'Yes (Complex Object)', 'source' => 'API (Auto-Sync)'];
+            $v = sprintf('<pre>%s</pre>', print_r($auto_meta['periods'], true));
+            $fields['openingHours'] = ['value' => $v, 'source' => 'API (Auto-Sync)'];
         } else {
             $fields['openingHours'] = ['value' => 'Missing', 'source' => '-'];
         }
@@ -301,8 +302,8 @@ readonly class Display
 
         $options = $this->api->getApiOptions();
         $seo_data = $this->seo->get_local_data();
-        $auto_meta = !empty($current_place_id) ? $this->api->get_location_metadata($current_place_id) : null;
         $global_place_id = $options['place_id'] ?? '';
+        $auto_meta = !empty($current_place_id) ? $this->api->get_location_metadata($current_place_id) : ($this->api->get_location_metadata($global_place_id) ?? null);
         $default_name = !empty($seo_data['name']) ? $seo_data['name'] : ($options['grp_business_name'] ?: get_bloginfo('name'));
         $default_addr = !empty($seo_data['address']) ? $seo_data['address'] : ($options['grp_address'] ?? '');
         $default_phone = !empty($seo_data['phone']) ? $seo_data['phone'] : ($options['grp_phone'] ?? '');
@@ -412,7 +413,7 @@ readonly class Display
         }
 
         if (!empty($auto_meta['periods'])) {
-            $schema_payload['openingHoursSpecification'] = $this->format_opening_hours($auto_meta['periods']);
+            $schema_payload['openingHoursSpecification'] = $this->convert_periods_to_schema($auto_meta['periods']);
         }
 
         if ($stats) {
@@ -429,48 +430,58 @@ readonly class Display
     }
 
     /**
-     * Schema.org helper method for formatting business hours
-     * Google API format: day (0=Sunday), time ("0900").
-     * Schema format: dayOfWeek ("Sunday"), opens ("09:00"), closes ("17:00")
+     * Converts an associative array of hours to Schema.org OpeningHoursSpecification.
+     *
+     * @param string[] $hours e.g. ['monday' => '9:00 AM - 5:00 PM']
+     * @return array The structured data structure.
      */
-    private function format_opening_hours(array $periods): array
+    function convert_periods_to_schema(array $hours): array
     {
-        $schema_hours = [];
-        $days_map = [0 => 'Sunday', 1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday'];
+        $structured_data = [];
+        $days_l10n = [
+            __('monday', 'google-reviews-pro') => 'monday',
+            __('tuesday', 'google-reviews-pro') => 'tuesday',
+            __('wednesday', 'google-reviews-pro') => 'wednesday',
+            __('thursday', 'google-reviews-pro') => 'thursday',
+            __('friday', 'google-reviews-pro') => 'friday',
+            __('saturday', 'google-reviews-pro') => 'saturday',
+            __('sunday', 'google-reviews-pro') => 'sunday',
+        ];
 
-        foreach ($periods as $period) {
-            if (empty($period['open'])) {
+        foreach ($hours as $day => $time_range) {
+            // The input can contain Narrow No-Break Space (U+202F), Thin Space (U+2009),
+            // and En-dash (U+2013). We normalize them to standard ASCII.
+            $clean_range = str_replace(
+                ["\u{202F}", "\u{2009}", "\u{2013}", "–"],
+                [" ", " ", "-", "-"],
+                $time_range
+            );
+
+            // Handle "Closed" status
+            // Schema.org best practice is to simply omit closed days.
+            if (str_contains(strtolower($clean_range), 'closed')) {
                 continue;
             }
 
-            $day_index = $period['open']['day'];
-            $open_time = $period['open']['time']; // "0900"
-
-            // if 24h format
-            if ($open_time === '0000' && empty($period['close'])) {
-                $schema_hours[] = [
-                    '@type' => 'OpeningHoursSpecification',
-                    'dayOfWeek' => $days_map[$day_index],
-                    'opens' => '00:00',
-                    'closes' => '23:59'
-                ];
-                continue;
+            // Separate Start and End times
+            $parts = explode('-', $clean_range);
+            if (count($parts) !== 2) {
+                continue; // Skip malformed entries
             }
 
-            if (empty($period['close'])) {
-                continue;
-            }
+            // Convert to 24-hour format (required by Schema.org) - e.g., "9:00 AM" -> "09:00"
+            $opens = date("H:i", strtotime(preg_replace("/[^0-9:]/", "", trim($parts[0]))));
+            $closes = date("H:i", strtotime(preg_replace("/[^0-9:]/", "", trim($parts[1]))));
 
-            $close_time = $period['close']['time']; // "1700"
-
-            $schema_hours[] = [
-                '@type' => 'OpeningHoursSpecification',
-                'dayOfWeek' => $days_map[$day_index],
-                'opens' => substr($open_time, 0, 2) . ':' . substr($open_time, 2),
-                'closes' => substr($close_time, 0, 2) . ':' . substr($close_time, 2),
+            // Capitalize the array key (e.g., "monday" -> "Monday")
+            $structured_data[] = [
+                "@type" => "OpeningHoursSpecification",
+                "dayOfWeek" => "https://schema.org/" . ucfirst($days_l10n[$day] ?? $day),
+                "opens" => $opens,
+                "closes" => $closes
             ];
         }
 
-        return $schema_hours;
+        return $structured_data;
     }
 }
