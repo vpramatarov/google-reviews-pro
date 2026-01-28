@@ -74,8 +74,8 @@ class SerpApi implements ApiHandler
                     'price_level' => $this->normalize_price($info['price'] ?? null), // $1–10
                     'maps_url' => $info['url'] ?? null,
                     'website' => $info['website'] ?? get_home_url(),
-                    'periods' => $info['operating_hours'] ?? null,
-                    'weekday_text'=> $info['hours']  ?? null,
+                    'periods' => $this->normalize_hours($info['operating_hours'] ?? $info['hours'] ?? null),
+                    'weekday_text'=> null,
                     'icon' => $place['thumbnail'] ?? null,
                     'rating' => $info['rating'] ?? 0,
                     'count' => $info['reviews'] ?? 0,
@@ -162,7 +162,7 @@ class SerpApi implements ApiHandler
                 'price_level' => $this->normalize_price($place['price_level'] ?? null), // $1–10
                 'maps_url' => $response_meta['google_maps_url'] ?? null,
                 'website' => $place['website'] ?? get_home_url(),
-                'periods' => $this->normalize_hours($place['hours'] ?? null),
+                'periods' => $this->normalize_hours($place['operating_hours'] ?? $place['hours'] ?? null),
                 'weekday_text'=> $place['open_state'] ?? null,
                 'icon' => $place['thumbnail'] ?? null,
                 'rating' => $place['rating'] ?? 0,
@@ -215,9 +215,15 @@ class SerpApi implements ApiHandler
         }
 
         if (isset($hours[0])) {
-            return array_merge(...$hours);
+            $working_hours = [];
+            foreach ($hours as $hourData) {
+                foreach ($hourData as $day => $hour) {
+                    $working_hours[strtolower($day)] = $hour;
+                }
+            }
+            return $working_hours;
+        } else {
+            return $hours;
         }
-
-        return $hours;
     }
 }

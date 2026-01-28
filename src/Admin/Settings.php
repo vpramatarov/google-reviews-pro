@@ -417,8 +417,7 @@ readonly class Settings
             }
 
             if (!empty($clean['grp_periods'])) {
-                $working_hours = array_filter(explode("\n", $input['grp_periods']));
-                $meta['periods'] = $working_hours;
+                $meta['periods'] = json_decode($clean['grp_periods'], true);
             }
 
             $this->api->save_location_metadata($clean['place_id'], $meta);
@@ -950,24 +949,25 @@ readonly class Settings
     {
         $values = get_option('grp_settings')['grp_periods'] ?? [];
 
-        if (is_array($values)) {
-            $working_hours = '';
-
-            foreach ($values as $day => $value) {
-                $working_hours .= sprintf('%s: %s', esc_attr($day), esc_attr($value)).PHP_EOL;
-            }
-
-            printf(
-                '<textarea id="grp_periods" name="grp_settings[grp_periods]" class="large-text" rows="3" style="white-space: pre-wrap;" readonly>%s</textarea>',
-                $working_hours
-            );
-        } else {
-            printf(
-                '<textarea id="grp_periods" name="grp_settings[grp_periods]" class="large-text" rows="3" style="white-space: pre-wrap;" readonly>%s</textarea>',
-                $values
-            );
+        if (is_string($values)) {
+            $values = json_decode($values, true);
         }
 
+        $working_hours = '';
+
+        foreach ($values as $day => $value) {
+            $working_hours .= sprintf('%s: %s', esc_attr($day), esc_attr($value)).PHP_EOL;
+        }
+
+        printf(
+            '<textarea id="grp_periods_normalized" class="large-text" rows="3" style="white-space: pre-wrap;" disabled>%s</textarea>',
+            $working_hours
+        );
+
+        printf(
+            '<input type="hidden" id="grp_periods" name="grp_settings[grp_periods]" value="%s">',
+            json_encode($values, JSON_UNESCAPED_UNICODE)
+        );
 
     }
 
@@ -1455,18 +1455,19 @@ readonly class Settings
                             $('#grp_prev_coordinates').text(coordinates);
                             $('.grp-stars').text(getStars(data.rating || 0));
                             $('#grp_prev_weekday').text(data.weekday_text || '');
-                            console.log(data.periods || 'No working hours');
+
                             if (data.periods) {
                                 let working_hours = '';
                                 let periods = data.periods;
 
                                 for (let key in periods) {
-                                    if (periods.hasOwnProperty(key)) {
+                                    if (periods.hasOwnProperty(key) && periods[key].length) {
                                         working_hours += key + ': ' + periods[key] + "\n";
                                     }
                                 }
 
-                                $('#grp_periods').val(working_hours);
+                                $('#grp_periods_normalized').val(working_hours).css('background-color', '#e6fffa');
+                                $('#grp_periods').val(JSON.stringify(periods));
                             }
 
                             const priceLvl = data.price_level || 0;

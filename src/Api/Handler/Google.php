@@ -79,8 +79,8 @@ class Google implements ApiHandler
             'price_level' => $result['price_level'] ?? null, // 0-4
             'maps_url' => $result['url'] ?? null,
             'website' => $result['website'] ?? get_home_url(),
-            'periods' => $result['opening_hours']['periods'] ?? null,
-            'weekday_text'=> $result['opening_hours']['weekday_text'] ?? null,
+            'periods' => $this->format_periods($result['opening_hours']['periods'] ?? null),
+            'weekday_text'=> null,
             'icon' => $result['icon'] ?? null,
             'rating' => $result['rating'] ?? 0,
             'count' => $result['user_ratings_total'] ?? 0,
@@ -125,8 +125,8 @@ class Google implements ApiHandler
                 'maps_url' => $place['url'] ?? null,
                 'website' => $place['website'] ?? get_home_url(),
                 'phone_number' => $place['phone'] ?? null,
-                'periods' => $place['opening_hours']['periods'] ?? null,
-                'weekday_text'=> $place['opening_hours']['weekday_text'] ?? null,
+                'periods' => $this->format_periods($place['opening_hours']['weekday_text'] ?? null),
+                'weekday_text'=> null,
                 'icon' => $result['icon'] ?? null,
                 'rating' => $place['rating'] ?? 0,
                 'count' => $place['user_ratings_total'] ?? 0,
@@ -141,5 +141,21 @@ class Google implements ApiHandler
     public function supports(string $source): bool
     {
         return self::SOURCE === $source;
+    }
+
+    private function format_periods(?array $periods): array
+    {
+        if (empty($periods)) {
+            return [];
+        }
+
+        $normalized_data = [];
+
+        foreach ($periods as $period) {
+            $day_and_hours = explode(':', $period);
+            $normalized_data[strtolower($day_and_hours[0])] = trim($day_and_hours[1]);
+        }
+
+        return $normalized_data;
     }
 }
