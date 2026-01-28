@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Google Reviews Pro\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-27 21:28+0000\n"
+"POT-Creation-Date: 2026-01-28 08:06+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: \n"
@@ -16,30 +16,30 @@ msgstr ""
 "X-Loco-Version: 2.8.1; wp-6.9; php-8.3.29\n"
 "X-Domain: google-reviews-pro"
 
-#: src/Admin/Settings.php:733
+#: src/Admin/Settings.php:750
 msgid "3 Stars & Up"
 msgstr ""
 
-#: src/Admin/Settings.php:734
+#: src/Admin/Settings.php:751
 msgid "4 Stars & Up"
 msgstr ""
 
-#: src/Admin/Settings.php:735
+#: src/Admin/Settings.php:752
 msgid "5 Stars Only"
 msgstr ""
 
-#: src/Admin/Settings.php:447
+#: src/Admin/Settings.php:460
 #, php-format
 msgid ""
 "<strong>Integrated with %s:</strong> Business data is synced from your SEO "
 "plugin to prevent conflicts. Fields below are read-only."
 msgstr ""
 
-#: src/Admin/Settings.php:642
+#: src/Admin/Settings.php:655
 msgid "Actions"
 msgstr ""
 
-#: src/Admin/Settings.php:305
+#: src/Admin/Settings.php:313
 msgid "Advanced Settings"
 msgstr ""
 
@@ -47,7 +47,7 @@ msgstr ""
 msgid "All Reviews"
 msgstr ""
 
-#: src/Admin/Settings.php:1537
+#: src/Admin/Settings.php:1594
 msgid "Analyzing..."
 msgstr ""
 
@@ -56,21 +56,21 @@ msgstr ""
 msgid "Anonymous"
 msgstr ""
 
-#: src/Admin/Settings.php:1466
+#: src/Admin/Settings.php:1523
 msgid ""
 "Are you sure you want to delete this location? All associated reviews and "
 "images will be permanently removed."
 msgstr ""
 
-#: src/Admin/Settings.php:916
+#: src/Admin/Settings.php:933
 msgid "Auto (Use API Data)"
 msgstr ""
 
-#: src/Admin/Settings.php:592
+#: src/Admin/Settings.php:605
 msgid "Automatically fetch reviews."
 msgstr ""
 
-#: src/Admin/Settings.php:1632
+#: src/Admin/Settings.php:1689
 msgid "Backup & Migration"
 msgstr ""
 
@@ -107,7 +107,7 @@ msgstr ""
 msgid "Business Address"
 msgstr ""
 
-#: src/Admin/Settings.php:1405
+#: src/Admin/Settings.php:1448
 msgid ""
 "Business found! Fields autofilled. Please <strong>Save Changes</strong>."
 msgstr ""
@@ -116,7 +116,7 @@ msgstr ""
 msgid "Business Name"
 msgstr ""
 
-#: src/Admin/Settings.php:484
+#: src/Admin/Settings.php:497
 msgid "Business Preview"
 msgstr ""
 
@@ -128,31 +128,31 @@ msgstr ""
 msgid "Card Background"
 msgstr ""
 
-#: src/Admin/Settings.php:604
+#: src/Admin/Settings.php:617
 msgid "Choose how often the auto-sync should run."
 msgstr ""
 
-#: src/Admin/Settings.php:766
+#: src/Admin/Settings.php:783
 msgid "Choose how the reviews should be displayed on your site."
 msgstr ""
 
-#: src/Admin/Settings.php:752
+#: src/Admin/Settings.php:769
 msgid "Choose the order in which reviews appear."
 msgstr ""
 
-#: src/Admin/Settings.php:427
+#: src/Admin/Settings.php:440
 msgid "Choose where to fetch reviews from."
 msgstr ""
 
-#: src/Admin/Settings.php:705 src/Admin/Settings.php:720
+#: src/Admin/Settings.php:722 src/Admin/Settings.php:737
 msgid "Close"
 msgstr ""
 
-#: src/Admin/Settings.php:692
+#: src/Admin/Settings.php:709
 msgid "Current Value"
 msgstr ""
 
-#: src/Admin/Settings.php:600
+#: src/Admin/Settings.php:613
 msgid "Daily"
 msgstr ""
 
@@ -172,17 +172,17 @@ msgstr ""
 msgid "Default (Global)"
 msgstr ""
 
-#: src/Admin/Settings.php:672 src/Admin/Settings.php:1484
-#: src/Admin/Settings.php:1488
+#: src/Admin/Settings.php:689 src/Admin/Settings.php:1541
+#: src/Admin/Settings.php:1545
 msgid "Delete"
 msgstr ""
 
-#: src/Admin/Settings.php:1211
+#: src/Admin/Settings.php:1254
 msgid ""
 "Delete all reviews, local images, and settings when deleting the plugin."
 msgstr ""
 
-#: src/Admin/Settings.php:975
+#: src/Admin/Settings.php:1018
 msgid "Direct Link:"
 msgstr ""
 
@@ -192,15 +192,15 @@ msgid ""
 "conflicts."
 msgstr ""
 
-#: src/Admin/Settings.php:1029
+#: src/Admin/Settings.php:1072
 msgid "Download a backup of your current reviews."
 msgstr ""
 
-#: src/Admin/Settings.php:1048
+#: src/Admin/Settings.php:1091
 msgid "Download Full Backup (.ZIP)"
 msgstr ""
 
-#: src/Admin/Settings.php:1016
+#: src/Admin/Settings.php:1059
 msgid "Download QR Image"
 msgstr ""
 
@@ -208,7 +208,7 @@ msgstr ""
 msgid "Edit Review"
 msgstr ""
 
-#: src/Admin/Settings.php:312
+#: src/Admin/Settings.php:320
 msgid "Email Notifications"
 msgstr ""
 
@@ -220,53 +220,53 @@ msgstr ""
 msgid "Enable Schema.org"
 msgstr ""
 
-#: src/Admin/Settings.php:619
+#: src/Admin/Settings.php:632
 msgid "Enable this to show only reviews that contain actual comments."
 msgstr ""
 
-#: src/Admin/Settings.php:479
+#: src/Admin/Settings.php:492
 msgid "Enter business name (e.g. Pizza Mario New York)"
 msgstr ""
 
-#: src/Admin/Settings.php:959
+#: src/Admin/Settings.php:1002
 #, php-format
 msgid "Error generating QR code: %s"
 msgstr ""
 
-#: src/Admin/Settings.php:1575
+#: src/Admin/Settings.php:1632
 msgid "Error loading data"
 msgstr ""
 
-#: src/Admin/Settings.php:1433 src/Admin/Settings.php:1483
-#: src/Admin/Settings.php:1515
+#: src/Admin/Settings.php:1490 src/Admin/Settings.php:1540
+#: src/Admin/Settings.php:1572
 msgid "Error: "
 msgstr ""
 
-#: src/Admin/Settings.php:1042
+#: src/Admin/Settings.php:1085
 msgid "Export CSV"
 msgstr ""
 
-#: src/Admin/Settings.php:1035
+#: src/Admin/Settings.php:1078
 msgid "Export JSON"
 msgstr ""
 
-#: src/Admin/Settings.php:1028
+#: src/Admin/Settings.php:1071
 msgid "Export Reviews"
 msgstr ""
 
-#: src/Admin/Settings.php:1118
+#: src/Admin/Settings.php:1161
 msgid "Failed to parse JSON file."
 msgstr ""
 
-#: src/Admin/Settings.php:691
+#: src/Admin/Settings.php:708
 msgid "Field"
 msgstr ""
 
-#: src/Admin/Settings.php:1089
+#: src/Admin/Settings.php:1132
 msgid "File upload failed."
 msgstr ""
 
-#: src/Admin/Settings.php:452
+#: src/Admin/Settings.php:465
 msgid "Fill these fields to generate valid LocalBusiness Schema for Google."
 msgstr ""
 
@@ -278,12 +278,16 @@ msgstr ""
 msgid "Find Your Business"
 msgstr ""
 
-#: src/Admin/Settings.php:537
+#: src/Admin/Settings.php:550
 msgid "Find your Place ID"
 msgstr ""
 
-#: src/Admin/Settings.php:764
+#: src/Admin/Settings.php:781
 msgid "Floating Badge"
+msgstr ""
+
+#: src/Frontend/Display.php:492
+msgid "friday"
 msgstr ""
 
 #: src/Frontend/Layout/Grid.php:29 src/Frontend/Layout/ListLayout.php:28
@@ -291,7 +295,7 @@ msgstr ""
 msgid "from"
 msgstr ""
 
-#: src/Admin/Settings.php:571
+#: src/Admin/Settings.php:584
 msgid ""
 "Get your API key from <a href=\"https://www.scrapingdog.com/\" "
 "target=\"_blank\">ScrapingDog</a>."
@@ -315,11 +319,11 @@ msgstr ""
 msgid "Grid"
 msgstr ""
 
-#: src/Admin/Settings.php:761
+#: src/Admin/Settings.php:778
 msgid "Grid (Default)"
 msgstr ""
 
-#: src/Admin/Settings.php:538
+#: src/Admin/Settings.php:551
 msgid "here"
 msgstr ""
 
@@ -335,7 +339,7 @@ msgstr ""
 msgid "Hide this review from frontend"
 msgstr ""
 
-#: src/Admin/Settings.php:748
+#: src/Admin/Settings.php:765
 msgid "Highest Rated First"
 msgstr ""
 
@@ -347,11 +351,11 @@ msgstr ""
 msgid "https://vpramatarov.eu"
 msgstr ""
 
-#: src/Admin/Settings.php:1124
+#: src/Admin/Settings.php:1167
 msgid "Import complete! Added: %d, Skipped (Duplicates): %d, Errors: %d"
 msgstr ""
 
-#: src/Admin/Settings.php:1054 src/Admin/Settings.php:1064
+#: src/Admin/Settings.php:1097 src/Admin/Settings.php:1107
 msgid "Import Reviews"
 msgstr ""
 
@@ -363,7 +367,7 @@ msgstr ""
 msgid "Initial Reviews Limit"
 msgstr ""
 
-#: src/Admin/Settings.php:1112
+#: src/Admin/Settings.php:1155
 msgid "Invalid file type. Allowed: .json, .csv, .zip"
 msgstr ""
 
@@ -371,7 +375,7 @@ msgstr ""
 msgid "Invalid Place ID."
 msgstr ""
 
-#: src/Admin/Settings.php:1637
+#: src/Admin/Settings.php:1694
 msgid "Last Synced:"
 msgstr ""
 
@@ -383,11 +387,11 @@ msgstr ""
 msgid "Layout Style"
 msgstr ""
 
-#: src/Admin/Settings.php:1200
+#: src/Admin/Settings.php:1243
 msgid "Leave empty to use the WordPress Admin email."
 msgstr ""
 
-#: src/Admin/Settings.php:561
+#: src/Admin/Settings.php:574
 msgid ""
 "Limit the number of pages to fetch (1 page ≈ 10 reviews). Warning: High "
 "values increase sync time."
@@ -401,7 +405,7 @@ msgstr ""
 msgid "List"
 msgstr ""
 
-#: src/Admin/Settings.php:762
+#: src/Admin/Settings.php:779
 msgid "List View"
 msgstr ""
 
@@ -409,7 +413,7 @@ msgstr ""
 msgid "Load More"
 msgstr ""
 
-#: src/Admin/Settings.php:1503
+#: src/Admin/Settings.php:1560
 msgid "Loading data"
 msgstr ""
 
@@ -425,7 +429,7 @@ msgstr ""
 msgid "Location deleted. Removed %d reviews and %d images."
 msgstr ""
 
-#: src/Admin/Settings.php:713
+#: src/Admin/Settings.php:730
 msgid "Location Raw Data"
 msgstr ""
 
@@ -433,11 +437,11 @@ msgstr ""
 msgid "Longitude"
 msgstr ""
 
-#: src/Admin/Settings.php:994
+#: src/Admin/Settings.php:1037
 msgid "Loving your experience at"
 msgstr ""
 
-#: src/Admin/Settings.php:749
+#: src/Admin/Settings.php:766
 msgid "Lowest Rated First"
 msgstr ""
 
@@ -449,7 +453,7 @@ msgstr ""
 msgid "Manual mode active."
 msgstr ""
 
-#: src/Admin/Settings.php:1636
+#: src/Admin/Settings.php:1693
 msgid "Manual Synchronization"
 msgstr ""
 
@@ -493,11 +497,15 @@ msgstr ""
 msgid "Moderation"
 msgstr ""
 
+#: src/Frontend/Display.php:488
+msgid "monday"
+msgstr ""
+
 #: src/Admin/Settings.php:144
 msgid "Multi-Location Reference"
 msgstr ""
 
-#: src/Admin/Settings.php:1625
+#: src/Admin/Settings.php:1682
 msgid "Never"
 msgstr ""
 
@@ -508,7 +516,7 @@ msgid_plural "%d New Google Reviews on %s"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Admin/Settings.php:746
+#: src/Admin/Settings.php:763
 msgid "Newest First"
 msgstr ""
 
@@ -528,7 +536,7 @@ msgstr ""
 msgid "No data found for this location."
 msgstr ""
 
-#: src/Admin/Settings.php:631
+#: src/Admin/Settings.php:644
 msgid "No locations found yet. Sync some reviews first."
 msgstr ""
 
@@ -544,43 +552,43 @@ msgstr ""
 msgid "No reviews found yet."
 msgstr ""
 
-#: src/Admin/Settings.php:1659
+#: src/Admin/Settings.php:1716
 msgid "No reviews to export."
 msgstr ""
 
-#: src/Admin/Settings.php:1433
+#: src/Admin/Settings.php:1490
 msgid "Not found"
 msgstr ""
 
-#: src/Admin/Settings.php:700
+#: src/Admin/Settings.php:717
 msgid ""
 "Note: \"SEO Plugin\" has priority #1. \"API Data\" has priority #2. \"Manual "
 "Settings\" has priority #3."
 msgstr ""
 
-#: src/Admin/Settings.php:320
+#: src/Admin/Settings.php:328
 msgid "Notification Email"
 msgstr ""
 
-#: src/Admin/Settings.php:580
+#: src/Admin/Settings.php:593
 msgid ""
 "Number of reviews to show initially. For Grid layout, this also determines "
 "the number of columns (Max 5)."
 msgstr ""
 
-#: src/Admin/Settings.php:747
+#: src/Admin/Settings.php:764
 msgid "Oldest First"
 msgstr ""
 
-#: src/Admin/Settings.php:602 src/Core/CronManager.php:63
+#: src/Admin/Settings.php:615 src/Core/CronManager.php:63
 msgid "Once Monthly"
 msgstr ""
 
-#: src/Admin/Settings.php:601
+#: src/Admin/Settings.php:614
 msgid "Once Weekly"
 msgstr ""
 
-#: src/Admin/Settings.php:1096
+#: src/Admin/Settings.php:1139
 msgid "Only JSON files are allowed."
 msgstr ""
 
@@ -588,20 +596,20 @@ msgstr ""
 msgid "Photo"
 msgstr ""
 
-#: src/Admin/Settings.php:96 src/Admin/Settings.php:639
+#: src/Admin/Settings.php:96 src/Admin/Settings.php:652
 msgid "Place ID"
 msgstr ""
 
-#: src/Admin/Settings.php:939
+#: src/Admin/Settings.php:982
 msgid ""
 "Please configure and save a Place ID in the \"Data Source\" section first."
 msgstr ""
 
-#: src/Admin/Settings.php:1352
+#: src/Admin/Settings.php:1395
 msgid "Please enter a business name and ensure your API key is filled in."
 msgstr ""
 
-#: src/Admin/Settings.php:469
+#: src/Admin/Settings.php:482
 msgid "Please enter and save an API Key first to use the Business Finder."
 msgstr ""
 
@@ -609,23 +617,23 @@ msgstr ""
 msgid "Price Range"
 msgstr ""
 
-#: src/Admin/Settings.php:1012
+#: src/Admin/Settings.php:1055
 msgid "Print Card"
 msgstr ""
 
-#: src/Admin/Settings.php:982
+#: src/Admin/Settings.php:1025
 msgid "Print this card and place it on your counter or tables."
 msgstr ""
 
-#: src/Admin/Settings.php:981
+#: src/Admin/Settings.php:1024
 msgid "Printable Card Preview"
 msgstr ""
 
-#: src/Admin/Settings.php:750
+#: src/Admin/Settings.php:767
 msgid "Random"
 msgstr ""
 
-#: src/Admin/Settings.php:993
+#: src/Admin/Settings.php:1036
 msgid "Rate Us on Google"
 msgstr ""
 
@@ -639,7 +647,7 @@ msgstr ""
 msgid "Rating"
 msgstr ""
 
-#: src/Admin/Settings.php:668
+#: src/Admin/Settings.php:683
 msgid "Raw Data"
 msgstr ""
 
@@ -655,11 +663,11 @@ msgstr ""
 msgid "Review"
 msgstr ""
 
-#: src/Admin/Settings.php:297
+#: src/Admin/Settings.php:305
 msgid "Review Collection Tools"
 msgstr ""
 
-#: src/Admin/Settings.php:935
+#: src/Admin/Settings.php:978
 msgid "Review Us"
 msgstr ""
 
@@ -672,27 +680,31 @@ msgstr ""
 msgid "reviews"
 msgstr ""
 
-#: src/Admin/Settings.php:737
+#: src/Admin/Settings.php:754
 msgid "Reviews below this rating will be hidden from the frontend."
 msgstr ""
 
-#: src/Admin/Settings.php:640
+#: src/Admin/Settings.php:653
 msgid "Reviews Count"
 msgstr ""
 
-#: src/Admin/Settings.php:1324
+#: src/Admin/Settings.php:1367
 msgid "Reviews synced successfully!"
 msgstr ""
 
-#: src/Admin/Settings.php:966
+#: src/Frontend/Display.php:493
+msgid "saturday"
+msgstr ""
+
+#: src/Admin/Settings.php:1009
 msgid "Scan this code to test the experience:"
 msgstr ""
 
-#: src/Admin/Settings.php:1002
+#: src/Admin/Settings.php:1045
 msgid "Scan with your phone camera"
 msgstr ""
 
-#: src/Admin/Settings.php:664
+#: src/Admin/Settings.php:677
 msgid "Schema Check"
 msgstr ""
 
@@ -700,11 +712,11 @@ msgstr ""
 msgid "ScrapingDog API Key"
 msgstr ""
 
-#: src/Admin/Settings.php:480
+#: src/Admin/Settings.php:493
 msgid "Search & Auto-fill"
 msgstr ""
 
-#: src/Admin/Settings.php:1078 src/Admin/Settings.php:1142
+#: src/Admin/Settings.php:1121 src/Admin/Settings.php:1185
 msgid "Security check failed"
 msgstr ""
 
@@ -713,7 +725,7 @@ msgstr ""
 msgid "Security check failed."
 msgstr ""
 
-#: src/Admin/Settings.php:926
+#: src/Admin/Settings.php:943
 msgid ""
 "Select a price range manually to override, or leave \"Auto\" to use data "
 "fetched from Google."
@@ -727,7 +739,7 @@ msgstr ""
 msgid "Select Source"
 msgstr ""
 
-#: src/Admin/Settings.php:1181
+#: src/Admin/Settings.php:1224
 msgid "Send email notifications when new reviews are imported."
 msgstr ""
 
@@ -739,28 +751,28 @@ msgstr ""
 msgid "SerpApi API Key"
 msgstr ""
 
-#: src/Admin/Settings.php:1518
+#: src/Admin/Settings.php:1575
 msgid "Server connection failed"
 msgstr ""
 
-#: src/Admin/Settings.php:1439 src/Admin/Settings.php:1487
-#: src/Admin/Settings.php:1578
+#: src/Admin/Settings.php:1496 src/Admin/Settings.php:1544
+#: src/Admin/Settings.php:1635
 msgid "Server error"
 msgstr ""
 
-#: src/Admin/Settings.php:1330
+#: src/Admin/Settings.php:1373
 msgid "Server error occurred."
 msgstr ""
 
-#: src/Admin/Settings.php:1627 src/Integrations/Elementor/ReviewWidget.php:68
+#: src/Admin/Settings.php:1684 src/Integrations/Elementor/ReviewWidget.php:68
 msgid "Settings"
 msgstr ""
 
-#: src/Admin/Settings.php:641
+#: src/Admin/Settings.php:654
 msgid "Shortcode Snippet"
 msgstr ""
 
-#: src/Admin/Settings.php:732
+#: src/Admin/Settings.php:749
 msgid "Show All Reviews"
 msgstr ""
 
@@ -768,7 +780,7 @@ msgstr ""
 msgid "Slider"
 msgstr ""
 
-#: src/Admin/Settings.php:763
+#: src/Admin/Settings.php:780
 msgid "Slider / Carousel"
 msgstr ""
 
@@ -776,7 +788,7 @@ msgstr ""
 msgid "Sort Order"
 msgstr ""
 
-#: src/Admin/Settings.php:693
+#: src/Admin/Settings.php:710
 msgid "Source"
 msgstr ""
 
@@ -784,7 +796,7 @@ msgstr ""
 msgid "Stored Locations"
 msgstr ""
 
-#: src/Admin/Settings.php:683
+#: src/Admin/Settings.php:700
 msgid "Structured Data Source Analysis"
 msgstr ""
 
@@ -792,20 +804,24 @@ msgstr ""
 msgid "Styling Configuration"
 msgstr ""
 
+#: src/Frontend/Display.php:494
+msgid "sunday"
+msgstr ""
+
 #: src/Admin/Settings.php:136
 msgid "Sync Frequency"
 msgstr ""
 
-#: src/Admin/Settings.php:1332 src/Admin/Settings.php:1638
+#: src/Admin/Settings.php:1375 src/Admin/Settings.php:1695
 msgid "Sync Reviews Now"
 msgstr ""
 
-#: src/Admin/Settings.php:854 src/Admin/Settings.php:871
-#: src/Admin/Settings.php:892
+#: src/Admin/Settings.php:871 src/Admin/Settings.php:888
+#: src/Admin/Settings.php:909
 msgid "Synced from SEO plugin."
 msgstr ""
 
-#: src/Admin/Settings.php:1316
+#: src/Admin/Settings.php:1359
 msgid "Syncing..."
 msgstr ""
 
@@ -817,7 +833,7 @@ msgstr ""
 msgid "Text Color"
 msgstr ""
 
-#: src/Admin/Settings.php:375
+#: src/Admin/Settings.php:384
 msgid ""
 "The notification email provided is invalid. Saved with default admin email."
 msgstr ""
@@ -832,14 +848,22 @@ msgstr ""
 msgid "This plugin requires PHP Zip and Mbstring extensions."
 msgstr ""
 
-#: src/Admin/Settings.php:610
+#: src/Admin/Settings.php:623
 msgid ""
 "This table shows all unique locations (Place IDs) found in your imported "
 "reviews database. Use these IDs in your shortcodes to display specific "
 "reviews."
 msgstr ""
 
-#: src/Admin/Settings.php:1082 src/Admin/Settings.php:1146
+#: src/Frontend/Display.php:491
+msgid "thursday"
+msgstr ""
+
+#: src/Frontend/Display.php:489
+msgid "tuesday"
+msgstr ""
+
+#: src/Admin/Settings.php:1125 src/Admin/Settings.php:1189
 msgid "Unauthorized"
 msgstr ""
 
@@ -848,7 +872,7 @@ msgstr ""
 msgid "Unauthorized action."
 msgstr ""
 
-#: src/Admin/Settings.php:328
+#: src/Admin/Settings.php:336
 msgid "Uninstall Cleanup"
 msgstr ""
 
@@ -856,7 +880,7 @@ msgstr ""
 msgid "Unknown API Error"
 msgstr ""
 
-#: src/Admin/Settings.php:1483 src/Admin/Settings.php:1515
+#: src/Admin/Settings.php:1540 src/Admin/Settings.php:1572
 msgid "Unknown error"
 msgstr ""
 
@@ -864,7 +888,7 @@ msgstr ""
 msgid "Unknown error or no data found."
 msgstr ""
 
-#: src/Admin/Settings.php:1055
+#: src/Admin/Settings.php:1098
 msgid "Upload a JSON or Zip file previously exported from this plugin."
 msgstr ""
 
@@ -872,8 +896,8 @@ msgstr ""
 msgid "User Avatar"
 msgstr ""
 
-#: src/Admin/Settings.php:807 src/Admin/Settings.php:822
-#: src/Admin/Settings.php:837
+#: src/Admin/Settings.php:824 src/Admin/Settings.php:839
+#: src/Admin/Settings.php:854
 msgid "Value synced from SEO plugin."
 msgstr ""
 
@@ -897,16 +921,24 @@ msgstr ""
 msgid "Visible"
 msgstr ""
 
-#: src/Admin/Settings.php:1214
+#: src/Admin/Settings.php:1257
 msgid ""
 "Warning: This action is irreversible. If checked, all your collected reviews "
 "will be lost upon uninstallation."
 msgstr ""
 
-#: src/Admin/Settings.php:1620
+#: src/Admin/Settings.php:1677
 msgid ""
 "Warning: WP_CRON is disabled in your wp-config.php. Auto-sync will not work "
 "unless you set up a system cron job."
+msgstr ""
+
+#: src/Frontend/Display.php:490
+msgid "wednesday"
+msgstr ""
+
+#: src/Admin/Settings.php:296
+msgid "Working Days"
 msgstr ""
 
 #: src/Frontend/Layout/Layout.php:68
@@ -921,6 +953,6 @@ msgstr ""
 msgid "You have received new reviews!"
 msgstr ""
 
-#: src/Admin/Settings.php:908
+#: src/Admin/Settings.php:925
 msgid "✓ API Detected:"
 msgstr ""
