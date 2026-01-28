@@ -14,10 +14,10 @@ class ScrapingDog implements ApiHandler
         $this->options = $options;
     }
 
-    public function fetch(): \WP_Error|array
+    public function fetch(string $place_id): \WP_Error|array
     {
         $api_key = $this->options['scrapingdog_key'] ?? '';
-        $place_id = $this->options['place_id'] ?? '';
+        $place_id = $place_id ?: $this->options['place_id'] ?? '';
 
         if (empty($api_key)) {
             return new \WP_Error('config_missing', __('Missing ScrapingDog API Key', 'google-reviews-pro'));
@@ -136,6 +136,12 @@ class ScrapingDog implements ApiHandler
 
         if (empty($api_key)) {
             return new \WP_Error('api_error', __('Missing ScrapingDog API Key.', 'google-reviews-pro'));
+        }
+
+        $query = trim($query);
+
+        if (empty($query)) {
+            return new \WP_Error('api_error', __('Empty query.', 'google-reviews-pro'));
         }
 
         $url = sprintf(

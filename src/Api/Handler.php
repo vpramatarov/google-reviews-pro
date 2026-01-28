@@ -259,16 +259,27 @@ readonly class Handler
         }
 
         $source = $this->options['data_source'] ?? 'google';
-        $current_place_id = '';
+        $current_place_id = $this->options['place_id'] ?? '';
         $data = null;
+
+        $db = get_option('grp_locations_db', []);
+
+        if (empty($db) && !empty($current_place_id)) {
+            $db[$current_place_id] = [];
+        }
+
+        $locations = array_keys($db);
 
         foreach ($this->apiHandlers as $apiHandler) {
             if (!$apiHandler->supports($source)) {
                 continue;
             }
 
-            $current_place_id = $this->options['place_id'] ?? '';
-            $data = $apiHandler->fetch();
+            $data = [];
+            foreach ($locations as $place_id) {
+                $data[$place_id] = $apiHandler->fetch($place_id);
+            }
+
             break;
         }
 
@@ -276,21 +287,35 @@ readonly class Handler
             return ['success' => true, 'count' => 0, 'message' => __('Manual mode active.', 'google-reviews-pro')];
         }
 
-        if (is_wp_error($data)) {
-            return $data;
+        $response = [];
+
+        foreach ($data as $place_id => $locationData) {
+            if (is_wp_error($locationData)) {
+                return $locationData;
+            }
+
+            $reviews = $locationData['reviews'] ?? [];
+            $meta = $locationData['meta'] ?? [];
+            $stats = $this->save_reviews($reviews, $place_id);
+
+            if (!empty($place_id) && !empty($meta)) {
+                $this->save_location_metadata($place_id, $meta);
+            }
+
+            $response[$place_id] = $stats;
         }
 
-        $reviews = $data['reviews'] ?? [];
-        $meta = $data['meta'] ?? [];
-        $stats = $this->save_reviews($reviews, $current_place_id);
-
-        if (!empty($current_place_id) && !empty($meta)) {
-            $this->save_location_metadata($current_place_id, $meta);
-        }
+//        $reviews = $data['reviews'] ?? [];
+//        $meta = $data['meta'] ?? [];
+//        $stats = $this->save_reviews($reviews, $current_place_id);
+//
+//        if (!empty($current_place_id) && !empty($meta)) {
+//            $this->save_location_metadata($current_place_id, $meta);
+//        }
 
         update_option('grp_last_sync_time', time());
 
-        return $stats;
+        return $response;
     }
 
     /**

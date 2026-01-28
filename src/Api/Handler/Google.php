@@ -16,10 +16,10 @@ class Google implements ApiHandler
         $this->options = $options;
     }
 
-    public function fetch(): \WP_Error|array
+    public function fetch(string $place_id): \WP_Error|array
     {
         $api_key = $this->options['google_api_key'] ?? '';
-        $place_id = $this->options['place_id'] ?? '';
+        $place_id = $place_id ?: $this->options['place_id'] ?? '';
 
         if (!$api_key || !$place_id) {
             return new \WP_Error('config_missing', __('Missing Google Config', 'google-reviews-pro'));
@@ -98,6 +98,12 @@ class Google implements ApiHandler
 
         if (empty($api_key)) {
             return new \WP_Error('api_error', __('Missing API Key.', 'google-reviews-pro'));
+        }
+
+        $query = trim($query);
+
+        if (empty($query)) {
+            return new \WP_Error('api_error', __('Empty query.', 'google-reviews-pro'));
         }
 
         $url = sprintf(

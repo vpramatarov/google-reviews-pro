@@ -4,7 +4,7 @@ namespace GRP\Api\Handler;
 
 interface ApiHandler
 {
-    public function fetch(): \WP_Error|array;
+    public function fetch(string $place_id): \WP_Error|array;
 
     public function fetch_business_info(string $query): \WP_Error|array;
 
