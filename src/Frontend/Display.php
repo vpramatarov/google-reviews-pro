@@ -41,7 +41,7 @@ readonly class Display
                 ['in_footer' => true, 'strategy' => 'async']
         );
 
-        $options = $this->api->getApiOptions();
+        $options = $this->api->get_api_options();
         $limit = absint($options['grp_review_limit'] ?? 3);
         if ($limit < 1) {
             $limit = 3;
@@ -166,7 +166,7 @@ readonly class Display
         }
 
         $enable_schema = filter_var($atts['schema'], FILTER_VALIDATE_BOOLEAN);
-        $options = $this->api->getApiOptions();
+        $options = $this->api->get_api_options();
         $limit = absint($options['grp_review_limit'] ?? 3);
         if ($limit < 1) {
             $limit = 3;
@@ -225,7 +225,7 @@ readonly class Display
      */
     public function get_schema_debug_info(string $place_id): array
     {
-        $options = $this->api->getApiOptions();
+        $options = $this->api->get_api_options();
         $seo_data = $this->seo->get_local_data();
         $global_place_id = $options['place_id'] ?? '';
         $is_main_location = (empty($place_id) || $place_id === $global_place_id);
@@ -253,6 +253,8 @@ readonly class Display
 
         // Analyze Basic Fields
         $fields = [
+            'place_id' => $determine('place_id', '', $global_place_id, $auto_meta['place_id'] ?? '', $is_main_location),
+            'data_id' => $determine('data_id', '', $options['serpapi_data_id'] ?? '', $auto_meta['data_id'] ?? '', $is_main_location),
             'name' => $determine('name', $seo_data['name'] ?? '', $options['grp_business_name'] ?? '', $auto_meta['name'] ?? '', $is_main_location),
             'address' => $determine('address', $seo_data['address'] ?? '', $options['grp_address'] ?? '', $auto_meta['address'] ?? '', $is_main_location),
             'phone' => $determine('phone', $seo_data['phone'] ?? '', $options['grp_phone'] ?? '', $auto_meta['phone'] ?? '', $is_main_location),
@@ -299,7 +301,7 @@ readonly class Display
             return '';
         }
 
-        $options = $this->api->getApiOptions();
+        $options = $this->api->get_api_options();
         $seo_data = $this->seo->get_local_data();
         $global_place_id = $options['place_id'] ?? '';
         $auto_meta = !empty($current_place_id) ? $this->api->get_location_metadata($current_place_id) : ($this->api->get_location_metadata($global_place_id) ?? null);

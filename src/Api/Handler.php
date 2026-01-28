@@ -56,13 +56,13 @@ readonly class Handler
      *     "grp_hide_empty": bool|int
      * }|array{}
      */
-    public function getApiOptions(): array
+    public function get_api_options(): array
     {
         return $this->options;
     }
 
     /** @return ApiHandler[] */
-    public function getApiHandlers(): array
+    public function get_api_handlers(): array
     {
         return $this->apiHandlers;
     }
@@ -270,6 +270,10 @@ readonly class Handler
 
         $locations = array_keys($db);
 
+        if (empty($locations)) {
+            return new \WP_Error('api_error', __('No locations found.', 'google-reviews-pro'));
+        }
+
         foreach ($this->apiHandlers as $apiHandler) {
             if (!$apiHandler->supports($source)) {
                 continue;
@@ -277,7 +281,8 @@ readonly class Handler
 
             $data = [];
             foreach ($locations as $place_id) {
-                $data[$place_id] = $apiHandler->fetch($place_id);
+                $id = $db[$place_id]['data_id'] ?? $place_id;
+                $data[$place_id] = $apiHandler->fetch($id);
             }
 
             break;
@@ -304,14 +309,6 @@ readonly class Handler
 
             $response[$place_id] = $stats;
         }
-
-//        $reviews = $data['reviews'] ?? [];
-//        $meta = $data['meta'] ?? [];
-//        $stats = $this->save_reviews($reviews, $current_place_id);
-//
-//        if (!empty($current_place_id) && !empty($meta)) {
-//            $this->save_location_metadata($current_place_id, $meta);
-//        }
 
         update_option('grp_last_sync_time', time());
 
@@ -449,6 +446,7 @@ readonly class Handler
         $db = get_option('grp_locations_db', []);
         $existing = $db[$place_id] ?? [];
         $db[$place_id] = [
+            'data_id' => sanitize_text_field($meta['data_id'] ?? $existing['data_id'] ?? null),
             'name' => sanitize_text_field($meta['name'] ?? $existing['name'] ?? null),
             'address' => sanitize_text_field($meta['address'] ?? $existing['address'] ?? null),
             'phone' => sanitize_text_field($meta['phone'] ?? $existing['phone'] ?? null),

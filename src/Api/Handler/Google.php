@@ -16,12 +16,12 @@ class Google implements ApiHandler
         $this->options = $options;
     }
 
-    public function fetch(string $place_id): \WP_Error|array
+    public function fetch(string $id): \WP_Error|array
     {
         $api_key = $this->options['google_api_key'] ?? '';
-        $place_id = $place_id ?: $this->options['place_id'] ?? '';
+        $id = $id ?: $this->options['place_id'] ?? '';
 
-        if (!$api_key || !$place_id) {
+        if (empty($api_key) || empty($id)) {
             return new \WP_Error('config_missing', __('Missing Google Config', 'google-reviews-pro'));
         }
 
@@ -35,7 +35,7 @@ class Google implements ApiHandler
         $fields = 'reviews,rating,formatted_address,international_phone_number,geometry,name,opening_hours,price_level,url,website,user_ratings_total,icon';
         $url = sprintf(
             "https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=%s&key=%s&language=%s",
-            $place_id,
+            $id,
             $fields,
             $api_key,
             get_locale()

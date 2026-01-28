@@ -16,17 +16,17 @@ class SerpApi implements ApiHandler
         $this->options = $options;
     }
 
-    public function fetch(string $place_id): \WP_Error|array
+    public function fetch(string $id): \WP_Error|array
     {
         $api_key = $this->options['serpapi_key'] ?? '';
-        $place_id = $place_id ?: $this->options['place_id'] ?? '';
+        $id = $id ?: $this->options['serpapi_data_id'] ?? '';
 
         if (empty($api_key)) {
             return new \WP_Error('config_missing', __('Missing SerpApi Key', 'google-reviews-pro'));
         }
 
-        if (empty($place_id)) {
-            return new \WP_Error('config_missing', __('Missing Place ID', 'google-reviews-pro'));
+        if (empty($id)) {
+            return new \WP_Error('config_missing', __('Missing Data ID', 'google-reviews-pro'));
         }
 
         $all_reviews = [];
@@ -41,8 +41,8 @@ class SerpApi implements ApiHandler
 
         do {
             $url = sprintf(
-                "https://serpapi.com/search.json?engine=google_maps_reviews&place_id=%s&api_key=%s&hl=%s",
-                $place_id,
+                "https://serpapi.com/search.json?engine=google_maps_reviews&data_id=%s&api_key=%s&hl=%s",
+                $id,
                 $api_key,
                 $locale
             );

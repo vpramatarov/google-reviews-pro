@@ -14,17 +14,17 @@ class ScrapingDog implements ApiHandler
         $this->options = $options;
     }
 
-    public function fetch(string $place_id): \WP_Error|array
+    public function fetch(string $id): \WP_Error|array
     {
-        $api_key = $this->options['scrapingdog_key'] ?? '';
-        $place_id = $place_id ?: $this->options['place_id'] ?? '';
+        $api_key = $this->options['scrapingdog_api_key'] ?? '';
+        $id = $id ?: $this->options['serpapi_data_id'] ?? '';
 
         if (empty($api_key)) {
             return new \WP_Error('config_missing', __('Missing ScrapingDog API Key', 'google-reviews-pro'));
         }
 
-        if (empty($place_id)) {
-            return new \WP_Error('config_missing', __('Missing Place ID', 'google-reviews-pro'));
+        if (empty($id)) {
+            return new \WP_Error('config_missing', __('Missing Data ID', 'google-reviews-pro'));
         }
 
         $all_reviews = [];
@@ -41,7 +41,7 @@ class ScrapingDog implements ApiHandler
             $url = sprintf(
                 "https://api.scrapingdog.com/google_maps/reviews?api_key=%s&data_id=%s",
                 $api_key,
-                urlencode($place_id)
+                urlencode($id)
             );
 
             if ($next_page_token) {
@@ -67,27 +67,18 @@ class ScrapingDog implements ApiHandler
             }
 
             // We only keep the meta data from the first page
-            if ($page_count === 0 && !empty($body['place_info'])) {
-                $info = $body['place_info'];
+            if ($page_count === 0 && !empty($body['locationDetails'])) {
+                $info = $body['locationDetails'];
                 $meta = [
                     'name' => $info['title'] ?? null,
                     'address' => $info['address'] ?? null,
-                    'phone' => $info['phone'] ?? null,
-                    'lat' => $info['gps_coordinates']['latitude'] ?? null,
-                    'lng' => $info['gps_coordinates']['longitude'] ?? null,
-                    'price_level' => $this->normalize_price($info['price_level'] ?? null), // $1–10
-                    'maps_url' => $info['url'] ?? null,
-                    'website' => $info['website'] ?? get_home_url(),
-                    'periods' => $info['operating_hours'] ?? null,
-                    'weekday_text'=> $info['open_state'] ?? $info['hours'] ?? null,
-                    'icon' => $info['thumbnail'] ?? null,
                     'rating' => $info['rating'] ?? 0,
                     'count' => $info['reviews'] ?? 0,
                 ];
             }
 
-            if (!empty($body['reviews'])) {
-                foreach ($body['reviews'] as $review) {
+            if (!empty($body['reviews_results'])) {
+                foreach ($body['reviews_results'] as $review) {
                     if (!empty($review['review_id'])) {
                         $unique_id = $review['review_id'];
                     } else {
@@ -106,7 +97,7 @@ class ScrapingDog implements ApiHandler
                         'photo_url' => $review['user']['thumbnail'] ?? '',
                         'author_url' => $review['user']['link'] ?? '',
                         'rating' => isset($review['rating']) ? (float)$review['rating'] : 5.0,
-                        'text' => $review['body'] ?? '',
+                        'text' => $review['snippet'] ?? '',
                         'time' => $timestamp,
                         'source' => 'scrapingdog'
                     ];
@@ -115,7 +106,7 @@ class ScrapingDog implements ApiHandler
                 break;
             }
 
-            $next_page_token = $body['next_page_token'] ?? null;
+            $next_page_token = $body['pagination']['next_page_token'] ?? null;
             $page_count++;
 
             if ($next_page_token) {
@@ -132,7 +123,7 @@ class ScrapingDog implements ApiHandler
 
     public function fetch_business_info(string $query): \WP_Error|array
     {
-        $api_key = $this->options['scrapingdog_key'] ?? '';
+        $api_key = $this->options['scrapingdog_api_key'] ?? '';
 
         if (empty($api_key)) {
             return new \WP_Error('api_error', __('Missing ScrapingDog API Key.', 'google-reviews-pro'));
@@ -168,7 +159,7 @@ class ScrapingDog implements ApiHandler
                 'lat' => $place['gps_coordinates']['latitude'] ?? null,
                 'lng' => $place['gps_coordinates']['longitude'] ?? null,
                 'price_level' => $this->normalize_price($place['price_level'] ?? null), // $1–10
-                'maps_url' => $place['url'] ?? null,
+                'maps_url' => $place['google_maps_url'] ?? null,
                 'website' => $place['website'] ?? get_home_url(),
                 'periods' => $place['operating_hours'] ?? null,
                 'weekday_text'=> $place['open_state'] ?? $place['hours'] ?? null,
@@ -179,13 +170,8 @@ class ScrapingDog implements ApiHandler
 
             // ScrapingDog Reviews API requires a 'data_id' (CID), which is usually in the format 0x...
             // The Search API returns 'data_id' or 'place_id'. Priority is data_id.
-            if (!empty($place['data_id'])) {
-                $result['place_id'] = $place['data_id'];
-            } elseif (!empty($place['place_id'])) {
-                $result['place_id'] = $place['place_id'];
-            } else {
-                $result['place_id'] = '';
-            }
+            $result['place_id'] = $place['place_id'] ?? $place['data_id'] ?? null;
+            $result['data_id'] = $place['data_id'] ?? null;
 
         } else {
             return new \WP_Error('api_error', $body['message'] ?? __('No business found via ScrapingDog.', 'google-reviews-pro'));

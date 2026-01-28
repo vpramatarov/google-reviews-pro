@@ -29,7 +29,7 @@ readonly class Handler
 
         $place_id = isset($_POST['place_id']) ? sanitize_text_field($_POST['place_id']) : '';
         $offset = isset($_POST['offset']) ? absint($_POST['offset']) : 0;
-        $options = $this->api->getApiOptions();
+        $options = $this->api->get_api_options();
         $reviews_limit = absint($options['grp_review_limit'] ?? 3);
         $limit_req = isset($_POST['limit']) ? absint($_POST['limit']) : $reviews_limit;
         $limit = max(1, min(10, $limit_req));
@@ -88,7 +88,7 @@ readonly class Handler
         }
 
         $query = sanitize_text_field($_POST['query'] ?? '');
-        $api_options = $this->api->getApiOptions();
+        $api_options = $this->api->get_api_options();
         $source = $api_options['data_source'] ?? '';
         $api_key = '';
         if ($source === 'google') {
@@ -105,7 +105,7 @@ readonly class Handler
 
         $result = [];
 
-        foreach ($this->api->getApiHandlers() as $apiHandler) {
+        foreach ($this->api->get_api_handlers() as $apiHandler) {
             if (!$apiHandler->supports($source)) {
                 continue;
             }
@@ -242,7 +242,6 @@ readonly class Handler
         array_walk($working_days, 'sanitize_text_field');
 
         $meta = [];
-        $meta['place_id'] = $place_id;
         $meta['count'] = (int)$reviews_count;
 
         if (!empty($data_id)) {
