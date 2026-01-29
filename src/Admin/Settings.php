@@ -26,6 +26,17 @@ readonly class Settings
         add_action('admin_init', [$this, 'handle_export_request']);
         add_action('admin_init', [$this, 'handle_import_request']);
         add_action('admin_footer', [$this, 'render_admin_scripts']);
+        add_action('admin_notices', [$this, 'show_sync_success_notices']);
+    }
+
+    public function show_sync_success_notices(): void
+    {
+        if (isset($_GET['sync-success']) && is_numeric($_GET['sync-success']) && (int)$_GET['sync-success'] === 1) {
+            printf(
+                '<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+                __('API data saved successfully.', 'google-reviews-pro')
+            );
+        }
     }
 
     public function add_menu(): void
@@ -485,7 +496,7 @@ readonly class Settings
             <p class="description" id="grp-finder-msg"></p>',
             __('Enter business name (e.g. Pizza Mario New York)', 'google-reviews-pro'),
             __('Search & Auto-fill', 'google-reviews-pro'),
-            __('Save API data', 'google-reviews-pro')
+            __('Sync Data', 'google-reviews-pro')
         );
         ?>
         <div id="grp_preview_wrapper" style="display: none; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
@@ -1466,6 +1477,9 @@ readonly class Settings
 
                     $msg.text('');
                     let working_days = periods.length ? JSON.parse(periods) : [];
+                    $spinner.addClass('is-active');
+                    $saveApiDataBtn.prop('disabled', true);
+                    $findBtn.prop('disabled', true);
 
                     const request_data = {
                         data_id: data_id,
@@ -1480,19 +1494,28 @@ readonly class Settings
                         working_days: working_days
                     };
 
-                    $saveApiDataBtn.prop('disabled', true);
-
                     $.post(ajaxurl, {
                         action: 'grp_save_api_location_data',
                         nonce: '<?php echo wp_create_nonce("grp_nonce"); ?>',
                         data: request_data
-                    }, function() {
+                    }, function(res) {
+                        $spinner.removeClass('is-active');
                         $saveApiDataBtn.prop('disabled', false);
+                        $findBtn.prop('disabled', false);
                         $previewWrapper.slideUp();
-                        $msg.css('color', 'green').html('<?php _e('API data saved successfully.', 'google-reviews-pro'); ?>');
+                        if (res.success) {
+                            $msg.css('color', 'green').html('<?php _e('API data saved successfully.', 'google-reviews-pro'); ?>');
+                            setTimeout(() => {
+                                window.location.href = res.data.redirect_url;
+                            }, 1000);
+                        } else {
+                            $msg.css('color', 'red').text('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
+                        }
                     }).fail(function(res) {
+                        $spinner.removeClass('is-active');
                         $saveApiDataBtn.hide();
                         $saveApiDataBtn.prop('disabled', false);
+                        $findBtn.prop('disabled', false);
                         $msg.css('color', 'red').text('<?php _e('Server error','google-reviews-pro'); ?>.');
                         console.log(res);
                     });

@@ -464,7 +464,7 @@ readonly class Handler
         update_option('grp_locations_db', $db);
     }
 
-    private function save_reviews(array $reviews, string $assigned_place_id): array
+    public function save_reviews(array $reviews, string $assigned_place_id): array
     {
         $inserted = 0;
         $updated = 0;
@@ -499,11 +499,11 @@ readonly class Handler
                 $updated++;
             } else {
                 $post_id = wp_insert_post([
-                    'post_type'    => 'grp_review',
-                    'post_title'   => $review['author_name'],
+                    'post_type' => 'grp_review',
+                    'post_title' => $review['author_name'],
                     'post_content' => $review['text'],
-                    'post_status'  => 'publish',
-                    'post_date'    => date('Y-m-d H:i:s', $review['time']),
+                    'post_status' => 'publish',
+                    'post_date' => date('Y-m-d H:i:s', $review['time']),
                 ]);
                 $inserted++;
 
@@ -511,7 +511,7 @@ readonly class Handler
                     $newly_added_for_email[] = [
                         'author' => $review['author_name'],
                         'rating' => $review['rating'],
-                        'text'   => wp_trim_words($review['text'], 20)
+                        'text' => wp_trim_words($review['text'], 20)
                     ];
                 }
             }
@@ -585,9 +585,9 @@ readonly class Handler
 
         $attachment = [
             'post_mime_type' => $file_type,
-            'post_title'     => $desc . ' Avatar',
-            'post_content'   => '',
-            'post_status'    => 'inherit'
+            'post_title' => $desc . ' Avatar',
+            'post_content' => '',
+            'post_status' => 'inherit'
         ];
 
         $attach_id = wp_insert_attachment($attachment, $file_path, $post_id);
