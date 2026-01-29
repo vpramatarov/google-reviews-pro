@@ -466,13 +466,13 @@ readonly class Display
 
             // Separate Start and End times
             $parts = explode('-', $clean_range);
-            if (count($parts) !== 2) {
+            if (!$parts || count($parts) !== 2) {
                 continue; // Skip malformed entries
             }
 
             // Convert to 24-hour format (required by Schema.org) - e.g., "9:00 AM" -> "09:00"
-            $opens = date("H:i", strtotime(preg_replace("/[^0-9:]/", "", trim($parts[0]))));
-            $closes = date("H:i", strtotime(preg_replace("/[^0-9:]/", "", trim($parts[1]))));
+            $opens = date("H:i", strtotime(preg_replace("/[^0-9APM:\s]/", "", trim($parts[0]))));
+            $closes = date("H:i", strtotime(preg_replace("/[^0-9APM:\s]/", "", trim($parts[1]))));
 
             // Capitalize the array key (e.g., "monday" -> "Monday")
             $structured_data[] = [

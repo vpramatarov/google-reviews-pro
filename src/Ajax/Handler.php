@@ -201,6 +201,10 @@ readonly class Handler
 
     public function handle_save_api_location_data(): void
     {
+        if (function_exists('set_time_limit')) {
+            set_time_limit(300);
+        }
+
         if (!check_ajax_referer('grp_nonce', 'nonce', false)) {
             wp_send_json_error(__('Security check failed.', 'google-reviews-pro'));
         }
@@ -209,23 +213,23 @@ readonly class Handler
             wp_send_json_error(__('Unauthorized action.', 'google-reviews-pro'));
         }
 
-        $data = $_POST['data'] ?? null;
+        $post_data = $_POST['data'] ?? null;
 
-        if (empty($data)) {
+        if (empty($post_data)) {
             wp_send_json_error(__('Invalid API data.', 'google-reviews-pro'));
         }
 
-        $place_id = sanitize_text_field($data['place_id'] ?? '');
+        $place_id = sanitize_text_field($post_data['place_id'] ?? '');
 
         if (empty($place_id)) {
             wp_send_json_error(__('Invalid Place ID.', 'google-reviews-pro'));
         }
 
-        $data_id = sanitize_text_field($data['data_id'] ?? '');
-        $name = sanitize_text_field($data['name'] ?? '');
-        $address = sanitize_text_field($data['address'] ?? '');
-        $phone = sanitize_text_field($data['phone'] ?? '');
-        $coordinates = sanitize_text_field($data['coordinates'] ?? '');
+        $data_id = sanitize_text_field($post_data['data_id'] ?? '');
+        $name = sanitize_text_field($post_data['name'] ?? '');
+        $address = sanitize_text_field($post_data['address'] ?? '');
+        $phone = sanitize_text_field($post_data['phone'] ?? '');
+        $coordinates = sanitize_text_field($post_data['coordinates'] ?? '');
         $lat = null;
         $lng = null;
 
@@ -235,10 +239,10 @@ readonly class Handler
             $lng = $cords[1] ?? null;
         }
 
-        $price_lvl = sanitize_text_field($data['price_lvl'] ?? '');
-        $rating = sanitize_text_field($data['rating'] ?? '');
-        $reviews_count = sanitize_text_field($data['reviews_count'] ?? '');
-        $working_days = $data['working_days'] ?? [];
+        $price_lvl = sanitize_text_field($post_data['price_lvl'] ?? '');
+        $rating = sanitize_text_field($post_data['rating'] ?? '');
+        $reviews_count = sanitize_text_field($post_data['reviews_count'] ?? '');
+        $working_days = $post_data['working_days'] ?? [];
         array_walk($working_days, 'sanitize_text_field');
 
         $meta = [];
@@ -278,13 +282,35 @@ readonly class Handler
 
         $meta['periods'] = $working_days;
 
+        $source = $this->api->get_api_options()['data_source'] ?? '';
         $this->api->save_location_metadata($place_id, $meta);
-        $sync_result = $this->api->sync_reviews();
+        $handlers = $this->api->get_api_handlers();
+        $data = null;
 
-        if (is_wp_error($sync_result)) {
-            wp_send_json_error($sync_result->get_error_message());
+        foreach ($handlers as $handler) {
+            if (!$handler->supports($source)) {
+                continue;
+            }
+
+            $id = $meta['data_id'] ?? $place_id;
+            $data = $handler->fetch($id);
+            break;
         }
 
-        wp_send_json_success();
+        if (is_wp_error($data)) {
+            wp_send_json_error($data->get_error_message());
+        }
+
+        if ($data === null) {
+            wp_send_json_error(__('No reviews found.', 'google-reviews-pro'));
+        }
+
+        $stats = $this->api->save_reviews($data['reviews'] ?? [], $place_id);
+
+        wp_send_json_success([
+            'redirect_url' => admin_url('options-general.php?page=grp-settings&sync-success=1'),
+            'inserted' => $stats['inserted'],
+            'updated' => $stats['updated'],
+        ]);
     }
 }
