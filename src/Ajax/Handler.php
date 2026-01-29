@@ -231,8 +231,8 @@ readonly class Handler
 
         if (!empty($coordinates)) {
             $cords = explode(' / ', $coordinates);
-            $lat = $cords[0];
-            $lng = $cords[1];
+            $lat = $cords[0] ?? null;
+            $lng = $cords[1] ?? null;
         }
 
         $price_lvl = sanitize_text_field($data['price_lvl'] ?? '');
@@ -279,6 +279,11 @@ readonly class Handler
         $meta['periods'] = $working_days;
 
         $this->api->save_location_metadata($place_id, $meta);
+        $sync_result = $this->api->sync_reviews();
+
+        if (is_wp_error($sync_result)) {
+            wp_send_json_error($sync_result->get_error_message());
+        }
 
         wp_send_json_success();
     }

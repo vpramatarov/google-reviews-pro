@@ -158,7 +158,7 @@ class ScrapingDog implements ApiHandler
                 'phone' => $place['phone'] ?? null,
                 'lat' => $place['gps_coordinates']['latitude'] ?? null,
                 'lng' => $place['gps_coordinates']['longitude'] ?? null,
-                'price_level' => $this->normalize_price($place['price_level'] ?? null), // $1–10
+                'price_level' => $this->normalize_price($place['price'] ?? null), // $1–10
                 'maps_url' => $place['google_maps_url'] ?? null,
                 'website' => $place['website'] ?? get_home_url(),
                 'periods' => $place['operating_hours'] ?? null,
