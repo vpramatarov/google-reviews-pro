@@ -165,7 +165,7 @@ class SerpApi implements ApiHandler
                 'phone' => $place['phone'] ?? null,
                 'lat' => $place['gps_coordinates']['latitude'] ?? null,
                 'lng' => $place['gps_coordinates']['longitude'] ?? null,
-                'price_level' => $this->normalize_price($place['price_level'] ?? null), // $1–10
+                'price_level' => $this->normalize_price($place['price_level'] ?? $place['price'] ?? null), // $1–10
                 'maps_url' => $response_meta['google_maps_url'] ?? null,
                 'website' => $place['website'] ?? get_home_url(),
                 'periods' => $this->normalize_hours($place['operating_hours'] ?? $place['hours'] ?? null),
@@ -203,7 +203,7 @@ class SerpApi implements ApiHandler
 
         // If it's a string, count the currency symbols
         // Ex: "$$" -> 2, "$1-10" -> 1, "€€€" -> 3
-        preg_match_all('/[\$\€\£\¥\₩]/', (string)$price, $matches);
+        preg_match_all('/[\$\€\£\¥\₩]/', $price, $matches);
         $count = count($matches[0]);
 
         if ($count > 0) {
