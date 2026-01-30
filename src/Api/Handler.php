@@ -158,13 +158,19 @@ readonly class Handler
                 break;
             case 'rating_desc':
                 $args['meta_key'] = '_grp_rating';
-                $args['orderby'] = 'meta_value_num';
-                $args['order'] = 'DESC';
+                $args['orderby'] = [
+                    'meta_value_num' => 'DESC',
+                    'date' => 'DESC',
+                    'ID' => 'DESC'
+                ];
                 break;
             case 'rating_asc':
                 $args['meta_key'] = '_grp_rating';
-                $args['orderby'] = 'meta_value_num';
-                $args['order'] = 'ASC';
+                $args['orderby'] = [
+                    'meta_value_num' => 'ASC',
+                    'date' => 'DESC',
+                    'ID' => 'DESC'
+                ];
                 break;
             case 'random':
                 $args['orderby'] = 'rand';
