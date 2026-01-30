@@ -19,6 +19,13 @@ readonly class Handler
         add_action('wp_ajax_grp_get_location_details', [$this, 'handle_get_location_details']);
         add_action('wp_ajax_grp_get_schema_details', [$this, 'handle_get_schema_details']);
         add_action('wp_ajax_grp_save_api_location_data', [$this, 'handle_save_api_location_data']);
+        add_action('wp_ajax_grp_get_nonce', [$this, 'handle_get_nonce']);
+        add_action('wp_ajax_nopriv_grp_get_nonce', [$this, 'handle_get_nonce']);
+    }
+
+    public function handle_get_nonce(): void
+    {
+        wp_send_json_success(['nonce' => wp_create_nonce('grp_nonce')]);
     }
 
     public function handle_load_more(): void

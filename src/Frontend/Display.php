@@ -56,6 +56,7 @@ readonly class Display
             'buttonText' => __('Load More', 'google-reviews-pro'),
             'loadingText' => __('Loading...', 'google-reviews-pro'),
             'reviewsLimit' => $limit,
+            'nonce' => wp_create_nonce('grp_nonce')
         ]);
 
         $text_color = sanitize_hex_color($options['grp_text_color'] ?? '#333333');

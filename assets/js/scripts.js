@@ -1,4 +1,19 @@
 jQuery(document).ready(function($) {
+    // --- LOAD MORE REFRESH NONCE ---
+    $.post(gprJs.ajaxUrl, {
+        action: 'grp_get_nonce',
+        _ts: new Date().getTime() // cache buster
+    }, function(response) {
+        if (response.success && response.data.nonce) {
+            $('.grp-load-more-btn').data('nonce', response.data.nonce);
+
+            if (typeof gprJs !== 'undefined') {
+                gprJs.nonce = response.data.nonce;
+            }
+        }
+    });
+
+    // --- LOAD MORE ---
     $('body').on('click', '.grp-read-more-btn', function() {
         const $btn = $(this);
         const $textContainer = $btn.siblings('.grp-review-text');
