@@ -18,6 +18,7 @@ readonly class Handler
         add_action('wp_ajax_grp_delete_location', [$this, 'handle_delete_location']);
         add_action('wp_ajax_grp_get_location_details', [$this, 'handle_get_location_details']);
         add_action('wp_ajax_grp_get_schema_details', [$this, 'handle_get_schema_details']);
+        add_action('wp_ajax_grp_get_seo_details', [$this, 'handle_get_seo_details']);
         add_action('wp_ajax_grp_save_api_location_data', [$this, 'handle_save_api_location_data']);
         add_action('wp_ajax_grp_get_nonce', [$this, 'handle_get_nonce']);
         add_action('wp_ajax_nopriv_grp_get_nonce', [$this, 'handle_get_nonce']);
@@ -202,6 +203,27 @@ readonly class Handler
         }
 
         $debug_info = $this->display->get_schema_debug_info($place_id);
+
+        wp_send_json_success($debug_info);
+    }
+
+    public function handle_get_seo_details(): void
+    {
+        if (!check_ajax_referer('grp_nonce', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized action.', 'google-reviews-pro'));
+        }
+
+        $place_id = sanitize_text_field($_POST['place_id'] ?? '');
+
+        if (empty($place_id)) {
+            wp_send_json_error(__('Invalid Place ID.', 'google-reviews-pro'));
+        }
+
+        $debug_info = $this->display->get_seo_debug_info($place_id);
 
         wp_send_json_success($debug_info);
     }
