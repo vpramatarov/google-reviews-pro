@@ -29,26 +29,27 @@ class ReviewExporter
         $added_images = []; // Cache to avoid file duplication in the archive
 
         foreach ($reviews as $review) {
-            $export_item = $review;
+            $local_path = $this->get_local_path_from_url($review['photo_url'] ?? '');
 
-            if (!empty($review['photo_url'])) {
-                $local_path = $this->get_local_path_from_url($review['photo_url']);
-
-                if ($local_path && file_exists($local_path)) {
-                    $filename = basename($local_path);
-
-                    // We add it to the 'images/' folder inside the ZIP
-                    if (!in_array($filename, $added_images)) {
-                        $zip->addFile($local_path, 'images/' . $filename);
-                        $added_images[] = $filename;
-                    }
-
-                    // We record the relative path that the Importer will use
-                    $export_item['zip_image_path'] = 'images/' . $filename;
-                }
+            if (empty($local_path)) {
+                $local_path = $this->get_local_path_from_url($review['featured_image_url'] ?? '');
             }
 
-            $export_data[] = $export_item;
+            if ($local_path && file_exists($local_path)) {
+                $filename = basename($local_path);
+                $hash = hash('sha256', $filename);
+
+                // We add it to the 'images/' folder inside the ZIP
+                if (!isset($added_images[$hash])) {
+                    $zip->addFile($local_path, 'images/' . $filename);
+                    $added_images[$hash] = $filename;
+                }
+
+                // We record the relative path that the Importer will use
+                $review['zip_image_path'] = 'images/' . $filename;
+            }
+
+            $export_data[] = $review;
         }
 
         // Add the JSON file (with the updated paths to the photos)
@@ -78,12 +79,14 @@ class ReviewExporter
                 $id = get_the_ID();
 
                 $data[] = [
+                    'id' => $id,
                     'external_id' => get_post_meta($id, '_grp_external_id', true),
                     'author_name' => get_the_title(),
                     'text' => get_the_content(),
                     'rating' => get_post_meta($id, '_grp_rating', true),
                     'time'  => get_post_timestamp(), // Unix timestamp
                     'photo_url' => get_post_meta($id, '_grp_photo_url', true),
+                    'featured_image_url' => get_the_post_thumbnail_url($id, 'full'),
                     'place_id' => get_post_meta($id, '_grp_assigned_place_id', true),
                     'source' => get_post_meta($id, '_grp_source', true),
                     'is_hidden' => get_post_meta($id, '_grp_is_hidden', true) ? 1 : 0
@@ -100,6 +103,10 @@ class ReviewExporter
      */
     private function get_local_path_from_url(string $url): ?string
     {
+        if (empty($url)) {
+            return null;
+        }
+
         $upload_dir = wp_upload_dir();
         $base_url = $upload_dir['baseurl'];
 
