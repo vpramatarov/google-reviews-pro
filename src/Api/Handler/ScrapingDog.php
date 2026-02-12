@@ -41,14 +41,14 @@ class ScrapingDog implements ApiHandler
             $url = sprintf(
                 "https://api.scrapingdog.com/google_maps/reviews?api_key=%s&data_id=%s",
                 $api_key,
-                urlencode($id)
+                $id
             );
 
             if ($next_page_token) {
-                $url .= "&next_page_token=" . urlencode($next_page_token);
+                $url .= "&next_page_token=" . $next_page_token;
             }
 
-            $response = wp_remote_get($url, ['timeout' => 30]);
+            $response = wp_remote_get($url, ['timeout' => GRP_TIMEOUT]);
 
             if (is_wp_error($response)) {
                 if ($page_count === 0) {
@@ -66,7 +66,7 @@ class ScrapingDog implements ApiHandler
                 break;
             }
 
-            // We only keep the meta data from the first page
+            // We only keep the metadata from the first page
             if ($page_count === 0 && !empty($body['locationDetails'])) {
                 $info = $body['locationDetails'];
                 $meta = [
@@ -135,13 +135,17 @@ class ScrapingDog implements ApiHandler
             return new \WP_Error('api_error', __('Empty query.', 'google-reviews-pro'));
         }
 
+        $locales = explode('_', get_locale());
+        $locale = strtolower($locales[0]);
+
         $url = sprintf(
-            'https://api.scrapingdog.com/google_maps?api_key=%s&query=%s&type=search',
+            'https://api.scrapingdog.com/google_maps?api_key=%s&query=%s&type=search&language=%s',
             $api_key,
-            urlencode($query)
+            urlencode($query),
+            $locale
         );
 
-        $response = wp_remote_get($url, ['timeout' => 30]);
+        $response = wp_remote_get($url, ['timeout' => GRP_TIMEOUT]);
 
         if (is_wp_error($response)) {
             return $response;

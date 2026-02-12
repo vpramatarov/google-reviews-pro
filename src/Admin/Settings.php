@@ -1318,6 +1318,7 @@ readonly class Settings
                         $inputPlaceId.prop('required', true); // ScrapingDog also uses Place ID
                         $scrapingDogRow.show();
                         $placeIdRow.show();
+                        $serpApiDataIdRow.show(); // ScrapingDog also uses Data ID
                         $syncBtn.show();
                     }
 
@@ -1328,7 +1329,7 @@ readonly class Settings
                     }
 
                     $placeIdRow.toggle(val !== 'cpt');
-                    $serpPagesRow.toggle(val === 'serpapi');
+                    $serpPagesRow.toggle(val !== 'cpt' && val !== 'google');
                     $finderRow.toggle(val !== 'cpt');
                 }
 

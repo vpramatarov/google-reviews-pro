@@ -51,7 +51,7 @@ class SerpApi implements ApiHandler
                 $url .= "&next_page_token=" . $next_page_token;
             }
 
-            $response = wp_remote_get($url, ['timeout' => 20]);
+            $response = wp_remote_get($url, ['timeout' => GRP_TIMEOUT]);
 
             if (is_wp_error($response)) {
                 break;

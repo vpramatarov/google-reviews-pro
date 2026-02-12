@@ -509,7 +509,7 @@ readonly class Handler
                     'post_title' => $review['author_name'],
                     'post_content' => $review['text'],
                     'post_status' => 'publish',
-                    'post_date' => date('Y-m-d H:i:s', $review['time']),
+                    'post_date' => date('Y-m-d H:i:s', $review['time'] ?: time()),
                 ]);
                 $inserted++;
 
@@ -558,7 +558,7 @@ readonly class Handler
             return;
         }
 
-        $response = wp_remote_get($url, ['timeout' => 10]);
+        $response = wp_remote_get($url, ['timeout' => GRP_TIMEOUT]);
         if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
             return;
         }
