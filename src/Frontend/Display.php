@@ -292,6 +292,37 @@ readonly class Display
         return $fields;
     }
 
+    public function get_seo_debug_info(string $place_id): array
+    {
+        $seo_data = $this->seo->get_local_data();
+
+        // Analyze Basic Fields
+        $fields = [
+            'place_id' => ['value' => $place_id, 'source' => 'API (Auto-Sync)'],
+            'name' => ['value' => $seo_data['name'] ?? '', 'source' => 'SEO Plugin'],
+            'address' => ['value' => $seo_data['address'] ?? '', 'source' => 'SEO Plugin'],
+            'phone' => ['value' => $seo_data['phone'] ?? '', 'source' => 'SEO Plugin'],
+            'latitude' => ['value' => $seo_data['lat'] ?? '', 'source' => 'SEO Plugin'],
+            'longitude' => ['value' => $seo_data['lng'] ?? '', 'source' => 'SEO Plugin'],
+        ];
+
+        if (!empty($seo_data['price_range'])) {
+            $fields['priceRange'] = ['value' => $seo_data['price_range'], 'source' => 'SEO Plugin'];
+        } else {
+            $fields['priceRange'] = ['value' => '$$', 'source' => 'Default'];
+        }
+
+        $fields['openingHours'] = ['value' => 'Missing', 'source' => '-'];
+
+        if (!empty($seo_data['open_hours'])) {
+            // Analyze Hours & Maps
+            $v = sprintf('<pre>%s</pre>', print_r($seo_data['open_hours'], true));
+            $fields['openingHours'] = ['value' => $v, 'source' => 'SEO Plugin'];
+        }
+
+        return $fields;
+    }
+
     /**
      * @param array<int,array{"rating": int, "author_name": string, "text": string, "time": string}>|array{} $reviews
      * @param array{"reviewCount": int, "ratingValue": float} $stats

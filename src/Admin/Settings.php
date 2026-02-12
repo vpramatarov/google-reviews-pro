@@ -688,6 +688,12 @@ readonly class Settings
 
                         <hr>
 
+                        <button type="button" class="button button-secondary grp-seo-data-btn" data-place-id="<?php echo esc_attr($loc['place_id']); ?>" style="margin-right: 5px;">
+                            <?php _e('Seo Data Check', 'google-reviews-pro'); ?>
+                        </button>
+
+                        <hr>
+
                         <button type="button" class="button button-secondary grp-details-btn" data-place-id="<?php echo esc_attr($loc['place_id']); ?>" style="margin-right: 5px;">
                             <?php _e('Raw Data', 'google-reviews-pro'); ?>
                         </button>
@@ -1611,16 +1617,17 @@ readonly class Settings
                 const $schemaModal = $('#grp-schema-modal');
                 const $schemaBody = $('#grp-schema-tbody');
 
-                $('.grp-schema-btn').on('click', function(e) {
+                $('.grp-schema-btn, .grp-seo-data-btn').on('click', function(e) {
                     e.preventDefault();
                     const $btn = $(this);
                     const placeId = $btn.data('place-id');
+                    const action = $btn.hasClass('grp-seo-data-btn') ? 'grp_get_seo_details' : 'grp_get_schema_details';
 
                     $schemaBody.html('<tr><td colspan="3"><?php _e('Analyzing...', 'google-reviews-pro'); ?></td></tr>');
                     $schemaModal.css('display', 'flex');
 
                     $.post(ajaxurl, {
-                        action: 'grp_get_schema_details',
+                        action: action,
                         nonce: '<?php echo wp_create_nonce("grp_nonce"); ?>',
                         place_id: placeId
                     }, function(res) {

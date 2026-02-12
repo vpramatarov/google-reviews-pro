@@ -12,10 +12,10 @@ final readonly class SeoIntegrator
     public function get_active_provider(): ?string
     {
         // Rank Math Logic
-        if (defined('RANK_MATH_VERSION')) {
-            $titles = get_option('rank_math_titles');
-            if (!empty($titles['knowledge_graph_type']) &&
-                ($titles['knowledge_graph_type'] === 'company' || $titles['knowledge_graph_type'] === 'person')) {
+        if (defined('RANK_MATH_VERSION') || get_option( 'rank_math_version', null )) {
+            $titles = get_option('rank-math-options-titles');
+            if (!empty($titles['knowledgegraph_type']) &&
+                ($titles['knowledgegraph_type'] === 'company' || $titles['knowledgegraph_type'] === 'person')) {
                 return 'rank_math';
             }
         }
@@ -77,13 +77,14 @@ final readonly class SeoIntegrator
             'address'     => '',
             'lat'         => '',
             'lng'         => '',
+            'open_hours'  => [],
         ];
 
         if ($provider === 'rank_math') {
-            $rm = get_option('rank_math_titles');
+            $rm = get_option('rank-math-options-titles');
 
-            $data['name'] = $rm['knowledge_graph_name'] ?? '';
-            $data['phone'] = $rm['phone'] ?? '';
+            $data['name'] = $rm['knowledgegraph_name'] ?? '';
+            $data['phone'] = $rm['phone_numbers'][0]['number'] ?? '';
             $data['price_range'] = $rm['price_range'] ?? '';
 
             if (!empty($rm['local_address']) && is_array($rm['local_address'])) {
@@ -104,6 +105,18 @@ final readonly class SeoIntegrator
                     $data['lng'] = trim($parts[1]);
                 }
             }
+
+            if (!empty($rm['opening_hours'])) {
+                $opening_hours = [];
+                foreach ($rm['opening_hours'] as $opening_hour) {
+                    $day = strtolower($opening_hour['day']);
+                    $time = $opening_hour['time'];
+                    $opening_hours[$day] = $time;
+                }
+
+                $data['open_hours'] = $opening_hours;
+            }
+
         } elseif ($provider === 'yoast') {
             $yoast = get_option('wpseo_titles');
             $data['name'] = $yoast['company_name'] ?? '';
