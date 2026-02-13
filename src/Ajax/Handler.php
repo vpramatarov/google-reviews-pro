@@ -16,6 +16,7 @@ readonly class Handler
         add_action('wp_ajax_grp_load_more', [$this, 'handle_load_more']);
         add_action('wp_ajax_nopriv_grp_load_more', [$this, 'handle_load_more']);
         add_action('wp_ajax_grp_delete_location', [$this, 'handle_delete_location']);
+        add_action('wp_ajax_grp_update_location', [$this, 'handle_update_location']);
         add_action('wp_ajax_grp_get_location_details', [$this, 'handle_get_location_details']);
         add_action('wp_ajax_grp_get_schema_details', [$this, 'handle_get_schema_details']);
         add_action('wp_ajax_grp_get_seo_details', [$this, 'handle_get_seo_details']);
@@ -131,6 +132,27 @@ readonly class Handler
         } else {
             wp_send_json_error(__('Unknown error or no data found.', 'google-reviews-pro'));
         }
+    }
+
+    public function handle_update_location(): void
+    {
+        if (!check_ajax_referer('grp_nonce', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized action.', 'google-reviews-pro'));
+        }
+
+        $place_id = sanitize_text_field($_POST['place_id'] ?? '');
+
+        if (empty($place_id)) {
+            wp_send_json_error(__('Invalid Place ID.', 'google-reviews-pro'));
+        }
+
+//        $result = $this->api->update_location($place_id);
+
+        wp_send_json_success(['message' => __('Location Updated.', 'google-reviews-pro')]);
     }
 
     public function handle_delete_location(): void
