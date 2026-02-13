@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Google Reviews Pro
  * Plugin URI: https://github.com/vpramatarov/google-reviews-pro
- * Version: 1.1.4
+ * Version: 1.1.5
  * Text Domain: google-reviews-pro
  * Author: Velizar Pramatarov <velizarpramatrov@yahoo.com>
  * Author URI: https://vpramatarov.eu
@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-const GRP_VERSION = '1.1.4';
+const GRP_VERSION = '1.1.5';
 const GRP_MAX_REVIEW_LIMIT = 5;
 
 const GRP_TIMEOUT = 120;
@@ -107,10 +107,10 @@ final class GoogleReviewsPro
             return $cronManager->add_custom_cron_schedules($schedules);
         });
 
-        $exporter = new GRP\Core\ReviewExporter();
-        $importer = new GRP\Core\ReviewImporter();
+        new GRP\Core\ReviewExporter();
+        new GRP\Core\ReviewImporter();
         $this->display = new GRP\Frontend\Display($this->apiHandler, $seo);
-        new GRP\Admin\Settings($seo, $this->apiHandler, $exporter, $importer);
+        new GRP\Admin\Settings($seo, $this->apiHandler);
         new GRP\Ajax\Handler($this->apiHandler, $this->display);
         new GRP\Core\PostType();
         new GRP\Core\Blocks($this->apiHandler, $this->display);
