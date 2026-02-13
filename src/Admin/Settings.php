@@ -648,6 +648,7 @@ readonly class Settings
     {
         $locations = $this->api->get_stored_locations();
         $layout = esc_attr(get_option('grp_settings')['grp_layout'] ?? 'grid');
+        $global_place_id = $this->api->get_api_options()['place_id'] ?? '';
 
         if (empty($locations)) {
             echo '<p class="description">' . __('No locations found yet. Sync some reviews first.', 'google-reviews-pro') . '</p>';
@@ -655,52 +656,72 @@ readonly class Settings
         }
 
         ?>
+        <style>
+            .debug-place, input[name=debug_data] { display: none; }
+            input[name=debug_data]:checked + label {
+                background-color: #b91c1c;
+                color: #fff;
+            }
+        </style>
         <table class="widefat fixed striped">
             <thead>
             <tr>
                 <th style="width: 25%; padding-left: 10px;"><?php _e('Place ID', 'google-reviews-pro'); ?></th>
                 <th style="width: 10%; padding-left: 10px;"><?php _e('Reviews Count', 'google-reviews-pro'); ?></th>
-                <th style="width: 40%; padding-left: 10px;"><?php _e('Shortcode Snippet', 'google-reviews-pro'); ?></th>
-                <th style="width: 20%; text-align: right; padding-right: 15px;"><?php _e('Actions', 'google-reviews-pro'); ?></th>
+                <th style="width: 45%; padding-left: 10px;"><?php _e('Shortcode Snippet', 'google-reviews-pro'); ?></th>
+                <th style="width: 15%; text-align: right; padding-right: 15px;"><?php _e('Actions', 'google-reviews-pro'); ?></th>
             </tr>
             </thead>
             <tbody>
-            <?php foreach ($locations as $loc): ?>
+            <?php foreach ($locations as $loc):
+                $place_id = $loc['place_id'];
+                ?>
                 <tr>
                     <td>
-                        <code><?php echo esc_html($loc['place_id']); ?></code>
+                        <code><?php echo esc_html($place_id); ?></code>
                         <hr>
                         <code><?php echo esc_html($loc['name']); ?></code>
                     </td>
                     <td style="text-align: center"><?php echo esc_html($loc['count']); ?></td>
                     <td>
-                        <input type="text"
-                               readonly
-                               class="regular-text"
-                               value='[google_reviews place_id="<?php echo esc_attr($loc['place_id']); ?>" layout="<?php echo $layout; ?>"]'
-                               style="width: 100%; font-family: monospace; background: #f9f9f9; color: #555;"
-                               onclick="this.select();">
+                        <div>
+                            <input type="text"
+                                   readonly
+                                   class="regular-text"
+                                   value='[google_reviews place_id="<?php echo esc_attr($place_id); ?>" layout="<?php echo $layout; ?>"]'
+                                   style="width: 100%; font-family: monospace; background: #f9f9f9; color: #555;"
+                                   onclick="this.select();">
+                        </div>
+
+                        <div id="debug-place-<?php echo esc_attr($place_id); ?>" class="debug-place">
+                            <hr>
+
+                            <div style="display: flex; flex-direction: row; align-content: space-evenly;">
+                                <button type="button" class="button button-secondary grp-schema-btn" data-place-id="<?php echo esc_attr($place_id); ?>" style="margin-right: 5px;">
+                                    <?php _e('Schema Check', 'google-reviews-pro'); ?>
+                                </button>
+
+                                <?php if($is_main_location = (empty($place_id) || $place_id === $global_place_id)): ?>
+                                    <button type="button" class="button button-secondary grp-seo-data-btn" data-place-id="<?php echo esc_attr($place_id); ?>" style="margin-right: 5px;">
+                                        <?php _e('Seo Data Check', 'google-reviews-pro'); ?>
+                                    </button>
+                                <?php endif; ?>
+
+                                <button type="button" class="button button-secondary grp-details-btn" data-place-id="<?php echo esc_attr($place_id); ?>" style="margin-right: 5px;">
+                                    <?php _e('Raw Data', 'google-reviews-pro'); ?>
+                                </button>
+                            </div>
+                        </div>
                     </td>
                     <td style="text-align: right;">
-                        <button type="button" class="button button-secondary grp-schema-btn" data-place-id="<?php echo esc_attr($loc['place_id']); ?>" style="margin-right: 5px;">
-                            <?php _e('Schema Check', 'google-reviews-pro'); ?>
-                        </button>
+                        <input type="radio" name="debug_data" data-place-id="<?php echo esc_attr($place_id); ?>" id="debug-data-<?php echo esc_attr($place_id); ?>">
+                        <label for="debug-data-<?php echo esc_attr($place_id); ?>" class="button">
+                            <?php _e('Show debug options', 'google-reviews-pro'); ?>
+                        </label>
 
                         <hr>
 
-                        <button type="button" class="button button-secondary grp-seo-data-btn" data-place-id="<?php echo esc_attr($loc['place_id']); ?>" style="margin-right: 5px;">
-                            <?php _e('Seo Data Check', 'google-reviews-pro'); ?>
-                        </button>
-
-                        <hr>
-
-                        <button type="button" class="button button-secondary grp-details-btn" data-place-id="<?php echo esc_attr($loc['place_id']); ?>" style="margin-right: 5px;">
-                            <?php _e('Raw Data', 'google-reviews-pro'); ?>
-                        </button>
-
-                        <hr>
-
-                        <button type="button" class="button button-link-delete grp-delete-loc-btn" data-place-id="<?php echo esc_attr($loc['place_id']); ?>">
+                        <button type="button" class="button button-link-delete grp-delete-loc-btn" data-place-id="<?php echo esc_attr($place_id); ?>">
                             <?php _e('Delete', 'google-reviews-pro'); ?>
                         </button>
                     </td>
@@ -1315,7 +1336,6 @@ readonly class Settings
                         $syncBtn.show();
                     } else if (val === 'serpapi') {
                         $inputSerpApiKey.prop('required', true);
-                        $inputSerpApiDataId.prop('required', true);
                         $serpApiRow.show();
                         $serpApiDataIdRow.show();
                         $syncBtn.show();
@@ -1575,6 +1595,16 @@ readonly class Settings
                         alert('<?php _e('Server error', 'google-reviews-pro'); ?>.');
                         $btn.prop('disabled', false).text('<?php _e('Delete', 'google-reviews-pro'); ?>');
                     });
+                });
+
+                $('input[name=debug_data]').on('click', function (e) {
+                    e.preventDefault();
+                    const $input = $(this);
+                    const placeId = $input.data('place-id');
+                    $('.debug-place').hide();
+                    const $id = 'debug-place-' + placeId;
+                    console.log($id);
+                    $('#' + $id).show();
                 });
 
                 // Show stored raw API data
