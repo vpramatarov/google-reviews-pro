@@ -8,8 +8,6 @@ use chillerlan\QRCode\Common\EccLevel;
 use chillerlan\QRCode\Output\QROutputInterface;
 use GRP\Api\Handler as ApiHandler;
 use GRP\Core\SeoIntegrator;
-use GRP\Core\ReviewExporter;
-use GRP\Core\ReviewImporter;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 
@@ -17,14 +15,10 @@ readonly class Settings
 {
     public function __construct(
         private SeoIntegrator $seo,
-        private ApiHandler $api,
-        private ReviewExporter $exporter,
-        private ReviewImporter $importer
+        private ApiHandler $api
     ) {
         add_action('admin_menu', [$this, 'add_menu']);
         add_action('admin_init', [$this, 'register_settings']);
-        add_action('admin_init', [$this, 'handle_export_request']);
-        add_action('admin_init', [$this, 'handle_import_request']);
         add_action('admin_footer', [$this, 'render_admin_scripts']);
         add_action('admin_notices', [$this, 'show_sync_success_notices']);
     }
@@ -656,21 +650,14 @@ readonly class Settings
         }
 
         ?>
-        <style>
-            .debug-place, input[name=debug_data] { display: none; }
-            input[name=debug_data]:checked + label {
-                background-color: #b91c1c;
-                color: #fff;
-            }
-        </style>
         <table class="widefat fixed striped">
             <thead>
-            <tr>
-                <th style="width: 25%; padding-left: 10px;"><?php _e('Place ID', 'google-reviews-pro'); ?></th>
-                <th style="width: 10%; padding-left: 10px;"><?php _e('Reviews Count', 'google-reviews-pro'); ?></th>
-                <th style="width: 45%; padding-left: 10px;"><?php _e('Shortcode Snippet', 'google-reviews-pro'); ?></th>
-                <th style="width: 15%; text-align: right; padding-right: 15px;"><?php _e('Actions', 'google-reviews-pro'); ?></th>
-            </tr>
+                <tr>
+                    <th style="width: 25%; padding-left: 10px;"><?php _e('Place ID', 'google-reviews-pro'); ?></th>
+                    <th style="width: 10%; padding-left: 10px;"><?php _e('Reviews Count', 'google-reviews-pro'); ?></th>
+                    <th style="width: 45%; padding-left: 10px;"><?php _e('Shortcode Snippet', 'google-reviews-pro'); ?></th>
+                    <th style="width: 15%; text-align: right; padding-right: 15px;"><?php _e('Actions', 'google-reviews-pro'); ?></th>
+                </tr>
             </thead>
             <tbody>
             <?php foreach ($locations as $loc):
@@ -721,6 +708,12 @@ readonly class Settings
 
                         <hr>
 
+                        <button type="button" class="button button-link-edit-place" data-place-id="<?php echo esc_attr($place_id); ?>">
+                            <?php _e('Edit', 'google-reviews-pro'); ?>
+                        </button>
+
+                        <hr>
+
                         <button type="button" class="button button-link-delete grp-delete-loc-btn" data-place-id="<?php echo esc_attr($place_id); ?>">
                             <?php _e('Delete', 'google-reviews-pro'); ?>
                         </button>
@@ -730,46 +723,71 @@ readonly class Settings
             </tbody>
         </table>
 
-        <div id="grp-schema-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:100000; align-items:center; justify-content:center;">
-            <div style="background:#fff; width:700px; max-width:90%; max-height:90vh; padding:20px; border-radius:5px; box-shadow:0 0 10px rgba(0,0,0,0.5); display:flex; flex-direction:column;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+        <div id="grp-edit-place" class="modal-window">
+            <div class="modal-wrapper">
+                <div class="modal-header">
+                    <h3 style="margin:0;"><?php _e('Edit Location', 'google-reviews-pro'); ?></h3>
+                    <button type="button" class="grp-close-edit-location-modal button button-small">✕</button>
+                </div>
+                <div class="modal-content">
+                    <ul>
+                        <li>
+                            <label>
+                                <?php _e('Business Name', 'google-reviews-pro'); ?>: <input type="text" name="location_name" class="regular-text edit-location">
+                            </label>
+                        </li>
+                        <li>
+                            <label for="edit-location-address"><?php _e('Business Address', 'google-reviews-pro'); ?>:</label>
+                            <textarea name="location_address" class="edit-location large-text" rows="3" id="edit-location-address"></textarea>
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="button button-primary" id="grp-edit-loc-btn"><?php _e('Update', 'google-reviews-pro'); ?></button>
+                    <button type="button" class="button button-secondary grp-close-edit-location-modal"><?php _e('Close', 'google-reviews-pro'); ?></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="grp-schema-modal" class="modal-window">
+            <div class="modal-wrapper">
+                <div class="modal-header">
                     <h3 style="margin:0;"><?php _e('Structured Data Source Analysis', 'google-reviews-pro'); ?></h3>
                     <button type="button" class="grp-close-schema button button-small">✕</button>
                 </div>
 
-                <div style="overflow-y:auto; flex:1;">
+                <div class="modal-content darker-bg">
                     <table class="widefat striped">
                         <thead>
-                        <tr>
-                            <th><?php _e('Field', 'google-reviews-pro'); ?></th>
-                            <th><?php _e('Current Value', 'google-reviews-pro'); ?></th>
-                            <th><?php _e('Source', 'google-reviews-pro'); ?></th>
-                        </tr>
+                            <tr>
+                                <th><?php _e('Field', 'google-reviews-pro'); ?></th>
+                                <th><?php _e('Current Value', 'google-reviews-pro'); ?></th>
+                                <th><?php _e('Source', 'google-reviews-pro'); ?></th>
+                            </tr>
                         </thead>
-                        <tbody id="grp-schema-tbody">
-                        </tbody>
+                        <tbody id="grp-schema-tbody"></tbody>
                     </table>
                     <p class="description" style="margin-top: 10px;">
                         <?php _e('Note: "SEO Plugin" has priority #1. "API Data" has priority #2. "Manual Settings" has priority #3.', 'google-reviews-pro'); ?>
                     </p>
                 </div>
 
-                <div style="margin-top:15px; text-align:right;">
+                <div class="modal-footer">
                     <button type="button" class="button button-primary grp-close-schema"><?php _e('Close', 'google-reviews-pro'); ?></button>
                 </div>
             </div>
         </div>
 
-        <div id="grp-raw-data-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:100000; align-items:center; justify-content:center;">
-            <div style="background:#fff; width:600px; max-width:90%; max-height:80vh; padding:20px; border-radius:5px; box-shadow:0 0 10px rgba(0,0,0,0.5); display:flex; flex-direction:column;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+        <div id="grp-raw-data-modal" class="modal-window">
+            <div class="modal-wrapper">
+                <div class="modal-header">
                     <h3 style="margin:0;"><?php _e('Location Raw Data', 'google-reviews-pro'); ?></h3>
                     <button type="button" class="grp-close-modal button button-small">✕</button>
                 </div>
-                <div style="overflow-y:auto; flex:1; background:#f5f5f5; padding:10px; border:1px solid #ddd;">
-                    <pre id="grp-raw-content" style="white-space:pre-wrap; word-wrap:break-word; font-size:12px; margin:0;"></pre>
+                <div class="modal-content darker-bg">
+                    <pre id="grp-raw-content" style=""></pre>
                 </div>
-                <div style="margin-top:15px; text-align:right;">
+                <div class="modal-footer">
                     <button type="button" class="button button-primary grp-close-modal"><?php _e('Close', 'google-reviews-pro'); ?></button>
                 </div>
             </div>
@@ -1121,110 +1139,6 @@ readonly class Settings
         <?php
     }
 
-    public function handle_import_request(): void
-    {
-        if (!isset($_POST['grp_action']) || $_POST['grp_action'] !== 'import_file' || !isset($_FILES['grp_import_file'])) {
-            return;
-        }
-
-        if (!check_admin_referer('grp_import_action', 'grp_import_nonce')) {
-            wp_die(__('Security check failed', 'google-reviews-pro'));
-        }
-
-        if (!current_user_can('manage_options')) {
-            wp_die(__('Unauthorized', 'google-reviews-pro'));
-        }
-
-        $file = $_FILES['grp_import_file'];
-
-        // check for errors
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            add_settings_error('grp_settings', 'upload_error', __('File upload failed.', 'google-reviews-pro'));
-            return;
-        }
-
-        // Check MIME type (basic)
-        $file_type = wp_check_filetype($file['name']);
-        if ($file_type['ext'] !== 'json') {
-            add_settings_error('grp_settings', 'invalid_type', __('Only JSON files are allowed.', 'google-reviews-pro'));
-            return;
-        }
-
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-
-        if ($ext === 'zip') {
-            $stats = $this->importer->import_zip($file['tmp_name']);
-        } elseif ($ext === 'json') {
-            $stats = $this->importer->import_json($file['tmp_name']);
-        } elseif ($ext === 'csv') {
-            $stats = $this->importer->import_csv($file['tmp_name']);
-        } else {
-            add_settings_error(
-                'grp_settings',
-                'invalid_type',
-                __('Invalid file type. Allowed: .json, .csv, .zip', 'google-reviews-pro')
-            );
-            return;
-        }
-
-        if ($stats['errors'] > 0 && $stats['success'] === 0) {
-            add_settings_error('grp_settings', 'import_fail', __('Failed to parse JSON file.', 'google-reviews-pro'));
-        } else {
-            add_settings_error(
-                'grp_settings',
-                'import_success',
-                sprintf(
-                    __('Import complete! Added: %d, Skipped (Duplicates): %d, Errors: %d', 'google-reviews-pro'),
-                    $stats['success'],
-                    $stats['skipped'],
-                    $stats['errors']
-                ),
-                'success'
-            );
-        }
-    }
-
-    public function handle_export_request(): void
-    {
-        if (!isset($_POST['grp_action']) || !isset($_POST['grp_export_nonce'])) {
-            return;
-        }
-
-        // Check Nonce + Permissions
-        if (!wp_verify_nonce($_POST['grp_export_nonce'], 'grp_export_action')) {
-            wp_die(__('Security check failed', 'google-reviews-pro'));
-        }
-
-        if (!current_user_can('manage_options')) {
-            wp_die(__('Unauthorized', 'google-reviews-pro'));
-        }
-
-        if ($_POST['grp_action'] === 'export_zip') {
-            $zip_path = $this->exporter->generate_backup_zip();
-
-            if (file_exists($zip_path)) {
-                header('Content-Type: application/zip');
-                header('Content-Disposition: attachment; filename="grp-backup-full.zip"');
-                header('Content-Length: ' . filesize($zip_path));
-                readfile($zip_path);
-
-                unlink($zip_path);
-                exit;
-            } else {
-                wp_die('Error creating ZIP file.');
-            }
-        }
-
-        $data = $this->exporter->get_raw_data();
-        $filename = 'google-reviews-' . date('Y-m-d') . '-' . count($data);
-
-        if ($_POST['grp_action'] === 'export_json') {
-            $this->send_json_download($data, $filename . '.json');
-        } elseif ($_POST['grp_action'] === 'export_csv') {
-            $this->send_csv_download($data, $filename . '.csv');
-        }
-    }
-
     public function email_alerts_html(): void
     {
         $val = esc_attr(get_option('grp_settings')['email_alerts'] ?? 0);
@@ -1565,6 +1479,47 @@ readonly class Settings
                 // On Change
                 $emailCheckbox.on('change', toggleEmailInput);
 
+
+                const $editModal = $('#grp-edit-place');
+                // const $editModal;
+
+                // Edit location
+                $('.button-link-edit-place').on('click', function(e) {
+                    e.preventDefault();
+                    const $btn = $(this);
+                    const placeId = $btn.data('place-id');
+
+                    $btn.prop('disabled', true).text('<?php _e('Loading data', 'google-reviews-pro'); ?>...');
+
+                    $.post(ajaxurl, {
+                        action: 'grp_get_location_details',
+                        nonce: '<?php echo wp_create_nonce("grp_nonce"); ?>',
+                        place_id: placeId
+                    }, function(res) {
+                        if (res.success) {
+                            const $data = res.data;
+                            $editModal.find('input[name=location_name]').val($data.name || '');
+                            $editModal.find('#edit-location-address').text($data.address || '');
+                            $editModal.css('display', 'flex'); // Flex to center
+                            $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
+                        } else {
+                            alert('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
+                            $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
+                        }
+                    }).fail(function() {
+                        alert('<?php _e('Server error', 'google-reviews-pro'); ?>.');
+                        $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
+                    });
+                });
+
+                // Close Modal
+                $('.grp-close-edit-location-modal').on('click', function(e) {
+                    e.preventDefault();
+                    $editModal.hide();
+                    $editModal.find('input').val('');
+                    $editModal.find('textarea').text('');
+                });
+
                 // Delete location
                 $('.grp-delete-loc-btn').on('click', function(e) {
                     e.preventDefault();
@@ -1603,7 +1558,6 @@ readonly class Settings
                     const placeId = $input.data('place-id');
                     $('.debug-place').hide();
                     const $id = 'debug-place-' + placeId;
-                    console.log($id);
                     $('#' + $id).show();
                 });
 
@@ -1704,7 +1658,7 @@ readonly class Settings
                     $schemaModal.hide();
                 });
 
-                // Close on outside click (for both modals)
+                // Close on outside click (for modals)
                 $(window).on('click', function(e) {
                     if ($(e.target).is('#grp-raw-data-modal')) {
                         $('#grp-raw-data-modal').hide();
@@ -1712,13 +1666,16 @@ readonly class Settings
                     if ($(e.target).is('#grp-schema-modal')) {
                         $('#grp-schema-modal').hide();
                     }
+                    if ($(e.target).is('#grp-edit-place')) {
+                        $('#grp-edit-place').hide();
+                    }
                 });
             });
 
             function printCard() {
                 const cardContent = document.getElementById('grp-print-card').outerHTML;
                 const win = window.open('', '', 'height=600,width=800');
-                win.document.write('<html><head><title>Print Card</title>');
+                win.document.write('<html lang="en"><head><title><?php _e('Print Card', 'google-reviews-pro'); ?></title>');
                 win.document.write('</head><body style="display:flex; justify-content:center; align-items:center; height:100vh;">');
                 win.document.write(cardContent);
                 win.document.write('</body></html>');
@@ -1736,6 +1693,67 @@ readonly class Settings
 
     public function render_page(): void
     {
+        ?>
+        <style>
+            .debug-place, input[name=debug_data] { display: none; }
+            input[name=debug_data]:checked + label {
+                background-color: #b91c1c;
+                color: #fff;
+            }
+            ul { list-style: none; }
+            ul li { margin-bottom: 10px; }
+            .modal-window {
+                display:none;
+                position:fixed;
+                top:0;
+                left:0;
+                width:100%;
+                height:100%;
+                background:rgba(0,0,0,0.6);
+                z-index:100000;
+                align-items:center;
+                justify-content:center;
+            }
+            .modal-wrapper {
+                background:#fff;
+                width:600px;
+                max-width:90%;
+                max-height:80vh;
+                padding:20px;
+                border-radius:5px;
+                box-shadow:0 0 10px rgba(0,0,0,0.5);
+                display:flex;
+                flex-direction:column;
+            }
+            .modal-header {
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                margin-bottom:15px;
+                border-bottom:1px solid #eee;
+                padding-bottom:10px;
+            }
+            .modal-content {
+                overflow-y:auto;
+                flex:1;
+            }
+            .modal-content.darker-bg {
+                background:#f5f5f5;
+                padding:10px;
+                border:1px solid #ddd;
+            }
+            .modal-footer {
+                margin-top:15px;
+                text-align:right;
+            }
+            #grp-raw-content {
+                white-space:pre-wrap;
+                word-wrap:break-word;
+                font-size:12px;
+                margin:0;
+            }
+        </style>
+<?php
         if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON && (get_option('grp_settings')['auto_sync'] ?? 0)) {
             echo '<div class="notice notice-warning"><p>';
             _e('Warning: WP_CRON is disabled in your wp-config.php. Auto-sync will not work unless you set up a system cron job.', 'google-reviews-pro');
@@ -1759,55 +1777,5 @@ readonly class Settings
         echo '<button id="grp-sync-btn" class="button button-secondary">' . __('Sync Reviews Now', 'google-reviews-pro') . '</button>';
         echo '<span id="grp-sync-status" style="margin-left: 10px;"></span>';
         echo '</div>';
-    }
-
-    private function send_json_download(array $data, string $filename): void
-    {
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/json');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate');
-        header('Pragma: public');
-
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
-        exit;
-    }
-
-    private function send_csv_download(array $data, string $filename): void
-    {
-        if (empty($data)) {
-            wp_die(__('No reviews to export.', 'google-reviews-pro'));
-        }
-
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-
-        $output = fopen('php://output', 'w');
-
-        // Add BOM for Excel UTF-8 compatibility
-        fputs($output, "\xEF\xBB\xBF");
-
-        // Headers
-        fputcsv($output, array_keys($data[0]));
-
-        // Rows
-        foreach ($data as $row) {
-            // Formatting the date for CSV to be readable (in JSON we store it as a timestamp)
-            $row['time'] = date('Y-m-d H:i:s', (int)$row['time']);
-
-            // sanitization against Excel Injection
-            $row = array_map(function($value) {
-                if (is_string($value) && preg_match('/^[=\+\-@]/', $value)) {
-                    return "'" . $value; // add "'" so it's treated like text
-                }
-                return $value;
-            }, $row);
-
-            fputcsv($output, $row);
-        }
-
-        fclose($output);
-        exit;
     }
 }
