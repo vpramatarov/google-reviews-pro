@@ -8,11 +8,79 @@ use ZipArchive;
 
 class ReviewImporter
 {
+    public function __construct()
+    {
+        add_action('admin_init', [$this, 'handle_import_request']);
+    }
+
+    public function handle_import_request(): void
+    {
+        if (!isset($_POST['grp_action']) || $_POST['grp_action'] !== 'import_file' || !isset($_FILES['grp_import_file'])) {
+            return;
+        }
+
+        if (!check_admin_referer('grp_import_action', 'grp_import_nonce')) {
+            wp_die(__('Security check failed', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Unauthorized', 'google-reviews-pro'));
+        }
+
+        $file = $_FILES['grp_import_file'];
+
+        // check for errors
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            add_settings_error('grp_settings', 'upload_error', __('File upload failed.', 'google-reviews-pro'));
+            return;
+        }
+
+        // Check MIME type (basic)
+        $file_type = wp_check_filetype($file['name']);
+        if ($file_type['ext'] !== 'json') {
+            add_settings_error('grp_settings', 'invalid_type', __('Only JSON files are allowed.', 'google-reviews-pro'));
+            return;
+        }
+
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+
+        if ($ext === 'zip') {
+            $stats = $this->import_zip($file['tmp_name']);
+        } elseif ($ext === 'json') {
+            $stats = $this->import_json($file['tmp_name']);
+        } elseif ($ext === 'csv') {
+            $stats = $this->import_csv($file['tmp_name']);
+        } else {
+            add_settings_error(
+                'grp_settings',
+                'invalid_type',
+                __('Invalid file type. Allowed: .json, .csv, .zip', 'google-reviews-pro')
+            );
+            return;
+        }
+
+        if ($stats['errors'] > 0 && $stats['success'] === 0) {
+            add_settings_error('grp_settings', 'import_fail', __('Failed to parse JSON file.', 'google-reviews-pro'));
+        } else {
+            add_settings_error(
+                'grp_settings',
+                'import_success',
+                sprintf(
+                    __('Import complete! Added: %d, Skipped (Duplicates): %d, Errors: %d', 'google-reviews-pro'),
+                    $stats['success'],
+                    $stats['skipped'],
+                    $stats['errors']
+                ),
+                'success'
+            );
+        }
+    }
+
     /**
      * @param string $zip_file_path The temporary path to the uploaded file (tmp_name)
      * @return array{success: int, skipped: int, errors: int}
      */
-    public function import_zip(string $zip_file_path): array
+    private function import_zip(string $zip_file_path): array
     {
         $stats = ['success' => 0, 'skipped' => 0, 'errors' => 0];
         $upload_dir = wp_upload_dir();
@@ -67,7 +135,7 @@ class ReviewImporter
         return $stats;
     }
 
-    public function import_json(string $json_file_path): array
+    private function import_json(string $json_file_path): array
     {
         $stats = ['success' => 0, 'skipped' => 0, 'errors' => 0];
 
@@ -87,7 +155,7 @@ class ReviewImporter
         return $stats;
     }
 
-    public function import_csv(string $file_path): array
+    private function import_csv(string $file_path): array
     {
         $stats = ['success' => 0, 'skipped' => 0, 'errors' => 0];
 
