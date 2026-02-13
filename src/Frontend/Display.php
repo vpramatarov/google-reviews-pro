@@ -233,13 +233,19 @@ readonly class Display
         $auto_meta = !empty($place_id) ? $this->api->get_location_metadata($place_id) : ($this->api->get_location_metadata($global_place_id) ?? null); // API data
 
         // Helper function to determine value and source
-        $determine = function($key, $seo_val, $manual_val, $api_val, $is_main) use ($options) {
-            // Priority 1: SEO Plugin
-            if (!empty($seo_val)) {
-                return ['value' => $seo_val, 'source' => 'SEO Plugin (' . $this->seo->get_active_provider() . ')'];
+        $determine = function($key, $seo_val, $manual_val, $api_val, $is_main) use ($options, $is_main_location) {
+            if ($is_main_location) {
+                // Priority 1: SEO Plugin
+                if (!empty($seo_val)) {
+                    return ['value' => $seo_val, 'source' => 'SEO Plugin (' . $this->seo->get_active_provider() . ')'];
+                }
+
+                // Priority 2: API Data (Auto-Sync) - if data for given location is available
+                if (!empty($api_val)) {
+                    return ['value' => $api_val, 'source' => 'API (Auto-Sync)'];
+                }
             }
 
-            // Priority 2: API Data (Auto-Sync) - if data for given location is available
             if (!empty($api_val)) {
                 return ['value' => $api_val, 'source' => 'API (Auto-Sync)'];
             }
@@ -254,7 +260,7 @@ readonly class Display
 
         // Analyze Basic Fields
         $fields = [
-            'place_id' => $determine('place_id', '', $global_place_id, $auto_meta['place_id'] ?? '', $is_main_location),
+            'place_id' => $determine('place_id', '', $global_place_id, $auto_meta['place_id'] ?? $place_id, $is_main_location),
             'data_id' => $determine('data_id', '', $options['serpapi_data_id'] ?? '', $auto_meta['data_id'] ?? '', $is_main_location),
             'name' => $determine('name', $seo_data['name'] ?? '', $options['grp_business_name'] ?? '', $auto_meta['name'] ?? '', $is_main_location),
             'address' => $determine('address', $seo_data['address'] ?? '', $options['grp_address'] ?? '', $auto_meta['address'] ?? '', $is_main_location),
@@ -267,7 +273,7 @@ readonly class Display
         $manual_price = $options['grp_price'] ?? '';
         $api_price = !empty($auto_meta['price_level']) ? str_repeat('$', max(1, (int)$auto_meta['price_level'])) : '';
 
-        if (!empty($seo_data['price_range'])) {
+        if ($is_main_location && !empty($seo_data['price_range'])) {
             $fields['priceRange'] = ['value' => $seo_data['price_range'], 'source' => 'SEO Plugin'];
         } elseif (!empty($manual_price)) {
             $fields['priceRange'] = ['value' => $manual_price, 'source' => 'Manual Settings'];
@@ -281,6 +287,9 @@ readonly class Display
         if (!empty($auto_meta['periods'])) {
             $v = sprintf('<pre>%s</pre>', print_r($auto_meta['periods'], true));
             $fields['openingHours'] = ['value' => $v, 'source' => 'API (Auto-Sync)'];
+        } else if ($is_main_location && !empty($seo_data['open_hours'])) {
+            $v = sprintf('<pre>%s</pre>', print_r($seo_data['open_hours'], true));
+            $fields['openingHours'] = ['value' => $v, 'source' => 'SEO Plugin'];
         } else {
             $fields['openingHours'] = ['value' => 'Missing', 'source' => '-'];
         }
