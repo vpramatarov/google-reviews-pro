@@ -8,11 +8,57 @@ use ZipArchive;
 
 class ReviewExporter
 {
+    public function __construct()
+    {
+        add_action('admin_init', [$this, 'handle_export_request']);
+    }
+
+    public function handle_export_request(): void
+    {
+        if (!isset($_POST['grp_action']) || !isset($_POST['grp_export_nonce'])) {
+            return;
+        }
+
+        // Check Nonce + Permissions
+        if (!wp_verify_nonce($_POST['grp_export_nonce'], 'grp_export_action')) {
+            wp_die(__('Security check failed', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Unauthorized', 'google-reviews-pro'));
+        }
+
+        if ($_POST['grp_action'] === 'export_zip') {
+            $zip_path = $this->generate_backup_zip();
+
+            if (file_exists($zip_path)) {
+                header('Content-Type: application/zip');
+                header('Content-Disposition: attachment; filename="grp-backup-full.zip"');
+                header('Content-Length: ' . filesize($zip_path));
+                readfile($zip_path);
+
+                unlink($zip_path);
+                exit;
+            } else {
+                wp_die('Error creating ZIP file.');
+            }
+        }
+
+        $data = $this->get_raw_data();
+        $filename = 'google-reviews-' . date('Y-m-d') . '-' . count($data);
+
+        if ($_POST['grp_action'] === 'export_json') {
+            $this->send_json_download($data, $filename . '.json');
+        } elseif ($_POST['grp_action'] === 'export_csv') {
+            $this->send_csv_download($data, $filename . '.csv');
+        }
+    }
+
     /**
      * Creates a ZIP archive with JSON data and physical images (if local).
      * @return string The path to the generated ZIP file or an empty string on error.
      */
-    public function generate_backup_zip(): string
+    private function generate_backup_zip(): string
     {
         $reviews = $this->get_raw_data();
         $upload_dir = wp_upload_dir();
@@ -60,7 +106,7 @@ class ReviewExporter
         return $zip_file_path;
     }
 
-    public function get_raw_data(): array
+    private function get_raw_data(): array
     {
         $args = [
             'post_type'  => 'grp_review',
@@ -96,6 +142,56 @@ class ReviewExporter
         }
 
         return $data;
+    }
+
+    private function send_json_download(array $data, string $filename): void
+    {
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/json');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    private function send_csv_download(array $data, string $filename): void
+    {
+        if (empty($data)) {
+            wp_die(__('No reviews to export.', 'google-reviews-pro'));
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        $output = fopen('php://output', 'w');
+
+        // Add BOM for Excel UTF-8 compatibility
+        fputs($output, "\xEF\xBB\xBF");
+
+        // Headers
+        fputcsv($output, array_keys($data[0]));
+
+        // Rows
+        foreach ($data as $row) {
+            // Formatting the date for CSV to be readable (in JSON we store it as a timestamp)
+            $row['time'] = date('Y-m-d H:i:s', (int)$row['time']);
+
+            // sanitization against Excel Injection
+            $row = array_map(function($value) {
+                if (is_string($value) && preg_match('/^[=\+\-@]/', $value)) {
+                    return "'" . $value; // add "'" so it's treated like text
+                }
+                return $value;
+            }, $row);
+
+            fputcsv($output, $row);
+        }
+
+        fclose($output);
+        exit;
     }
 
     /**
