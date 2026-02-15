@@ -144,15 +144,27 @@ readonly class Handler
             wp_send_json_error(__('Unauthorized action.', 'google-reviews-pro'));
         }
 
-        $place_id = sanitize_text_field($_POST['place_id'] ?? '');
+        $place_id = sanitize_text_field(trim($_POST['place_id'] ?? ''));
+        $business_name = sanitize_text_field(trim($_POST['name'] ?? ''));
+        $address = sanitize_textarea_field(trim($_POST['address'] ?? ''));
 
         if (empty($place_id)) {
             wp_send_json_error(__('Invalid Place ID.', 'google-reviews-pro'));
         }
 
-//        $result = $this->api->update_location($place_id);
+        if (empty($business_name)) {
+            wp_send_json_error(__('Invalid Business name.', 'google-reviews-pro'));
+        }
 
-        wp_send_json_success(['message' => __('Location Updated.', 'google-reviews-pro')]);
+        if (empty($address)) {
+            wp_send_json_error(__('Invalid Address.', 'google-reviews-pro'));
+        }
+
+        if ($this->api->update_location($place_id, ['business_name' => $business_name, 'address' => $address])) {
+            wp_send_json_success(['message' => __('Location Updated.', 'google-reviews-pro')]);
+        }
+
+        wp_send_json_error(__('Data not updated.', 'google-reviews-pro'));
     }
 
     public function handle_delete_location(): void
