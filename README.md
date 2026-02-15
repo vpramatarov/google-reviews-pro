@@ -168,6 +168,12 @@ It is useful for people who only want to show "Top 5" reviews or use business da
 * **SerpApi:** [Get Key](https://serpapi.com/) (Scraper, supports deep pagination).
 * **Scrapingdog:** [Get Key](https://www.scrapingdog.com/) (Scraper, supports deep pagination).
 
+
+= Can I support the development of this plugin? =
+
+Yes, this plugin is maintained in my free time. If you find it useful, you can support me via Revolut:
+[Support via Revolut](https://revolut.me/velizaaj0s)
+
 == Changelog ==
 
 = 1.0.0 =
