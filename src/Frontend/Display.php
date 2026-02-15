@@ -85,6 +85,7 @@ readonly class Display
                 }
             }
             
+            .grp-card { border-left-color: {$accent_color} }
             .grp-grid .grp-card, 
             .grp-list-view .grp-card,
             .grp-slider-track .grp-card {
