@@ -414,8 +414,8 @@ readonly class Handler
             }
         }
 
-        $rating = absint($data['rating'] ?? 0);
-        $total_count = !empty($data['total_count']) ? (float)$data['total_count'] : 0;
+        $rating = !empty($data['rating']) ? (float)$data['rating'] : 0;
+        $total_count = absint($data['total_count'] ?? 0);
 
         $db = get_option('grp_locations_db', []);
         if (isset($db[$place_id])) {
