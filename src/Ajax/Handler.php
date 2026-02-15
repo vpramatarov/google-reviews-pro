@@ -173,8 +173,8 @@ readonly class Handler
         $update_data = [
             'business_name' => $business_name,
             'address' => $address,
-            'rating' => (float)$rating,
-            'total_count' => absint($total_count),
+            'rating' => $rating,
+            'total_count' => $total_count,
         ];
 
         if ($this->api->update_location($place_id, $update_data)) {

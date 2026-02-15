@@ -425,12 +425,12 @@ readonly class Handler
                 'updated' => time()
             ];
 
-            if ($rating > 0 && ($rating !== $db[$place_id]['rating'])) {
-                $db[$place_id]['rating'] = $rating;
+            if ($total_count > 0 && ($total_count !== $db[$place_id]['count'])) {
+                $db[$place_id]['count'] = $total_count;
             }
 
-            if (($total_count >= 1 && $total_count <= 5) && $db[$place_id]['count'] !== $total_count) {
-                $db[$place_id]['count'] = $total_count;
+            if (($rating >= 1 && $rating <= 5) && $db[$place_id]['rating'] !== $rating) {
+                $db[$place_id]['rating'] = $rating;
             }
 
             return update_option('grp_locations_db', $db);
