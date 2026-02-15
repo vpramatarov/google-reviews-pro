@@ -147,6 +147,8 @@ readonly class Handler
         $place_id = sanitize_text_field(trim($_POST['place_id'] ?? ''));
         $business_name = sanitize_text_field(trim($_POST['name'] ?? ''));
         $address = sanitize_textarea_field(trim($_POST['address'] ?? ''));
+        $rating = sanitize_text_field(trim($_POST['rating'] ?? ''));
+        $total_count = sanitize_text_field(trim($_POST['total_count'] ?? ''));
 
         if (empty($place_id)) {
             wp_send_json_error(__('Invalid Place ID.', 'google-reviews-pro'));
@@ -160,7 +162,22 @@ readonly class Handler
             wp_send_json_error(__('Invalid Address.', 'google-reviews-pro'));
         }
 
-        if ($this->api->update_location($place_id, ['business_name' => $business_name, 'address' => $address])) {
+        if ((!empty($total_count) && !is_numeric($total_count)) || (!empty($total_count) && (int)$total_count < 1)) {
+            wp_send_json_error(__('Total count must a positive number.', 'google-reviews-pro'));
+        }
+
+        if ((!empty($rating) && !is_numeric($rating)) || (!empty($rating) && ((float)$rating > 5 || (float)$rating < 1))) {
+            wp_send_json_error(__('Rating must a positive number between 1 and 5.', 'google-reviews-pro'));
+        }
+
+        $update_data = [
+            'business_name' => $business_name,
+            'address' => $address,
+            'rating' => absint($rating),
+            'total_count' => (float)$total_count,
+        ];
+
+        if ($this->api->update_location($place_id, $update_data)) {
             wp_send_json_success(['message' => __('Location Updated.', 'google-reviews-pro')]);
         }
 

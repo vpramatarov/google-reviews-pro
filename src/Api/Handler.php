@@ -398,7 +398,7 @@ readonly class Handler
     }
 
     /**
-     * @param array{business_name: string, address: string} $data
+     * @param array{business_name: string, address: string, rating: float|int, total_count: int} $data
      * @return bool
      */
     public function update_location(string $place_id, array $data): bool
@@ -414,6 +414,9 @@ readonly class Handler
             }
         }
 
+        $rating = absint($data['rating'] ?? 0);
+        $total_count = !empty($data['total_count']) ? (float)$data['total_count'] : 0;
+
         $db = get_option('grp_locations_db', []);
         if (isset($db[$place_id])) {
             $db[$place_id] = [
@@ -421,6 +424,14 @@ readonly class Handler
                 'address' => sanitize_textarea_field($data['address']),
                 'updated' => time()
             ];
+
+            if ($rating > 0) {
+                $db[$place_id]['rating'] = $rating;
+            }
+
+            if ($total_count >= 1 && $total_count <= 5) {
+                $db[$place_id]['count'] = $total_count;
+            }
 
             return update_option('grp_locations_db', $db);
         }

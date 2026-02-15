@@ -743,6 +743,16 @@ readonly class Settings
                                 <label for="edit-location-address"><?php _e('Business Address', 'google-reviews-pro'); ?>:</label>
                                 <textarea name="location_address" class="edit-location large-text" rows="3" id="edit-location-address"></textarea>
                             </li>
+                            <li>
+                                <label for="edit-reviews-total-count">
+                                    <?php _e('Reviews count', 'google-reviews-pro'); ?>: <input type="text" name="reviews_total_count" id="edit-reviews-total-count" class="regular-text edit-location">
+                                </label>
+                            </li>
+                            <li>
+                                <label for="edit-reviews-rating">
+                                    <?php _e('Reviews rating', 'google-reviews-pro'); ?>: <input type="text" name="reviews_rating" id="edit-reviews-rating" class="regular-text edit-location">
+                                </label>
+                            </li>
                         </ul>
                         <input name="place_id" type="hidden" id="edit-location-place-id" >
                     </div>
@@ -1506,6 +1516,8 @@ readonly class Settings
                             $('#edit-location-name').val($data.name || '');
                             $('#edit-location-address').text($data.address || '');
                             $('input#edit-location-place-id').val($data.place_id || placeId);
+                            $('#edit-reviews-rating').val($data.rating || '');
+                            $('#edit-reviews-total-count').val($data.count || '');
                             $('#grp-edit-loc-btn').prop('disabled', false);
                             $editModal.css('display', 'flex'); // Flex to center
                             $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
@@ -1537,6 +1549,8 @@ readonly class Settings
                     const placeId = $('input#edit-location-place-id').val();
                     const location_name = $('#edit-location-name').val();
                     const location_address = $('#edit-location-address').val();
+                    const location_rating = $('#edit-reviews-rating').val();
+                    const location_total_reviews_count = $('#edit-reviews-total-count').val();
 
                     $('#update-location-response').text('').addClass('hidden').removeClass('error success');
                     $btn.prop('disabled', true).text('<?php _e('Updating data', 'google-reviews-pro'); ?>...');
@@ -1546,7 +1560,9 @@ readonly class Settings
                         nonce: '<?php echo wp_create_nonce("grp_nonce"); ?>',
                         place_id: placeId,
                         name: location_name,
-                        address: location_address
+                        address: location_address,
+                        rating: location_rating,
+                        total_count: location_total_reviews_count
                     }, function(res) {
                         if (res.success) {
                             $('#update-location-response').text(res.data.message).addClass('success').removeClass('hidden error');
@@ -1556,7 +1572,7 @@ readonly class Settings
                             $('#update-location-fields').hide();
                             $btn.text('<?php _e('Edit', 'google-reviews-pro'); ?>');
                         } else {
-                            $('#update-location-response').text('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data.message || '<?php _e('Unknown error', 'google-reviews-pro'); ?>')).addClass('error').removeClass('hidden success');
+                            $('#update-location-response').text('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>')).addClass('error').removeClass('hidden success');
                             $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
                         }
                     }).fail(function() {
