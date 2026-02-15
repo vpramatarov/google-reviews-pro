@@ -730,20 +730,25 @@ readonly class Settings
                     <button type="button" class="grp-close-edit-location-modal button button-small">✕</button>
                 </div>
                 <div class="modal-content">
-                    <ul>
-                        <li>
-                            <label>
-                                <?php _e('Business Name', 'google-reviews-pro'); ?>: <input type="text" name="location_name" class="regular-text edit-location">
-                            </label>
-                        </li>
-                        <li>
-                            <label for="edit-location-address"><?php _e('Business Address', 'google-reviews-pro'); ?>:</label>
-                            <textarea name="location_address" class="edit-location large-text" rows="3" id="edit-location-address"></textarea>
-                        </li>
-                    </ul>
+                    <div id="update-location-response" class="hidden"></div>
+
+                    <div id="update-location-fields">
+                        <ul>
+                            <li>
+                                <label for="edit-location-name">
+                                    <?php _e('Business Name', 'google-reviews-pro'); ?>: <input type="text" name="location_name" id="edit-location-name" class="regular-text edit-location">
+                                </label>
+                            </li>
+                            <li>
+                                <label for="edit-location-address"><?php _e('Business Address', 'google-reviews-pro'); ?>:</label>
+                                <textarea name="location_address" class="edit-location large-text" rows="3" id="edit-location-address"></textarea>
+                            </li>
+                        </ul>
+                        <input name="place_id" type="hidden" id="edit-location-place-id" >
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="button button-primary" id="grp-edit-loc-btn"><?php _e('Update', 'google-reviews-pro'); ?></button>
+                    <button type="button" class="button button-primary" id="grp-edit-loc-btn" disabled><?php _e('Update', 'google-reviews-pro'); ?></button>
                     <button type="button" class="button button-secondary grp-close-edit-location-modal"><?php _e('Close', 'google-reviews-pro'); ?></button>
                 </div>
             </div>
@@ -1479,9 +1484,7 @@ readonly class Settings
                 // On Change
                 $emailCheckbox.on('change', toggleEmailInput);
 
-
                 const $editModal = $('#grp-edit-place');
-                // const $editModal;
 
                 // Edit location
                 $('.button-link-edit-place').on('click', function(e) {
@@ -1489,6 +1492,8 @@ readonly class Settings
                     const $btn = $(this);
                     const placeId = $btn.data('place-id');
 
+                    $('#update-location-response').text('').addClass('hidden').removeClass('error success');
+                    $('#update-location-fields').show();
                     $btn.prop('disabled', true).text('<?php _e('Loading data', 'google-reviews-pro'); ?>...');
 
                     $.post(ajaxurl, {
@@ -1498,17 +1503,21 @@ readonly class Settings
                     }, function(res) {
                         if (res.success) {
                             const $data = res.data;
-                            $editModal.find('input[name=location_name]').val($data.name || '');
-                            $editModal.find('#edit-location-address').text($data.address || '');
+                            $('#edit-location-name').val($data.name || '');
+                            $('#edit-location-address').text($data.address || '');
+                            $('input#edit-location-place-id').val($data.place_id || placeId);
+                            $('#grp-edit-loc-btn').prop('disabled', false);
                             $editModal.css('display', 'flex'); // Flex to center
                             $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
                         } else {
+                            $('#grp-edit-loc-btn').prop('disabled', true);
                             alert('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
                             $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
                         }
                     }).fail(function() {
                         alert('<?php _e('Server error', 'google-reviews-pro'); ?>.');
                         $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
+                        $('#grp-edit-loc-btn').prop('disabled', true);
                     });
                 });
 
@@ -1518,6 +1527,42 @@ readonly class Settings
                     $editModal.hide();
                     $editModal.find('input').val('');
                     $editModal.find('textarea').text('');
+                    $('#update-location-fields').hide();
+                });
+
+                // Update Location
+                $('#grp-edit-loc-btn').on('click', function(e) {
+                    e.preventDefault();
+                    const $btn = $(this);
+                    const placeId = $('input#edit-location-place-id').val();
+                    const location_name = $('#edit-location-name').val();
+                    const location_address = $('#edit-location-address').val();
+
+                    $('#update-location-response').text('').addClass('hidden').removeClass('error success');
+                    $btn.prop('disabled', true).text('<?php _e('Updating data', 'google-reviews-pro'); ?>...');
+
+                    $.post(ajaxurl, {
+                        action: 'grp_update_location',
+                        nonce: '<?php echo wp_create_nonce("grp_nonce"); ?>',
+                        place_id: placeId,
+                        name: location_name,
+                        address: location_address
+                    }, function(res) {
+                        if (res.success) {
+                            $('#update-location-response').text(res.data.message).addClass('success').removeClass('hidden error');
+                            $editModal.find('input').val('');
+                            $editModal.find('textarea').text('');
+                            $editModal.css('display', 'flex'); // Flex to center
+                            $('#update-location-fields').hide();
+                            $btn.text('<?php _e('Edit', 'google-reviews-pro'); ?>');
+                        } else {
+                            $('#update-location-response').text('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data.message || '<?php _e('Unknown error', 'google-reviews-pro'); ?>')).addClass('error').removeClass('hidden success');
+                            $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
+                        }
+                    }).fail(function() {
+                        $('#update-location-response').text('<?php _e('Server error', 'google-reviews-pro'); ?>.').removeClass('hidden success');
+                        $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
+                    });
                 });
 
                 // Delete location
@@ -1695,6 +1740,11 @@ readonly class Settings
     {
         ?>
         <style>
+            .form-table .modal-window table th{
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            .hidden { display: none; }
             .debug-place, input[name=debug_data] { display: none; }
             input[name=debug_data]:checked + label {
                 background-color: #b91c1c;
@@ -1752,6 +1802,18 @@ readonly class Settings
                 font-size:12px;
                 margin:0;
             }
+            #update-location-response {
+                padding: 10px;
+                border: 1px solid;
+                border-left-width: 5px;
+                border-radius: 5px;
+            }
+            #update-location-response.success {
+                border-color: green;
+            }
+            #update-location-response.error {
+                border-color: red;
+            }
         </style>
 <?php
         if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON && (get_option('grp_settings')['auto_sync'] ?? 0)) {
@@ -1777,5 +1839,14 @@ readonly class Settings
         echo '<button id="grp-sync-btn" class="button button-secondary">' . __('Sync Reviews Now', 'google-reviews-pro') . '</button>';
         echo '<span id="grp-sync-status" style="margin-left: 10px;"></span>';
         echo '</div>';
+
+        echo '<hr>';
+        echo '<div class="grp-support-box" style="margin-top:20px; padding:10px; background:#fff; border-left:4px solid #7289da;">';
+        echo '<p><strong>' . __('Enjoying Google Reviews Pro?', 'google-reviews-pro') . '</strong> ';
+        echo sprintf(
+                __('You can support the developer via <a href="%s" target="_blank">Revolut</a>.', 'google-reviews-pro'),
+                'https://revolut.me/velizaaj0s'
+        );
+        echo '</p></div>';
     }
 }

@@ -398,6 +398,37 @@ readonly class Handler
     }
 
     /**
+     * @param array{business_name: string, address: string} $data
+     * @return bool
+     */
+    public function update_location(string $place_id, array $data): bool
+    {
+        if (empty($place_id) || empty($data)) {
+            return false;
+        }
+
+        $required_fields = ['business_name', 'address'];
+        foreach ($required_fields as $field) {
+            if (empty($data[$field]) || trim($data[$field]) === '') {
+                return false;
+            }
+        }
+
+        $db = get_option('grp_locations_db', []);
+        if (isset($db[$place_id])) {
+            $db[$place_id] = [
+                'name' => sanitize_text_field($data['business_name']),
+                'address' => sanitize_textarea_field($data['address']),
+                'updated' => time()
+            ];
+
+            return update_option('grp_locations_db', $db);
+        }
+
+        return false;
+    }
+
+    /**
      * Deletes a location and all associated data (reviews, images, metadata).
      * @return array{"success": bool, "reviews_deleted": int, "images_deleted": int}
      */
