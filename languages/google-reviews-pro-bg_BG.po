@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Google Reviews Pro 1.0.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-01-25 12:00+0000\n"
-"PO-Revision-Date: 2026-02-15 13:06+0000\n"
+"PO-Revision-Date: 2026-02-15 15:08+0000\n"
 "Last-Translator: \n"
 "Language-Team: Български\n"
 "Language: bg_BG\n"
@@ -14,15 +14,15 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Loco-Version: 2.8.1; wp-6.9.1; php-8.3.29"
 
-#: src/Admin/Settings.php:809
+#: src/Admin/Settings.php:819
 msgid "3 Stars & Up"
 msgstr "3 Звезди и нагоре"
 
-#: src/Admin/Settings.php:810
+#: src/Admin/Settings.php:820
 msgid "4 Stars & Up"
 msgstr "4 Звезди и нагоре"
 
-#: src/Admin/Settings.php:811
+#: src/Admin/Settings.php:821
 msgid "5 Stars Only"
 msgstr "Само 5 звезди"
 
@@ -48,7 +48,7 @@ msgstr "Разширени настройки"
 msgid "All Reviews"
 msgstr "Всички ревюта"
 
-#: src/Admin/Settings.php:1655
+#: src/Admin/Settings.php:1671
 msgid "Analyzing..."
 msgstr "Анализиране..."
 
@@ -57,11 +57,11 @@ msgstr "Анализиране..."
 msgid "Anonymous"
 msgstr "Анонимен"
 
-#: src/Admin/Settings.php:31 src/Admin/Settings.php:1453
+#: src/Admin/Settings.php:31 src/Admin/Settings.php:1463
 msgid "API data saved successfully."
 msgstr "Данните от API са запазени успешно."
 
-#: src/Admin/Settings.php:1574
+#: src/Admin/Settings.php:1590
 msgid ""
 "Are you sure you want to delete this location? All associated reviews and "
 "images will be permanently removed."
@@ -69,7 +69,7 @@ msgstr ""
 "Сигурни ли сте, че искате да изтриете този обект? Всички свързани отзиви и "
 "изображения ще бъдат премахнати за постоянно."
 
-#: src/Admin/Settings.php:992
+#: src/Admin/Settings.php:1002
 msgid "Auto (Use API Data)"
 msgstr "Автоматично (Използване на API данни)"
 
@@ -77,7 +77,7 @@ msgstr "Автоматично (Използване на API данни)"
 msgid "Automatically fetch reviews."
 msgstr "Автоматично изтегляне на ревюта."
 
-#: src/Admin/Settings.php:1833
+#: src/Admin/Settings.php:1849
 msgid "Backup & Migration"
 msgstr "Архивиране и Миграция"
 
@@ -114,7 +114,7 @@ msgstr "Google Reviews Pro"
 msgid "Business Address"
 msgstr "Адрес на бизнеса"
 
-#: src/Admin/Settings.php:1359
+#: src/Admin/Settings.php:1369
 msgid ""
 "Business found! Fields autofilled. Please <strong>Save Changes</strong>."
 msgstr ""
@@ -141,11 +141,11 @@ msgstr "Фон на картите"
 msgid "Choose how often the auto-sync should run."
 msgstr "Изберете колко често да се изпълнява автоматичната синхронизация."
 
-#: src/Admin/Settings.php:842
+#: src/Admin/Settings.php:852
 msgid "Choose how the reviews should be displayed on your site."
 msgstr "Изберете как отзивите да се показват на вашия сайт."
 
-#: src/Admin/Settings.php:828
+#: src/Admin/Settings.php:838
 msgid "Choose the order in which reviews appear."
 msgstr "Изберете реда, в който да се появяват ревютата."
 
@@ -153,12 +153,12 @@ msgstr "Изберете реда, в който да се появяват ре
 msgid "Choose where to fetch reviews from."
 msgstr "Изберете откъде да се теглят ревютата."
 
-#: src/Admin/Settings.php:752 src/Admin/Settings.php:781
-#: src/Admin/Settings.php:796
+#: src/Admin/Settings.php:762 src/Admin/Settings.php:791
+#: src/Admin/Settings.php:806
 msgid "Close"
 msgstr "Затвори"
 
-#: src/Admin/Settings.php:769
+#: src/Admin/Settings.php:779
 msgid "Current Value"
 msgstr "Текуща стойност"
 
@@ -170,7 +170,7 @@ msgstr "Ежедневно"
 msgid "Data ID"
 msgstr "Data ID"
 
-#: src/Ajax/Handler.php:167
+#: src/Ajax/Handler.php:184
 msgid "Data not updated."
 msgstr "Данните не са редактирани."
 
@@ -186,18 +186,18 @@ msgstr "По подразбиране (От настройките)"
 msgid "Default (Global)"
 msgstr "По подразбиране (Глобално)"
 
-#: src/Admin/Settings.php:718 src/Admin/Settings.php:1592
-#: src/Admin/Settings.php:1596
+#: src/Admin/Settings.php:718 src/Admin/Settings.php:1608
+#: src/Admin/Settings.php:1612
 msgid "Delete"
 msgstr "Изтриване"
 
-#: src/Admin/Settings.php:1183
+#: src/Admin/Settings.php:1193
 msgid ""
 "Delete all reviews, local images, and settings when deleting the plugin."
 msgstr ""
 "Изтрий всички ревюта, локални снимки и настройки при изтриване на плъгина."
 
-#: src/Admin/Settings.php:1051
+#: src/Admin/Settings.php:1061
 msgid "Direct Link:"
 msgstr "Директен линк:"
 
@@ -209,22 +209,22 @@ msgstr ""
 "Изключете това, ако имате няколко уиджета за ревюта на една страница, за да "
 "избегнете SEO конфликти."
 
-#: src/Admin/Settings.php:1105
+#: src/Admin/Settings.php:1115
 msgid "Download a backup of your current reviews."
 msgstr "Изтеглете резервно копие на текущите си ревюта."
 
-#: src/Admin/Settings.php:1124
+#: src/Admin/Settings.php:1134
 msgid "Download Full Backup (.ZIP)"
 msgstr "Свали пълен архив (.ZIP)"
 
-#: src/Admin/Settings.php:1092
+#: src/Admin/Settings.php:1102
 msgid "Download QR Image"
 msgstr "Свали QR кода"
 
-#: src/Admin/Settings.php:712 src/Admin/Settings.php:1511
-#: src/Admin/Settings.php:1515 src/Admin/Settings.php:1519
-#: src/Admin/Settings.php:1557 src/Admin/Settings.php:1560
-#: src/Admin/Settings.php:1564
+#: src/Admin/Settings.php:712 src/Admin/Settings.php:1523
+#: src/Admin/Settings.php:1527 src/Admin/Settings.php:1531
+#: src/Admin/Settings.php:1573 src/Admin/Settings.php:1576
+#: src/Admin/Settings.php:1580
 msgid "Edit"
 msgstr "Редакция"
 
@@ -257,34 +257,38 @@ msgstr "Включи Schema.org"
 msgid "Enable this to show only reviews that contain actual comments."
 msgstr "Включете това, за да показвате само ревюта, които съдържат текст."
 
+#: src/Admin/Settings.php:1861
+msgid "Enjoying Google Reviews Pro?"
+msgstr "Харесва ли ви Google Reviews Pro?"
+
 #: src/Admin/Settings.php:491
 msgid "Enter business name (e.g. Pizza Mario New York)"
 msgstr "Въведете име на бизнес (напр. Ресторант София)"
 
-#: src/Admin/Settings.php:1035
+#: src/Admin/Settings.php:1045
 #, php-format
 msgid "Error generating QR code: %s"
 msgstr "Грешка при генериране на QR код: %s"
 
-#: src/Admin/Settings.php:1695
+#: src/Admin/Settings.php:1711
 msgid "Error loading data"
 msgstr "Грешка при зареждане на данни"
 
-#: src/Admin/Settings.php:1394 src/Admin/Settings.php:1458
-#: src/Admin/Settings.php:1514 src/Admin/Settings.php:1559
-#: src/Admin/Settings.php:1591 src/Admin/Settings.php:1632
+#: src/Admin/Settings.php:1404 src/Admin/Settings.php:1468
+#: src/Admin/Settings.php:1526 src/Admin/Settings.php:1575
+#: src/Admin/Settings.php:1607 src/Admin/Settings.php:1648
 msgid "Error: "
 msgstr "Грешка:"
 
-#: src/Admin/Settings.php:1118
+#: src/Admin/Settings.php:1128
 msgid "Export CSV"
 msgstr "Експорт CSV"
 
-#: src/Admin/Settings.php:1111
+#: src/Admin/Settings.php:1121
 msgid "Export JSON"
 msgstr "Експорт JSON"
 
-#: src/Admin/Settings.php:1104
+#: src/Admin/Settings.php:1114
 msgid "Export Reviews"
 msgstr "Експортиране на ревюта"
 
@@ -300,7 +304,7 @@ msgstr "Неуспешен прочит на JSON файла."
 msgid "Fallback"
 msgstr "Стойност по подразбиране за"
 
-#: src/Admin/Settings.php:768
+#: src/Admin/Settings.php:778
 msgid "Field"
 msgstr "Поле"
 
@@ -326,11 +330,11 @@ msgstr "Намери своя бизнес"
 msgid "Find your Place ID"
 msgstr "Можете да намерете ID на обекта (Place ID)"
 
-#: src/Admin/Settings.php:840
+#: src/Admin/Settings.php:850
 msgid "Floating Badge"
 msgstr "Плаваща значка"
 
-#: src/Frontend/Display.php:488
+#: src/Frontend/Display.php:489
 msgid "friday"
 msgstr "петък"
 
@@ -365,7 +369,7 @@ msgstr "Google Reviews Pro"
 msgid "Grid"
 msgstr "Мрежа"
 
-#: src/Admin/Settings.php:837
+#: src/Admin/Settings.php:847
 msgid "Grid (Default)"
 msgstr "Мрежа (Grid)"
 
@@ -385,7 +389,7 @@ msgstr "Скрий ревюта без текст (само звезди)"
 msgid "Hide this review from frontend"
 msgstr "Скрий това ревю от сайта"
 
-#: src/Admin/Settings.php:824
+#: src/Admin/Settings.php:834
 msgid "Highest Rated First"
 msgstr "Първо най-високо оценените"
 
@@ -401,7 +405,7 @@ msgstr "https://vpramatarov.eu"
 msgid "Import complete! Added: %d, Skipped (Duplicates): %d, Errors: %d"
 msgstr "Импортът завърши! Добавени: %d, Пропуснати (Дубликати): %d, Грешки: %d"
 
-#: src/Admin/Settings.php:1130 src/Admin/Settings.php:1140
+#: src/Admin/Settings.php:1140 src/Admin/Settings.php:1150
 msgid "Import Reviews"
 msgstr "Импортиране на ревюта"
 
@@ -413,15 +417,15 @@ msgstr "Несъвместима PHP версия"
 msgid "Initial Reviews Limit"
 msgstr "Първоначален лимит на ревюта"
 
-#: src/Ajax/Handler.php:160
+#: src/Ajax/Handler.php:162
 msgid "Invalid Address."
 msgstr "Невалиден адрес"
 
-#: src/Ajax/Handler.php:282
+#: src/Ajax/Handler.php:299
 msgid "Invalid API data."
 msgstr "Невалидни данни от API."
 
-#: src/Ajax/Handler.php:156
+#: src/Ajax/Handler.php:158
 msgid "Invalid Business name."
 msgstr "Невалидно име на бизнеса."
 
@@ -429,12 +433,12 @@ msgstr "Невалидно име на бизнеса."
 msgid "Invalid file type. Allowed: .json, .csv, .zip"
 msgstr "Невалиден тип файл. Разрешени: .json, .csv, .zip"
 
-#: src/Ajax/Handler.php:152 src/Ajax/Handler.php:183 src/Ajax/Handler.php:210
-#: src/Ajax/Handler.php:236 src/Ajax/Handler.php:257 src/Ajax/Handler.php:288
+#: src/Ajax/Handler.php:154 src/Ajax/Handler.php:200 src/Ajax/Handler.php:227
+#: src/Ajax/Handler.php:253 src/Ajax/Handler.php:274 src/Ajax/Handler.php:305
 msgid "Invalid Place ID."
 msgstr "Невалиден Place ID"
 
-#: src/Admin/Settings.php:1838
+#: src/Admin/Settings.php:1854
 msgid "Last Synced:"
 msgstr "Последна синхронизация:"
 
@@ -446,7 +450,7 @@ msgstr "Географска ширина (Latitude)"
 msgid "Layout Style"
 msgstr "Изглед (Layout)"
 
-#: src/Admin/Settings.php:1172
+#: src/Admin/Settings.php:1182
 msgid "Leave empty to use the WordPress Admin email."
 msgstr "Оставете празно, за да използвате имейла на администратора."
 
@@ -466,7 +470,7 @@ msgstr "Линкове и бутони"
 msgid "List"
 msgstr "Списък"
 
-#: src/Admin/Settings.php:838
+#: src/Admin/Settings.php:848
 msgid "List View"
 msgstr "Списък (List)"
 
@@ -474,7 +478,7 @@ msgstr "Списък (List)"
 msgid "Load More"
 msgstr "Зареди още"
 
-#: src/Admin/Settings.php:1497 src/Admin/Settings.php:1620
+#: src/Admin/Settings.php:1507 src/Admin/Settings.php:1636
 msgid "Loading data"
 msgstr "Зареждане на данни"
 
@@ -486,15 +490,15 @@ msgstr "Зареждане..."
 msgid "Location"
 msgstr "Обект"
 
-#: src/Ajax/Handler.php:190
+#: src/Ajax/Handler.php:207
 msgid "Location deleted. Removed %d reviews and %d images."
 msgstr "Обекта е изтрит. Премахнати са %d отзива и %d изображения."
 
-#: src/Admin/Settings.php:789
+#: src/Admin/Settings.php:799
 msgid "Location Raw Data"
 msgstr "Необработени данни за обекта"
 
-#: src/Ajax/Handler.php:164
+#: src/Ajax/Handler.php:181
 msgid "Location Updated."
 msgstr "Данните за бизнеса са обновени."
 
@@ -502,15 +506,15 @@ msgstr "Данните за бизнеса са обновени."
 msgid "Longitude"
 msgstr "Географска дължина (Longitude)"
 
-#: src/Admin/Settings.php:1070
+#: src/Admin/Settings.php:1080
 msgid "Loving your experience at"
 msgstr "Хареса ли ви преживяването в"
 
-#: src/Admin/Settings.php:825
+#: src/Admin/Settings.php:835
 msgid "Lowest Rated First"
 msgstr "Първо най-ниско оценените"
 
-#: src/Api/Handler.php:680
+#: src/Api/Handler.php:691
 msgid "Manage Reviews in WordPress"
 msgstr "Управление на ревютата в WordPress"
 
@@ -518,7 +522,7 @@ msgstr "Управление на ревютата в WordPress"
 msgid "Manual mode active."
 msgstr "Ръчният режим е активен."
 
-#: src/Admin/Settings.php:1837
+#: src/Admin/Settings.php:1853
 msgid "Manual Synchronization"
 msgstr "Ръчна синхронизация"
 
@@ -559,7 +563,7 @@ msgstr "Липсва SerpApi ключ"
 msgid "Moderation"
 msgstr "Модерация"
 
-#: src/Frontend/Display.php:484
+#: src/Frontend/Display.php:485
 msgid "monday"
 msgstr "понеделник"
 
@@ -567,18 +571,18 @@ msgstr "понеделник"
 msgid "Multi-Location Reference"
 msgstr "Списък с локации"
 
-#: src/Admin/Settings.php:1826
+#: src/Admin/Settings.php:1842
 msgid "Never"
 msgstr "Никога"
 
-#: src/Api/Handler.php:648
+#: src/Api/Handler.php:659
 #, php-format
 msgid "New Google Review on %s from %s"
 msgid_plural "%d New Google Reviews on %s"
 msgstr[0] "Ново Google ревю в %s от %s"
 msgstr[1] "%d Нови Google ревюта в %s"
 
-#: src/Admin/Settings.php:822
+#: src/Admin/Settings.php:832
 msgid "Newest First"
 msgstr "Първо най-новите"
 
@@ -594,7 +598,7 @@ msgstr "Не е намерен бизнес чрез ScrapingDog."
 msgid "No business found via SerpApi."
 msgstr "Не е намерен бизнес чрез SerpApi."
 
-#: src/Ajax/Handler.php:219
+#: src/Ajax/Handler.php:236
 msgid "No data found for this location."
 msgstr "Няма намерени данни за този обект."
 
@@ -614,11 +618,11 @@ msgstr "Няма повече ревюта"
 msgid "No results found on Google."
 msgstr "Не са намерени резултати в Google"
 
-#: src/Frontend/Display.php:166
+#: src/Frontend/Display.php:167
 msgid "No reviews found yet."
 msgstr "Все още няма намерени ревюта."
 
-#: src/Ajax/Handler.php:368
+#: src/Ajax/Handler.php:385
 msgid "No reviews found."
 msgstr "Не са намерени ревюта за този обект."
 
@@ -626,11 +630,11 @@ msgstr "Не са намерени ревюта за този обект."
 msgid "No reviews to export."
 msgstr "Няма отзиви за експортиране."
 
-#: src/Admin/Settings.php:1394
+#: src/Admin/Settings.php:1404
 msgid "Not found"
 msgstr "Не е намерен"
 
-#: src/Admin/Settings.php:776
+#: src/Admin/Settings.php:786
 msgid ""
 "Note: \"SEO Plugin\" has priority #1. \"API Data\" has priority #2. \"Manual "
 "Settings\" has priority #3."
@@ -650,7 +654,7 @@ msgstr ""
 "Брой ревюта за първоначално показване. За мрежов изглед (Grid) това определя "
 "и броя колони (Макс 5)."
 
-#: src/Admin/Settings.php:823
+#: src/Admin/Settings.php:833
 msgid "Oldest First"
 msgstr "Първо най-старите"
 
@@ -674,14 +678,14 @@ msgstr "Снимка"
 msgid "Place ID"
 msgstr "ID на обекта (Place ID)"
 
-#: src/Admin/Settings.php:1015
+#: src/Admin/Settings.php:1025
 msgid ""
 "Please configure and save a Place ID in the \"Data Source\" section first."
 msgstr ""
 "Моля, първо конфигурирайте и запазете Place ID в секция \"Източник на "
 "данни\"."
 
-#: src/Admin/Settings.php:1324
+#: src/Admin/Settings.php:1334
 msgid "Please enter a business name and ensure your API key is filled in."
 msgstr ""
 "Моля, въведете име на обект и се уверете, че вашият API ключ е попълнен."
@@ -695,23 +699,23 @@ msgstr ""
 msgid "Price Range"
 msgstr "Ценови диапазон"
 
-#: src/Admin/Settings.php:1088 src/Admin/Settings.php:1723
+#: src/Admin/Settings.php:1098 src/Admin/Settings.php:1739
 msgid "Print Card"
 msgstr "Принтирай картата"
 
-#: src/Admin/Settings.php:1058
+#: src/Admin/Settings.php:1068
 msgid "Print this card and place it on your counter or tables."
 msgstr "Разпечатайте тази карта и я поставете на плота или масите."
 
-#: src/Admin/Settings.php:1057
+#: src/Admin/Settings.php:1067
 msgid "Printable Card Preview"
 msgstr "Преглед на карта за печат"
 
-#: src/Admin/Settings.php:826
+#: src/Admin/Settings.php:836
 msgid "Random"
 msgstr "Случаен ред"
 
-#: src/Admin/Settings.php:1069
+#: src/Admin/Settings.php:1079
 msgid "Rate Us on Google"
 msgstr "Оценете ни в Google"
 
@@ -724,6 +728,10 @@ msgstr "Оценка %s от 5"
 #: src/Frontend/Layout/ListLayout.php:26 src/Frontend/Layout/Slider.php:26
 msgid "Rating"
 msgstr "Рейтинг"
+
+#: src/Ajax/Handler.php:170
+msgid "Rating must a positive number between 1 and 5."
+msgstr "Оценката трябва да е положително число между 1 и 5."
 
 #: src/Admin/Settings.php:698
 msgid "Raw Data"
@@ -745,7 +753,7 @@ msgstr "Ревю"
 msgid "Review Collection Tools"
 msgstr "Инструменти за събиране на ревюта"
 
-#: src/Admin/Settings.php:1011
+#: src/Admin/Settings.php:1021
 msgid "Review Us"
 msgstr "Оценете ни"
 
@@ -758,7 +766,7 @@ msgstr "Име на рецензента"
 msgid "reviews"
 msgstr "ревюта"
 
-#: src/Admin/Settings.php:813
+#: src/Admin/Settings.php:823
 msgid "Reviews below this rating will be hidden from the frontend."
 msgstr "Ревюта под този рейтинг ще бъдат скрити от сайта."
 
@@ -766,19 +774,27 @@ msgstr "Ревюта под този рейтинг ще бъдат скрити
 msgid "Reviews Count"
 msgstr "Брой ревюта"
 
-#: src/Admin/Settings.php:1296
+#: src/Admin/Settings.php:748
+msgid "Reviews count"
+msgstr "Брой ревюта"
+
+#: src/Admin/Settings.php:753
+msgid "Reviews rating"
+msgstr "Рейтинг/Оценка"
+
+#: src/Admin/Settings.php:1306
 msgid "Reviews synced successfully!"
 msgstr "Отзивите са синхронизирани успешно!"
 
-#: src/Frontend/Display.php:489
+#: src/Frontend/Display.php:490
 msgid "saturday"
 msgstr "събота"
 
-#: src/Admin/Settings.php:1042
+#: src/Admin/Settings.php:1052
 msgid "Scan this code to test the experience:"
 msgstr "Сканирайте този код, за да тествате:"
 
-#: src/Admin/Settings.php:1078
+#: src/Admin/Settings.php:1088
 msgid "Scan with your phone camera"
 msgstr "Сканирайте с камерата на телефона си"
 
@@ -800,12 +816,12 @@ msgid "Security check failed"
 msgstr "Проверката за сигурност не бе успешна"
 
 #: src/Ajax/Handler.php:36 src/Ajax/Handler.php:72 src/Ajax/Handler.php:92
-#: src/Ajax/Handler.php:140 src/Ajax/Handler.php:173 src/Ajax/Handler.php:200
-#: src/Ajax/Handler.php:226 src/Ajax/Handler.php:247 src/Ajax/Handler.php:272
+#: src/Ajax/Handler.php:140 src/Ajax/Handler.php:190 src/Ajax/Handler.php:217
+#: src/Ajax/Handler.php:243 src/Ajax/Handler.php:264 src/Ajax/Handler.php:289
 msgid "Security check failed."
 msgstr "Проверката за сигурност неуспешна."
 
-#: src/Admin/Settings.php:1002
+#: src/Admin/Settings.php:1012
 msgid ""
 "Select a price range manually to override, or leave \"Auto\" to use data "
 "fetched from Google."
@@ -821,7 +837,7 @@ msgstr "Избери локация"
 msgid "Select Source"
 msgstr "Избери източник"
 
-#: src/Admin/Settings.php:1153
+#: src/Admin/Settings.php:1163
 msgid "Send email notifications when new reviews are imported."
 msgstr "Изпращай имейл известия при импортиране на нови ревюта."
 
@@ -838,21 +854,21 @@ msgstr "Проверка на SEO данни"
 msgid "SerpApi API Key"
 msgstr "SerpApi API Ключ"
 
-#: src/Admin/Settings.php:1635
+#: src/Admin/Settings.php:1651
 msgid "Server connection failed"
 msgstr "Връзката със сървъра не бе успешна"
 
-#: src/Admin/Settings.php:1402 src/Admin/Settings.php:1465
-#: src/Admin/Settings.php:1518 src/Admin/Settings.php:1563
-#: src/Admin/Settings.php:1595 src/Admin/Settings.php:1698
+#: src/Admin/Settings.php:1412 src/Admin/Settings.php:1475
+#: src/Admin/Settings.php:1530 src/Admin/Settings.php:1579
+#: src/Admin/Settings.php:1611 src/Admin/Settings.php:1714
 msgid "Server error"
 msgstr "Грешка на сървъра"
 
-#: src/Admin/Settings.php:1302
+#: src/Admin/Settings.php:1312
 msgid "Server error occurred."
 msgstr "Възникна грешка в сървъра."
 
-#: src/Admin/Settings.php:1828 src/Integrations/Elementor/ReviewWidget.php:68
+#: src/Admin/Settings.php:1844 src/Integrations/Elementor/ReviewWidget.php:68
 msgid "Settings"
 msgstr "Настройки"
 
@@ -860,7 +876,7 @@ msgstr "Настройки"
 msgid "Shortcode Snippet"
 msgstr "Шорткод (Shortcode)"
 
-#: src/Admin/Settings.php:808
+#: src/Admin/Settings.php:818
 msgid "Show All Reviews"
 msgstr "Покажи всички ревюта"
 
@@ -872,7 +888,7 @@ msgstr "Допълнителни опции"
 msgid "Slider"
 msgstr "Слайдер"
 
-#: src/Admin/Settings.php:839
+#: src/Admin/Settings.php:849
 msgid "Slider / Carousel"
 msgstr "Слайдер / Въртележка"
 
@@ -880,7 +896,7 @@ msgstr "Слайдер / Въртележка"
 msgid "Sort Order"
 msgstr "Сортиране"
 
-#: src/Admin/Settings.php:770
+#: src/Admin/Settings.php:780
 msgid "Source"
 msgstr "Източник"
 
@@ -888,7 +904,7 @@ msgstr "Източник"
 msgid "Stored Locations"
 msgstr "Запазени локации"
 
-#: src/Admin/Settings.php:760
+#: src/Admin/Settings.php:770
 msgid "Structured Data Source Analysis"
 msgstr "Анализ на източника на структурните данни"
 
@@ -896,7 +912,7 @@ msgstr "Анализ на източника на структурните да�
 msgid "Styling Configuration"
 msgstr "Настройки на дизайна"
 
-#: src/Frontend/Display.php:490
+#: src/Frontend/Display.php:491
 msgid "sunday"
 msgstr "неделя"
 
@@ -908,16 +924,16 @@ msgstr "Синхронизирай данните"
 msgid "Sync Frequency"
 msgstr "Честота на синхронизация"
 
-#: src/Admin/Settings.php:1304 src/Admin/Settings.php:1839
+#: src/Admin/Settings.php:1314 src/Admin/Settings.php:1855
 msgid "Sync Reviews Now"
 msgstr "Синхронизирай отзивите"
 
-#: src/Admin/Settings.php:930 src/Admin/Settings.php:947
-#: src/Admin/Settings.php:968
+#: src/Admin/Settings.php:940 src/Admin/Settings.php:957
+#: src/Admin/Settings.php:978
 msgid "Synced from SEO plugin."
 msgstr "Синхронизирано от SEO плъгин."
 
-#: src/Admin/Settings.php:1288
+#: src/Admin/Settings.php:1298
 msgid "Syncing..."
 msgstr "Синхронизиране..."
 
@@ -957,11 +973,15 @@ msgstr ""
 "Тази таблица показва всички уникални локации, намерени в базата данни. "
 "Използвайте тези ID-та в шорткодовете, за да покажете конкретни ревюта."
 
-#: src/Frontend/Display.php:487
+#: src/Frontend/Display.php:488
 msgid "thursday"
 msgstr "четвъртък"
 
-#: src/Frontend/Display.php:485
+#: src/Ajax/Handler.php:166
+msgid "Total count must a positive number."
+msgstr "Брой на ревютата трябва да е положително число."
+
+#: src/Frontend/Display.php:486
 msgid "tuesday"
 msgstr "вторник"
 
@@ -970,8 +990,8 @@ msgid "Unauthorized"
 msgstr "Неоторизиран"
 
 #: src/Ajax/Handler.php:76 src/Ajax/Handler.php:96 src/Ajax/Handler.php:144
-#: src/Ajax/Handler.php:177 src/Ajax/Handler.php:204 src/Ajax/Handler.php:230
-#: src/Ajax/Handler.php:251 src/Ajax/Handler.php:276
+#: src/Ajax/Handler.php:194 src/Ajax/Handler.php:221 src/Ajax/Handler.php:247
+#: src/Ajax/Handler.php:268 src/Ajax/Handler.php:293
 msgid "Unauthorized action."
 msgstr "Неоторизирано действие."
 
@@ -983,9 +1003,9 @@ msgstr "Почистване при деинсталация"
 msgid "Unknown API Error"
 msgstr "Неизвестна грешка от API"
 
-#: src/Admin/Settings.php:1458 src/Admin/Settings.php:1514
-#: src/Admin/Settings.php:1559 src/Admin/Settings.php:1591
-#: src/Admin/Settings.php:1632
+#: src/Admin/Settings.php:1468 src/Admin/Settings.php:1526
+#: src/Admin/Settings.php:1575 src/Admin/Settings.php:1607
+#: src/Admin/Settings.php:1648
 msgid "Unknown error"
 msgstr "Непозната грешка"
 
@@ -993,15 +1013,15 @@ msgstr "Непозната грешка"
 msgid "Unknown error or no data found."
 msgstr "Неизвестна грешка или липсват данни."
 
-#: src/Admin/Settings.php:751
+#: src/Admin/Settings.php:761
 msgid "Update"
 msgstr "Актуализация"
 
-#: src/Admin/Settings.php:1542
+#: src/Admin/Settings.php:1556
 msgid "Updating data"
 msgstr "Актуализиране на данните"
 
-#: src/Admin/Settings.php:1131
+#: src/Admin/Settings.php:1141
 msgid "Upload a JSON or Zip file previously exported from this plugin."
 msgstr "Качете JSON или Zip файл, експортиран преди това от този плъгин."
 
@@ -1009,8 +1029,8 @@ msgstr "Качете JSON или Zip файл, експортиран преди
 msgid "User Avatar"
 msgstr "Аватар"
 
-#: src/Admin/Settings.php:883 src/Admin/Settings.php:898
-#: src/Admin/Settings.php:913
+#: src/Admin/Settings.php:893 src/Admin/Settings.php:908
+#: src/Admin/Settings.php:923
 msgid "Value synced from SEO plugin."
 msgstr "Стойността е синхронизирана от SEO плъгина."
 
@@ -1034,7 +1054,7 @@ msgstr "Видимост"
 msgid "Visible"
 msgstr "Видим"
 
-#: src/Admin/Settings.php:1186
+#: src/Admin/Settings.php:1196
 msgid ""
 "Warning: This action is irreversible. If checked, all your collected reviews "
 "will be lost upon uninstallation."
@@ -1042,7 +1062,7 @@ msgstr ""
 "Внимание: Това действие е необратимо. Ако е избрано, всички събрани ревюта "
 "ще бъдат загубени при деинсталация."
 
-#: src/Admin/Settings.php:1821
+#: src/Admin/Settings.php:1837
 msgid ""
 "Warning: WP_CRON is disabled in your wp-config.php. Auto-sync will not work "
 "unless you set up a system cron job."
@@ -1050,7 +1070,7 @@ msgstr ""
 "Внимание: WP_CRON е деактивиран във вашия wp-config.php. Автоматичното "
 "синхронизиране няма да работи, освен ако не настроите системна cron задача."
 
-#: src/Frontend/Display.php:486
+#: src/Frontend/Display.php:487
 msgid "wednesday"
 msgstr "сряда"
 
@@ -1062,10 +1082,19 @@ msgstr "Напиши ревю"
 msgid "Yes"
 msgstr "Да"
 
-#: src/Api/Handler.php:660
+#: src/Admin/Settings.php:1863
+#, php-format
+msgid ""
+"You can support the developer via <a href=\"%s\" target=\"_blank\">"
+"Revolut</a>."
+msgstr ""
+"Можете да подкрепите разработчика чрез <a href=\"%s\" target=\"_blank\">"
+"Револют</a>."
+
+#: src/Api/Handler.php:671
 msgid "You have received new reviews!"
 msgstr "Имате нови ревюта!"
 
-#: src/Admin/Settings.php:984
+#: src/Admin/Settings.php:994
 msgid "✓ API Detected:"
 msgstr "✓ Открито API:"
