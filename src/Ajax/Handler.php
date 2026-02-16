@@ -146,6 +146,7 @@ readonly class Handler
 
         $place_id = sanitize_text_field(trim($_POST['place_id'] ?? ''));
         $business_name = sanitize_text_field(trim($_POST['name'] ?? ''));
+        $phone = sanitize_text_field(trim($_POST['phone'] ?? ''));
         $address = sanitize_textarea_field(trim($_POST['address'] ?? ''));
         $rating = sanitize_text_field(trim($_POST['rating'] ?? ''));
         $total_count = sanitize_text_field(trim($_POST['total_count'] ?? ''));
@@ -173,6 +174,7 @@ readonly class Handler
         $update_data = [
             'business_name' => $business_name,
             'address' => $address,
+            'phone' => $phone,
             'rating' => $rating,
             'total_count' => $total_count,
         ];

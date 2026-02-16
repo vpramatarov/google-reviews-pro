@@ -359,7 +359,7 @@ readonly class Display
          */
         $site_name = $default_name;
         $address = '';
-        $phone = '';
+        $phone = $default_phone;
         $lat = '';
         $lng = '';
 
@@ -379,7 +379,6 @@ readonly class Display
              * We use the global settings (from Settings or SEO Plugin)
              */
             $address = $default_addr;
-            $phone = $default_phone;
             $lat = $default_lat;
             $lng = $default_lng;
         }

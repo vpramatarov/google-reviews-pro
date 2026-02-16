@@ -425,6 +425,10 @@ readonly class Handler
                 'updated' => time()
             ];
 
+            if (!empty($phone) && $phone !== $db[$place_id]['phone']) {
+                $db[$place_id]['phone'] = sanitize_text_field($phone);
+            }
+
             if ($total_count > 0 && ($total_count !== $db[$place_id]['count'])) {
                 $db[$place_id]['count'] = $total_count;
             }

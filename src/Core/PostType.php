@@ -75,7 +75,11 @@ final readonly class PostType
         if ($column === 'location') {
             $location = get_post_meta($post_id, '_grp_assigned_place_id', true);
             $locations = get_option('grp_locations_db', []);
-            echo $location ? '<strong>' . esc_html($locations[$location]['name']) . '</strong>' : '—';
+            if (empty($location) || !isset($locations[$location])) {
+                echo '-';
+            }
+
+            printf ('<strong>%s</strong><hr>%s', esc_html($locations[$location]['name']), esc_html($locations[$location]['address']));
         }
 
         if ($column === 'grp_visible') {

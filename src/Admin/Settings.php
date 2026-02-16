@@ -332,14 +332,6 @@ readonly class Settings
             'grp_seo'
         );
 
-        // --- REVIEW COLLECTION ---
-        add_settings_section(
-            'grp_collection',
-            __('Review Collection Tools', 'google-reviews-pro'),
-            [$this, 'collection_section_html'],
-            'grp-settings'
-        );
-
         // --- ADVANCED & NOTIFICATIONS ---
         add_settings_section(
             'grp_advanced',
@@ -641,35 +633,44 @@ readonly class Settings
     public function stored_locations_html(): void
     {
         $locations = $this->api->get_stored_locations();
-        $layout = esc_attr(get_option('grp_settings')['grp_layout'] ?? 'grid');
-        $global_place_id = $this->api->get_api_options()['place_id'] ?? '';
+        $options = $this->api->get_api_options();
+        $layout = esc_attr($options['grp_layout'] ?? 'grid');
+        $global_place_id = $options['place_id'] ?? '';
 
         if (empty($locations)) {
             echo '<p class="description">' . __('No locations found yet. Sync some reviews first.', 'google-reviews-pro') . '</p>';
             return;
         }
 
+        $qr_options = new QROptions([
+            'version'      => 5, // Balance between density and readability
+            'outputType'   => QROutputInterface::GDIMAGE_PNG,
+            'eccLevel'     => EccLevel::L, // Low error correction for cleaner code
+            'scale'        => 20, // Pixel size
+            'imageBase64'  => true, // returns data:image/png;base64...
+        ]);
         ?>
         <table class="widefat fixed striped">
             <thead>
                 <tr>
                     <th style="width: 25%; padding-left: 10px;"><?php _e('Place ID', 'google-reviews-pro'); ?></th>
-                    <th style="width: 10%; padding-left: 10px;"><?php _e('Reviews Count', 'google-reviews-pro'); ?></th>
-                    <th style="width: 45%; padding-left: 10px;"><?php _e('Shortcode Snippet', 'google-reviews-pro'); ?></th>
+                    <th style="width: 40%; padding-left: 10px;"><?php _e('Shortcode Snippet', 'google-reviews-pro'); ?></th>
+                    <th style="width: 20%; padding-left: 10px;"><?php _e('QR Code', 'google-reviews-pro'); ?></th>
                     <th style="width: 15%; text-align: right; padding-right: 15px;"><?php _e('Actions', 'google-reviews-pro'); ?></th>
                 </tr>
             </thead>
             <tbody>
             <?php foreach ($locations as $loc):
-                $place_id = $loc['place_id'];
+                $place_id = esc_html($loc['place_id']);
                 ?>
                 <tr>
                     <td>
                         <code><?php echo esc_html($place_id); ?></code>
                         <hr>
                         <code><?php echo esc_html($loc['name']); ?></code>
+                        <hr>
+                        <?php _e('Reviews Count', 'google-reviews-pro'); ?>: <strong><?php echo esc_html($loc['count']); ?></strong>
                     </td>
-                    <td style="text-align: center"><?php echo esc_html($loc['count']); ?></td>
                     <td>
                         <div>
                             <input type="text"
@@ -683,7 +684,7 @@ readonly class Settings
                         <div id="debug-place-<?php echo esc_attr($place_id); ?>" class="debug-place">
                             <hr>
 
-                            <div style="display: flex; flex-direction: row; align-content: space-evenly;">
+                            <div class="debug-place-container">
                                 <button type="button" class="button button-secondary grp-schema-btn" data-place-id="<?php echo esc_attr($place_id); ?>" style="margin-right: 5px;">
                                     <?php _e('Schema Check', 'google-reviews-pro'); ?>
                                 </button>
@@ -699,6 +700,32 @@ readonly class Settings
                                 </button>
                             </div>
                         </div>
+                    </td>
+                    <td style="text-align: center">
+                        <?php
+                        $review_url = "https://search.google.com/local/writereview?placeid=" . esc_html($place_id);
+
+                        try {
+                            $qrcode = new QRCode($qr_options);
+                            $qr_image_src = $qrcode->render($review_url);
+                            printf('<p><img src="%s" alt="QR Code" style="display: block; width: 200px; height: 200px;"></p>', $qr_image_src);
+                            printf('
+                                <div style="margin-top: 20px;">
+                                    <p>
+                                        <button class="button button-info open-qr-preview-mode" data-name="%s" data-url="%s">
+                                            <span class="dashicons dashicons-exerpt-view"></span>
+                                            %s
+                                        </button>
+                                    </p>
+                                </div>',
+                                esc_html($loc['name']),
+                                esc_url($review_url),
+                                __('Printable Card Preview', 'google-reviews-pro'),
+                            );
+                        } catch (\Throwable $e) {
+                            echo '<div class="notice notice-error inline"><p>' . sprintf(__('Error generating QR code: %s', 'google-reviews-pro'), $e->getMessage()) . '</p></div>';
+                        }
+                        ?>
                     </td>
                     <td style="text-align: right;">
                         <input type="radio" name="debug_data" data-place-id="<?php echo esc_attr($place_id); ?>" id="debug-data-<?php echo esc_attr($place_id); ?>">
@@ -742,6 +769,11 @@ readonly class Settings
                             <li>
                                 <label for="edit-location-address"><?php _e('Business Address', 'google-reviews-pro'); ?>:</label>
                                 <textarea name="location_address" class="edit-location large-text" rows="3" id="edit-location-address"></textarea>
+                            </li>
+                            <li>
+                                <label for="edit-location-phone">
+                                    <?php _e('Phone', 'google-reviews-pro'); ?>: <input type="text" name="location_phone" id="edit-location-phone" class="regular-text edit-location">
+                                </label>
                             </li>
                             <li>
                                 <label for="edit-reviews-total-count">
@@ -804,6 +836,49 @@ readonly class Settings
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="button button-primary grp-close-modal"><?php _e('Close', 'google-reviews-pro'); ?></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="grp-printable-qr-card-preview" class="modal-window">
+            <div class="modal-wrapper">
+                <div class="modal-header printable-qr-card-preview">
+                    <h3 style="margin:0;"><?php _e('Printable Card Preview', 'google-reviews-pro'); ?></h3>
+                    <button type="button" class="grp-close-printable-qr-modal button button-small">✕</button>
+                </div>
+                <div class="modal-content">
+                    <?php printf('<p><strong>%s</strong></p>', __('Direct Link:', 'google-reviews-pro')); ?>
+                    <p>
+                        <input type="text" class="large-text" value="" readonly onclick="this.select();">
+                    </p>
+                    <p class="description"><?php _e('Print this card and place it on your counter or tables.', 'google-reviews-pro'); ?></p>
+                    <div id="grp-print-card">
+                        <h2 style="color: #333; margin-top: 0;"><?php _e('Rate Us on Google', 'google-reviews-pro'); ?></h2>
+                        <p style="color: #666;"><?php _e('Loving your experience at', 'google-reviews-pro'); ?> <br><strong id="grp-qr-code-business-name"></strong>?</p>
+
+                        <div style="margin: 20px auto;">
+                            <img src="" alt="QR Code" style="width: 150px; height: 150px;" id="grp-qr-code-img">
+                        </div>
+
+                        <p style="font-size: 12px; color: #999;"><?php _e('Scan with your phone camera', 'google-reviews-pro'); ?></p>
+
+                        <div class="qr-code-rating">
+                            <span>★★★★★</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="button button-primary" onclick="printCard()">
+                        <span class="dashicons dashicons-printer"></span>
+                        <?php _e('Print Card', 'google-reviews-pro'); ?>
+                    </button>
+
+                    <a href="" download="google-review-qr.png" class="button button-secondary" id="grp-google-review-qr-img">
+                        <span class="dashicons dashicons-download"></span>
+                        <?php _e('Download QR Image', 'google-reviews-pro'); ?>
+                    </a>
+
+                    <button type="button" class="button button-primary grp-close-printable-qr-modal"><?php _e('Close', 'google-reviews-pro'); ?></button>
                 </div>
             </div>
         </div>
@@ -1014,103 +1089,10 @@ readonly class Settings
         <?php
     }
 
-    public function collection_section_html(): void
-    {
-        $options = get_option('grp_settings');
-        $place_id = esc_attr($options['place_id'] ?? '');
-        $business_name = esc_attr($options['grp_business_name'] ?? __('Review Us', 'google-reviews-pro'));
-
-        if (empty($place_id)) {
-            echo '<div class="notice notice-warning inline"><p>' .
-                    __('Please configure and save a Place ID in the "Data Source" section first.', 'google-reviews-pro') .
-                    '</p></div>';
-            return;
-        }
-
-        $review_url = "https://search.google.com/local/writereview?placeid=" . $place_id;
-
-        try {
-            $qr_options = new QROptions([
-                'version'      => 5, // Balance between density and readability
-                'outputType'   => QROutputInterface::GDIMAGE_PNG,
-                'eccLevel'     => EccLevel::L, // Low error correction for cleaner code
-                'scale'        => 20, // Pixel size
-                'imageBase64'  => true, // returns data:image/png;base64...
-            ]);
-
-            $qrcode = new QRCode($qr_options);
-            $qr_image_src = $qrcode->render($review_url);
-        } catch (\Throwable $e) {
-            $qr_image_src = '';
-            echo '<div class="notice notice-error inline"><p>' . sprintf(__('Error generating QR code: %s', 'google-reviews-pro'), $e->getMessage()) . '</p></div>';
-        }
-
-        ?>
-        <div class="grp-qr-wrapper" style="display: flex; gap: 40px; align-items: flex-start; margin-top: 20px;">
-
-            <div style="flex: 1; max-width: 400px;">
-                <p><?php _e('Scan this code to test the experience:', 'google-reviews-pro'); ?></p>
-
-                <div id="grp-qr-code" style="background: #fff; padding: 20px; border: 1px solid #ddd; display: inline-block; border-radius: 8px;">
-                    <?php if ($qr_image_src): ?>
-                        <img src="<?php echo $qr_image_src; ?>" alt="QR Code" style="width: 150px; height: 150px; display: block;">
-                    <?php endif; ?>
-                </div>
-
-                <p style="margin-top: 15px;">
-                    <strong><?php _e('Direct Link:', 'google-reviews-pro'); ?></strong><br>
-                    <input type="text" class="large-text" value="<?php echo esc_url($review_url); ?>" readonly onclick="this.select();">
-                </p>
-            </div>
-
-            <div style="flex: 1;">
-                <h3><?php _e('Printable Card Preview', 'google-reviews-pro'); ?></h3>
-                <p class="description"><?php _e('Print this card and place it on your counter or tables.', 'google-reviews-pro'); ?></p>
-
-                <div id="grp-print-card" style="
-                    border: 1px solid #ccc;
-                    background: white;
-                    width: 300px;
-                    padding: 30px;
-                    text-align: center;
-                    font-family: sans-serif;
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-                ">
-                    <h2 style="color: #333; margin-top: 0;"><?php _e('Rate Us on Google', 'google-reviews-pro'); ?></h2>
-                    <p style="color: #666;"><?php _e('Loving your experience at', 'google-reviews-pro'); ?> <br><strong><?php echo $business_name; ?></strong>?</p>
-
-                    <div style="margin: 20px auto;">
-                        <?php if ($qr_image_src): ?>
-                            <img src="<?php echo $qr_image_src; ?>" alt="QR Code" style="width: 150px; height: 150px;">
-                        <?php endif; ?>
-                    </div>
-
-                    <p style="font-size: 12px; color: #999;"><?php _e('Scan with your phone camera', 'google-reviews-pro'); ?></p>
-
-                    <div style="margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                        <span style="color: #fbbc04; font-size: 20px;">★★★★★</span>
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <button type="button" class="button button-primary" onclick="printCard()">
-                        <span class="dashicons dashicons-printer" style="line-height: 28px;"></span>
-                        <?php _e('Print Card', 'google-reviews-pro'); ?>
-                    </button>
-                    <a href="<?php echo $qr_image_src; ?>" download="google-review-qr.png" class="button button-secondary">
-                        <span class="dashicons dashicons-download" style="line-height: 28px;"></span>
-                        <?php _e('Download QR Image', 'google-reviews-pro'); ?>
-                    </a>
-                </div>
-            </div>
-        </div>
-        <?php
-    }
-
     public function backup_section_html(): void
     {
         ?>
-        <div style="background: #fff; padding: 20px; border: 1px solid #ccd0d4; margin-bottom: 20px;">
+        <div class="grp-export-options">
             <h3><?php _e('Export Reviews', 'google-reviews-pro'); ?></h3>
             <p><?php _e('Download a backup of your current reviews.', 'google-reviews-pro'); ?></p>
             <div style="display: flex; gap: 15px;">
@@ -1136,7 +1118,7 @@ readonly class Settings
             </div>
         </div>
 
-        <div style="background: #fff; padding: 20px; border: 1px solid #ccd0d4;">
+        <div class="grp-export-options">
             <h3><?php _e('Import Reviews', 'google-reviews-pro'); ?></h3>
             <p><?php _e('Upload a JSON or Zip file previously exported from this plugin.', 'google-reviews-pro'); ?></p>
 
@@ -1515,6 +1497,7 @@ readonly class Settings
                             const $data = res.data;
                             $('#edit-location-name').val($data.name || '');
                             $('#edit-location-address').text($data.address || '');
+                            $('#edit-location-phone').val($data.phone || '');
                             $('input#edit-location-place-id').val($data.place_id || placeId);
                             $('#edit-reviews-rating').val($data.rating || '');
                             $('#edit-reviews-total-count').val($data.count || '');
@@ -1549,6 +1532,7 @@ readonly class Settings
                     const placeId = $('input#edit-location-place-id').val();
                     const location_name = $('#edit-location-name').val();
                     const location_address = $('#edit-location-address').val();
+                    const location_phone = $('#edit-location-phone').val();
                     const location_rating = $('#edit-reviews-rating').val();
                     const location_total_reviews_count = $('#edit-reviews-total-count').val();
 
@@ -1561,6 +1545,7 @@ readonly class Settings
                         place_id: placeId,
                         name: location_name,
                         address: location_address,
+                        phone: location_phone,
                         rating: location_rating,
                         total_count: location_total_reviews_count
                     }, function(res) {
@@ -1719,16 +1704,47 @@ readonly class Settings
                     $schemaModal.hide();
                 });
 
+                // QR Code
+                const $qrCodeModal = $('#grp-printable-qr-card-preview');
+
+                $('.open-qr-preview-mode').on('click', function(e) {
+                    e.preventDefault();
+                    const $btn = $(this);
+                    const qrImgSource = $btn.closest('td').find('img').prop('src');
+                    const businessName = $btn.data('name');
+                    const reviewUrl = $btn.data('url');
+                    $('#grp-qr-code-img').prop('src', qrImgSource);
+                    $('#grp-qr-code-business-name').text(businessName);
+                    $('#grp-google-review-qr-img').prop('href', qrImgSource);
+                    $qrCodeModal.find('input').val(reviewUrl);
+                    $qrCodeModal.css('display', 'flex');
+                });
+
+                $('.grp-close-printable-qr-modal').on('click', function() {
+                    $qrCodeModal.hide();
+                    $('#grp-qr-code-img').prop('src', '');
+                    $('#grp-qr-code-business-name').text('');
+                    $('#grp-google-review-qr-img').prop('href', '');
+                    $qrCodeModal.find('input').val('');
+                });
+
                 // Close on outside click (for modals)
                 $(window).on('click', function(e) {
                     if ($(e.target).is('#grp-raw-data-modal')) {
-                        $('#grp-raw-data-modal').hide();
+                        $rawModal.hide();
                     }
                     if ($(e.target).is('#grp-schema-modal')) {
-                        $('#grp-schema-modal').hide();
+                        $schemaModal.hide();
                     }
                     if ($(e.target).is('#grp-edit-place')) {
-                        $('#grp-edit-place').hide();
+                        $editModal.hide();
+                    }
+                    if ($(e.target).is('#grp-printable-qr-card-preview')) {
+                        $qrCodeModal.hide();
+                        $('#grp-qr-code-img').prop('src', '');
+                        $('#grp-qr-code-business-name').text('');
+                        $('#grp-google-review-qr-img').prop('href', '');
+                        $qrCodeModal.find('input').val('');
                     }
                 });
             });
@@ -1761,6 +1777,12 @@ readonly class Settings
                 padding-right: 10px;
             }
             .hidden { display: none; }
+            .debug-place > .debug-place-container {
+                display: flex;
+                flex-direction: column;
+                align-content: space-evenly;
+                gap: 10px;
+            }
             .debug-place, input[name=debug_data] { display: none; }
             input[name=debug_data]:checked + label {
                 background-color: #b91c1c;
@@ -1829,6 +1851,46 @@ readonly class Settings
             }
             #update-location-response.error {
                 border-color: red;
+            }
+            .grp-qr-wrapper {
+                display: flex;
+                gap: 40px;
+                align-items: flex-start;
+                margin-top: 20px;
+            }
+            .qr-scan-code { flex: 1; max-width: 400px; }
+            .printable-qr-card-preview { flex: 1 }
+            .grp-qr-code {
+                background: #fff;
+                padding: 20px;
+                border: 1px solid #ddd;
+                display: inline-block;
+                border-radius: 8px;
+                margin-bottom: 15px;
+            }
+            #grp-print-card {
+                border: 1px solid #ccc;
+                background: white;
+                width: 300px;
+                padding: 30px;
+                text-align: center;
+                font-family: sans-serif;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            }
+            .qr-code-rating {
+                margin-top: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 5px;
+            }
+            .qr-code-rating > span { color: #fbbc04; font-size: 20px; }
+            .button span.dashicons { line-height: 1.5; }
+            .grp-export-options {
+                background: #fff;
+                padding: 20px;
+                border: 1px solid #ccd0d4;
+                margin-bottom: 20px;
             }
         </style>
 <?php
