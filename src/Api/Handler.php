@@ -398,7 +398,7 @@ readonly class Handler
     }
 
     /**
-     * @param array{business_name: string, address: string, rating: float|int, total_count: int} $data
+     * @param array{business_name: string, address: string, phone: string, rating: float|int, total_count: int} $data
      * @return bool
      */
     public function update_location(string $place_id, array $data): bool
@@ -414,6 +414,7 @@ readonly class Handler
             }
         }
 
+        $phone = $data['phone'] ?? '';
         $rating = !empty($data['rating']) ? (float)$data['rating'] : 0;
         $total_count = absint($data['total_count'] ?? 0);
 
