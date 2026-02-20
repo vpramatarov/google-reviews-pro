@@ -473,58 +473,51 @@ readonly class Settings
             return;
         }
 
-        printf('<div id="grp-finder-box" style="display:flex; gap:10px; align-items:center;">
-                <input type="text" id="grp_finder_query" class="regular-text" placeholder="%s" value="">
+        printf('<div id="grp-finder-box">
+                <input type="text" id="grp_finder_query" class="regular-text" placeholder="%s" value=""> <span>%s</span> <input type="text" id="grp_finder_place_id" class="regular-text" placeholder="%s" value="">
                 <button type="button" id="grp-find-btn" class="button button-secondary">%s</button>
                 <span class="spinner" id="grp-finder-spinner" style="float:none; margin:0;"></span>
                 <button type="button" id="grp-save-api-btn" class="button button-secondary" style="display: none;">%s</button>
             </div>
             <p class="description" id="grp-finder-msg"></p>',
             __('Enter business name (e.g. Pizza Mario New York)', 'google-reviews-pro'),
+            __('or', 'google-reviews-pro'),
+            __('Enter Place ID', 'google-reviews-pro'),
             __('Search & Auto-fill', 'google-reviews-pro'),
             __('Sync Data', 'google-reviews-pro')
         );
         ?>
-        <div id="grp_preview_wrapper" style="display: none; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
-            <h4 style="margin: 0 0 10px 0;"><?php _e('Business Preview', 'google-reviews-pro'); ?></h4>
+        <div id="grp_preview_wrapper">
+            <h4><?php _e('Business Preview', 'google-reviews-pro'); ?></h4>
 
-            <div class="grp-preview-card" style="
-                display: flex;
-                background: #fff;
-                border: 1px solid #e0e0e0;
-                border-radius: 8px;
-                padding: 16px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                max-width: 450px;
-                font-family: Roboto, Arial, sans-serif;
-            ">
+            <div class="grp-preview-card">
                 <div style="margin-right: 15px;">
-                    <img id="grp_prev_icon" src="" alt="Logo" style="width: 50px; height: 50px; border-radius: 4px; object-fit: cover;">
+                    <img id="grp_prev_icon" src="" alt="Logo">
                 </div>
 
                 <div style="flex: 1;">
-                    <div id="grp_prev_name" style="font-weight: 500; font-size: 16px; color: #202124; margin-bottom: 4px;"></div>
+                    <div id="grp_prev_name"></div>
                     <div id="grp_prev_place_id" style="display: none"></div>
                     <div id="grp_prev_data_id" style="display: none"></div>
 
-                    <div style="display: flex; align-items: center; margin-bottom: 4px; font-size: 13px;">
-                        <span id="grp_prev_rating" style="font-weight: bold; color: #e7711b; margin-right: 4px;"></span>
-                        <div class="grp-stars" style="color: #fbbc04; margin-right: 6px; letter-spacing: 1px;"></div>
-                        <span style="color: #70757a;">(<span id="grp_prev_count"></span>)</span>
+                    <div id="grp_prev_rating_wrapper">
+                        <span id="grp_prev_rating"></span>
+                        <div class="grp-stars"></div>
+                        <span>(<span id="grp_prev_count"></span>)</span>
                     </div>
 
-                    <div id="grp_prev_address" style="color: #70757a; font-size: 12px; line-height: 1.4; margin-bottom: 4px;"></div>
+                    <div id="grp_prev_address" class="grp_prev_prop"></div>
 
-                    <div id="grp_prev_phone" style="color: #70757a; font-size: 12px; line-height: 1.4; margin-bottom: 4px;"></div>
+                    <div id="grp_prev_phone" class="grp_prev_prop"></div>
 
-                    <div id="grp_prev_coordinates" style="color: #70757a; font-size: 12px; line-height: 1.4; margin-bottom: 4px;"></div>
+                    <div id="grp_prev_coordinates" class="grp_prev_prop"></div>
 
                     <div style="font-size: 12px; display: flex; gap: 10px;">
                         <span id="grp_prev_price" style="color: #555;"></span>
                         <a id="grp_prev_map_link" href="#" target="_blank" style="text-decoration: none; color: #1a73e8;">View on Maps</a>
                     </div>
 
-                    <div id="grp_prev_weekday" style="color: #70757a; font-size: 12px; line-height: 1.4; margin-bottom: 4px;"></div>
+                    <div id="grp_prev_weekday" class="grp_prev_prop"></div>
                     <div id="grp_prev_periods" style="display: none"></div>
                 </div>
 
@@ -1300,8 +1293,11 @@ readonly class Settings
                 $findBtn.on('click', function(e) {
                     e.preventDefault();
                     const queryInput = $('#grp_finder_query');
+                    const queryPlaceIdInput = $('#grp_finder_place_id');
                     const query = queryInput.val();
+                    const placeId = queryPlaceIdInput.val();
                     const source = $sourceSelect.val();
+                    const searchedValue = query.trim().length ? query : placeId
                     let apiKey = '';
 
                     if (source === 'google') {
@@ -1312,7 +1308,7 @@ readonly class Settings
                         apiKey = $('#grp_scrapingdog_key').val();
                     }
 
-                    if(!query || !apiKey) {
+                    if(!searchedValue.trim().length || !apiKey) {
                         alert('<?php _e('Please enter a business name and ensure your API key is filled in.', 'google-reviews-pro'); ?>');
                         return;
                     }
@@ -1322,11 +1318,12 @@ readonly class Settings
                     $findBtn.prop('disabled', true);
                     $msg.text('');
                     $previewWrapper.hide();
+                    const $action = query.trim().length ? 'grp_find_business' : 'grp_find_business_by_place_id';
 
                     $.post(ajaxurl, {
-                        action: 'grp_find_business',
+                        action: $action,
                         nonce: '<?php echo wp_create_nonce("grp_nonce"); ?>',
-                        query: query
+                        query: searchedValue
                     }, function(res) {
                         $spinner.removeClass('is-active');
                         $findBtn.prop('disabled', false);
@@ -1772,10 +1769,7 @@ readonly class Settings
     {
         ?>
         <style>
-            .form-table .modal-window table th{
-                padding-left: 10px;
-                padding-right: 10px;
-            }
+            .form-table .modal-window table th { padding-left: 10px; padding-right: 10px; }
             .hidden { display: none; }
             .debug-place > .debug-place-container {
                 display: flex;
@@ -1784,10 +1778,7 @@ readonly class Settings
                 gap: 10px;
             }
             .debug-place, input[name=debug_data] { display: none; }
-            input[name=debug_data]:checked + label {
-                background-color: #b91c1c;
-                color: #fff;
-            }
+            input[name=debug_data]:checked + label { background-color: #b91c1c; color: #fff; }
             ul { list-style: none; }
             ul li { margin-bottom: 10px; }
             .modal-window {
@@ -1821,19 +1812,9 @@ readonly class Settings
                 border-bottom:1px solid #eee;
                 padding-bottom:10px;
             }
-            .modal-content {
-                overflow-y:auto;
-                flex:1;
-            }
-            .modal-content.darker-bg {
-                background:#f5f5f5;
-                padding:10px;
-                border:1px solid #ddd;
-            }
-            .modal-footer {
-                margin-top:15px;
-                text-align:right;
-            }
+            .modal-content { overflow-y:auto; flex:1; }
+            .modal-content.darker-bg { background:#f5f5f5; padding:10px; border:1px solid #ddd; }
+            .modal-footer { margin-top:15px; text-align:right; }
             #grp-raw-content {
                 white-space:pre-wrap;
                 word-wrap:break-word;
@@ -1846,28 +1827,10 @@ readonly class Settings
                 border-left-width: 5px;
                 border-radius: 5px;
             }
-            #update-location-response.success {
-                border-color: green;
-            }
-            #update-location-response.error {
-                border-color: red;
-            }
-            .grp-qr-wrapper {
-                display: flex;
-                gap: 40px;
-                align-items: flex-start;
-                margin-top: 20px;
-            }
-            .qr-scan-code { flex: 1; max-width: 400px; }
+            #update-location-response.success { border-color: green; }
+            #update-location-response.error { border-color: red; }
+            #grp-finder-box { display:flex; gap:10px; align-items:center; }
             .printable-qr-card-preview { flex: 1 }
-            .grp-qr-code {
-                background: #fff;
-                padding: 20px;
-                border: 1px solid #ddd;
-                display: inline-block;
-                border-radius: 8px;
-                margin-bottom: 15px;
-            }
             #grp-print-card {
                 border: 1px solid #ccc;
                 background: white;
@@ -1892,6 +1855,44 @@ readonly class Settings
                 border: 1px solid #ccd0d4;
                 margin-bottom: 20px;
             }
+            #grp_preview_wrapper {
+                display: none;
+                margin-top: 15px;
+                border-top: 1px solid #eee;
+                padding-top: 15px;
+            }
+            #grp_preview_wrapper > h4 { margin: 0 0 10px 0; }
+            .grp-preview-card {
+                display: flex;
+                background: #fff;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 16px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                max-width: 450px;
+            }
+            #grp_prev_icon {
+                width: 50px;
+                height: 50px;
+                border-radius: 4px;
+                object-fit: cover;
+            }
+            #grp_prev_name {
+                font-weight: 500;
+                font-size: 16px;
+                color: #202124;
+                margin-bottom: 4px;
+            }
+            #grp_prev_rating_wrapper {
+                display: flex;
+                align-items: center;
+                margin-bottom: 4px;
+                font-size: 13px;
+            }
+            #grp_prev_rating { font-weight: bold; color: #e7711b; margin-right: 4px; }
+            #grp_prev_rating_wrapper .grp-stars { color: #fbbc04; margin-right: 6px; letter-spacing: 1px; }
+            #grp_prev_rating_wrapper .grp-stars + span { color: #70757a; }
+            .grp-preview-card .grp_prev_prop { color: #70757a; font-size: 12px; line-height: 1.4; margin-bottom: 4px; }
         </style>
 <?php
         if (defined('DISABLE_WP_CRON') && DISABLE_WP_CRON && (get_option('grp_settings')['auto_sync'] ?? 0)) {

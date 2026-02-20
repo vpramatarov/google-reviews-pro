@@ -13,6 +13,7 @@ readonly class Handler
     {
         add_action('wp_ajax_grp_refresh', [$this, 'handle']);
         add_action('wp_ajax_grp_find_business', [$this, 'handle_find']);
+        add_action('wp_ajax_grp_find_business_by_place_id', [$this, 'handle_find_by_place_id']);
         add_action('wp_ajax_grp_load_more', [$this, 'handle_load_more']);
         add_action('wp_ajax_nopriv_grp_load_more', [$this, 'handle_load_more']);
         add_action('wp_ajax_grp_delete_location', [$this, 'handle_delete_location']);
@@ -120,6 +121,54 @@ readonly class Handler
             }
 
             $result = $apiHandler->fetch_business_info($query);
+            break;
+        }
+
+        if (is_wp_error($result)) {
+            wp_send_json_error($result->get_error_message());
+        }
+
+        if (!empty($result)) {
+            wp_send_json_success($result);
+        } else {
+            wp_send_json_error(__('Unknown error or no data found.', 'google-reviews-pro'));
+        }
+    }
+
+    public function handle_find_by_place_id(): void
+    {
+        if (!check_ajax_referer('grp_nonce', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized action.', 'google-reviews-pro'));
+        }
+
+        $place_id = sanitize_text_field($_POST['query'] ?? '');
+        $api_options = $this->api->get_api_options();
+        $source = $api_options['data_source'] ?? '';
+        $api_key = '';
+        if ($source === 'google') {
+            $api_key = $api_options['google_api_key'];
+        } elseif ($source === 'serpapi') {
+            $api_key = $api_options['serpapi_key'];
+        } elseif ($source === 'scrapingdog') {
+            $api_key = $api_options['scrapingdog_api_key'];
+        }
+
+        if (!$place_id || !$source || !$api_key) {
+            wp_send_json_error('Missing parameters');
+        }
+
+        $result = [];
+
+        foreach ($this->api->get_api_handlers() as $apiHandler) {
+            if (!$apiHandler->supports($source)) {
+                continue;
+            }
+
+            $result = $apiHandler->fetch_business_info_by_place_id($place_id);
             break;
         }
 

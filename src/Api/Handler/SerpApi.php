@@ -123,6 +123,62 @@ class SerpApi implements ApiHandler
         ];
     }
 
+    public function fetch_business_info_by_place_id(string $place_id): \WP_Error|array
+    {
+        $api_key = $this->options['serpapi_key'] ?? '';
+
+        if (empty($api_key)) {
+            return new \WP_Error('api_error', __('Missing API Key.', 'google-reviews-pro'));
+        }
+
+        $place_id = trim($place_id);
+
+        if (empty($place_id)) {
+            return new \WP_Error('api_error', __('Empty Place ID.', 'google-reviews-pro'));
+        }
+
+        $locales = explode('_', get_locale());
+
+        $url = sprintf(
+            'https://serpapi.com/search.json?engine=google_maps&place_id=%s&api_key=%s&type=search&hl=%s',
+            $place_id,
+            $api_key,
+            strtolower($locales[0])
+        );
+        $response = wp_remote_get($url);
+
+        if (is_wp_error($response)) {
+            wp_send_json_error($response->get_error_message());
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $place = $body['place_results'] ?? null;
+
+        if (!empty($place)) {
+            $result = [
+                'place_id' => $place['place_id'],
+                'data_id' => $place['data_id'],
+                'name' => $place['title'],
+                'address' => $place['address'] ?? null,
+                'phone' => $place['phone'] ?? null,
+                'lat' => $place['gps_coordinates']['latitude'] ?? null,
+                'lng' => $place['gps_coordinates']['longitude'] ?? null,
+                'price_level' => $this->normalize_price($place['price_level'] ?? $place['price'] ?? null), // $1–10
+                'maps_url' => null,
+                'website' => $place['website'] ?? get_home_url(),
+                'periods' => $this->normalize_hours($place['hours'] ??$place['operating_hours'] ?? null),
+                'weekday_text'=> $place['open_state'] ?? null,
+                'icon' => $place['thumbnail'] ?? null,
+                'rating' => $place['rating'] ?? 0,
+                'count' => $place['reviews'] ?? 0,
+            ];
+        } else {
+            return new \WP_Error('api_error', $body['error'] ?? __('No business found via SerpApi.', 'google-reviews-pro'));
+        }
+
+        return $result;
+    }
+
     public function fetch_business_info(string $query): \WP_Error|array
     {
         $api_key = $this->options['serpapi_key'] ?? '';

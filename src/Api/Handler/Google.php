@@ -92,6 +92,11 @@ class Google implements ApiHandler
         ];
     }
 
+    public function fetch_business_info_by_place_id(string $place_id): \WP_Error|array
+    {
+        return $this->fetch($place_id);
+    }
+
     public function fetch_business_info(string $query): \WP_Error|array
     {
         $api_key = $this->options['google_api_key'] ?? '';

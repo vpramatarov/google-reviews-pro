@@ -121,6 +121,66 @@ class ScrapingDog implements ApiHandler
         ];
     }
 
+    public function fetch_business_info_by_place_id(string $place_id): \WP_Error|array
+    {
+        $api_key = $this->options['scrapingdog_api_key'] ?? '';
+
+        if (empty($api_key)) {
+            return new \WP_Error('api_error', __('Missing ScrapingDog API Key.', 'google-reviews-pro'));
+        }
+
+        $place_id = trim($place_id);
+
+        if (empty($place_id)) {
+            return new \WP_Error('api_error', __('Empty Place ID.', 'google-reviews-pro'));
+        }
+
+        $locales = explode('_', get_locale());
+        $locale = strtolower($locales[0]);
+
+        $url = sprintf(
+            'https://api.scrapingdog.com/google_maps/places?api_key=%s&place_id=%s&country=%s',
+            $api_key,
+            $place_id,
+            $locale
+        );
+
+        $response = wp_remote_get($url, ['timeout' => GRP_TIMEOUT]);
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $place = $body['place_results'] ?? null;
+
+        if (!empty($place)) {
+            $result = [
+                'name' => $place['title'] ?? null,
+                'address' => $place['address'] ?? null,
+                'phone' => $place['phone'] ?? null,
+                'lat' => $place['gps_coordinates']['latitude'] ?? null,
+                'lng' => $place['gps_coordinates']['longitude'] ?? null,
+                'price_level' => $this->normalize_price($place['price'] ?? null),
+                'maps_url' => $place['google_maps_url'] ?? null,
+                'website' => $place['website'] ?? get_home_url(),
+                'periods' => $this->normalize_hours($place['hours'] ?? null),
+                'weekday_text'=> $place['open_state'] ?? null,
+                'icon' => $place['thumbnail'] ?? null,
+                'rating' => $place['rating'] ?? 0,
+                'count' => $place['reviews'] ?? 0,
+            ];
+
+            $result['place_id'] = $place['place_id'] ?? $place['data_id'] ?? $place_id;
+            $result['data_id'] = $place['data_id'] ?? null;
+
+        } else {
+            return new \WP_Error('api_error', $body['message'] ?? __('No business found via ScrapingDog.', 'google-reviews-pro'));
+        }
+
+        return $result;
+    }
+
     public function fetch_business_info(string $query): \WP_Error|array
     {
         $api_key = $this->options['scrapingdog_api_key'] ?? '';
@@ -215,5 +275,24 @@ class ScrapingDog implements ApiHandler
         }
 
         return null;
+    }
+
+    private function normalize_hours(?array $hours): array
+    {
+        if (empty($hours)) {
+            return [];
+        }
+
+        if (isset($hours[0])) {
+            $working_hours = [];
+            foreach ($hours as $hourData) {
+                foreach ($hourData as $day => $hour) {
+                    $working_hours[strtolower($day)] = $hour;
+                }
+            }
+            return $working_hours;
+        } else {
+            return $hours;
+        }
     }
 }
