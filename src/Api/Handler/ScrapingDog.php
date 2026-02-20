@@ -156,6 +156,8 @@ class ScrapingDog implements ApiHandler
 
         if (!empty($place)) {
             $result = [
+                'place_id' => $place['place_id'] ?? $place_id,
+                'data_id' => $place['data_id'] ?? null,
                 'name' => $place['title'] ?? null,
                 'address' => $place['address'] ?? null,
                 'phone' => $place['phone'] ?? null,
@@ -170,10 +172,6 @@ class ScrapingDog implements ApiHandler
                 'rating' => $place['rating'] ?? 0,
                 'count' => $place['reviews'] ?? 0,
             ];
-
-            $result['place_id'] = $place['place_id'] ?? $place['data_id'] ?? $place_id;
-            $result['data_id'] = $place['data_id'] ?? null;
-
         } else {
             return new \WP_Error('api_error', $body['message'] ?? __('No business found via ScrapingDog.', 'google-reviews-pro'));
         }
@@ -236,7 +234,6 @@ class ScrapingDog implements ApiHandler
             // The Search API returns 'data_id' or 'place_id'. Priority is data_id.
             $result['place_id'] = $place['place_id'] ?? $place['data_id'] ?? null;
             $result['data_id'] = $place['data_id'] ?? null;
-
         } else {
             return new \WP_Error('api_error', $body['message'] ?? __('No business found via ScrapingDog.', 'google-reviews-pro'));
         }
