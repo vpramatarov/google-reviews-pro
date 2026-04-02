@@ -373,8 +373,7 @@ readonly class Handler
         $price_lvl = sanitize_text_field($post_data['price_lvl'] ?? '');
         $rating = sanitize_text_field($post_data['rating'] ?? '');
         $reviews_count = sanitize_text_field($post_data['reviews_count'] ?? '');
-        $working_days = $post_data['working_days'] ?? [];
-        array_walk($working_days, 'sanitize_text_field');
+        $working_days = array_map('sanitize_text_field', wp_unslash($post_data['working_days'] ?? []));
 
         $meta = [];
         $meta['count'] = (int)$reviews_count;

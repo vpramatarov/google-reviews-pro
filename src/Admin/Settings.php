@@ -1492,8 +1492,9 @@ readonly class Settings
                     }, function(res) {
                         if (res.success) {
                             const $data = res.data;
+                            const $address = $data.address || '';
                             $('#edit-location-name').val($data.name || '');
-                            $('#edit-location-address').text($data.address || '');
+                            $('#edit-location-address').text($address).val($address);
                             $('#edit-location-phone').val($data.phone || '');
                             $('input#edit-location-place-id').val($data.place_id || placeId);
                             $('#edit-reviews-rating').val($data.rating || '');
@@ -1518,7 +1519,7 @@ readonly class Settings
                     e.preventDefault();
                     $editModal.hide();
                     $editModal.find('input').val('');
-                    $editModal.find('textarea').text('');
+                    $editModal.find('textarea').text('').val('');
                     $('#update-location-fields').hide();
                 });
 
@@ -1549,7 +1550,7 @@ readonly class Settings
                         if (res.success) {
                             $('#update-location-response').text(res.data.message).addClass('success').removeClass('hidden error');
                             $editModal.find('input').val('');
-                            $editModal.find('textarea').text('');
+                            $editModal.find('textarea').text('').val('');
                             $editModal.css('display', 'flex'); // Flex to center
                             $('#update-location-fields').hide();
                             $btn.text('<?php _e('Edit', 'google-reviews-pro'); ?>');
