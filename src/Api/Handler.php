@@ -53,7 +53,8 @@ readonly class Handler
      *     "serpapi_pages": int,
      *     "auto_sync": bool|int,
      *     "sync_frequency": string,
-     *     "grp_hide_empty": bool|int
+     *     "grp_hide_empty": bool|int,
+     *     "grp_disable_seo_integration": bool|int
      * }|array{}
      */
     public function get_api_options(): array
@@ -398,8 +399,7 @@ readonly class Handler
     }
 
     /**
-     * @param array{business_name: string, address: string, phone: string, rating: float|int, total_count: int} $data
-     * @return bool
+     * @param array{business_name: string, address: string, phone: string, rating: float|int, total_count: int, periods: array} $data
      */
     public function update_location(string $place_id, array $data): bool
     {
@@ -436,6 +436,12 @@ readonly class Handler
 
             if (($rating >= 1 && $rating <= 5) && $db[$place_id]['rating'] !== $rating) {
                 $db[$place_id]['rating'] = $rating;
+            }
+
+            // $data['periods'] is already validated & sanitized in the AJAX handler.
+            // An empty array means the admin cleared all hours intentionally.
+            if (array_key_exists('periods', $data)) {
+                $db[$place_id]['periods'] = $data['periods'];
             }
 
             return update_option('grp_locations_db', $db);

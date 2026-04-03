@@ -35,7 +35,8 @@ final class CronManager
      *     "serpapi_pages": int,
      *     "auto_sync": bool|int,
      *     "sync_frequency": string,
-     *     "grp_hide_empty": bool|int
+     *     "grp_hide_empty": bool|int,
+     *     "grp_disable_seo_integration": bool|int
      * }|array{} $options
      */
     public function __construct(array $options) {

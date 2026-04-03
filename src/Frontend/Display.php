@@ -228,7 +228,7 @@ readonly class Display
     public function get_schema_debug_info(string $place_id): array
     {
         $options = $this->api->get_api_options();
-        $seo_data = $this->seo->get_local_data();
+        $seo_data = $this->get_effective_seo_data();
         $global_place_id = $options['place_id'] ?? '';
         $is_main_location = (empty($place_id) || $place_id === $global_place_id);
         $auto_meta = !empty($place_id) ? $this->api->get_location_metadata($place_id) : ($this->api->get_location_metadata($global_place_id) ?? null); // API data
@@ -304,6 +304,20 @@ readonly class Display
 
     public function get_seo_debug_info(string $place_id): array
     {
+        // ── Guard: integration disabled ───────────────────────────────────
+        $disabled = (bool) ($this->api->get_api_options()['grp_disable_seo_integration'] ?? false);
+
+        if ($disabled) {
+            // Return a single informational row so the Schema-check table still
+            // renders cleanly rather than showing an empty / broken state.
+            return [
+                '_notice' => [
+                    'value'  => __('SEO plugin integration is disabled. Data below is not used for schema output.', 'google-reviews-pro'),
+                    'source' => '—',
+                ],
+            ];
+        }
+
         $seo_data = $this->seo->get_local_data();
 
         // Analyze Basic Fields
@@ -344,7 +358,7 @@ readonly class Display
         }
 
         $options = $this->api->get_api_options();
-        $seo_data = $this->seo->get_local_data();
+        $seo_data = $this->get_effective_seo_data();
         $global_place_id = $options['place_id'] ?? '';
         $auto_meta = !empty($current_place_id) ? $this->api->get_location_metadata($current_place_id) : ($this->api->get_location_metadata($global_place_id) ?? null);
         $default_name = !empty($seo_data['name']) ? $seo_data['name'] : ($options['grp_business_name'] ?: get_bloginfo('name'));
@@ -525,5 +539,36 @@ readonly class Display
         }
 
         return $structured_data;
+    }
+
+    /**
+     * Returns SEO-plugin local data only when the integration is active.
+     *
+     * When the admin has checked "Disable SEO plugin integration" in Settings,
+     * this returns an empty array so that generate_json_ld(),
+     * get_schema_debug_info(), and get_seo_debug_info() all fall through to
+     * manual / API values instead of using SEO-plugin data.
+     *
+     * @return array{name: string, phone: string, price_range: string, address: string, lat: string, lng: string, open_hours: array}
+     */
+    private function get_effective_seo_data(): array
+    {
+        $disabled = (bool) ($this->api->get_api_options()['grp_disable_seo_integration'] ?? false);
+
+        if ($disabled) {
+            // Return the same shape as SeoIntegrator::get_local_data() but empty,
+            // so callers never need to guard against missing keys.
+            return [
+                'name'        => '',
+                'phone'       => '',
+                'price_range' => '',
+                'address'     => '',
+                'lat'         => '',
+                'lng'         => '',
+                'open_hours'  => [],
+            ];
+        }
+
+        return $this->seo->get_local_data();
     }
 }

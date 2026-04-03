@@ -220,12 +220,56 @@ readonly class Handler
             wp_send_json_error(__('Rating must a positive number between 1 and 5.', 'google-reviews-pro'));
         }
 
+        $raw_hours   = $_POST['working_hours'] ?? [];
+        $periods     = [];
+        $allowed_days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $time_regex   = '/^([01]\d|2[0-3]):[0-5]\d$/';
+
+        if (!empty($raw_hours) && is_array($raw_hours)) {
+            foreach ($raw_hours as $day => $range) {
+                $day   = sanitize_text_field(strtolower(trim($day)));
+                $range = sanitize_text_field(trim($range));
+
+                if (!in_array($day, $allowed_days, true)) {
+                    wp_send_json_error(
+                        sprintf(__('Invalid day "%s" in working hours.', 'google-reviews-pro'), $day)
+                    );
+                }
+
+                // Expected format from JS: "09:00 - 18:00"
+                $parts = array_map('trim', explode(' - ', $range));
+
+                if (count($parts) !== 2) {
+                    wp_send_json_error(
+                        sprintf(__('Invalid time range format for %s. Expected HH:MM - HH:MM.', 'google-reviews-pro'), $day)
+                    );
+                }
+
+                [$opens, $closes] = $parts;
+
+                if (!preg_match($time_regex, $opens) || !preg_match($time_regex, $closes)) {
+                    wp_send_json_error(
+                        sprintf(__('Invalid time format for %s. Use HH:MM (24h).', 'google-reviews-pro'), $day)
+                    );
+                }
+
+                if ($opens >= $closes) {
+                    wp_send_json_error(
+                        sprintf(__('Closing time must be after opening time for %s.', 'google-reviews-pro'), $day)
+                    );
+                }
+
+                $periods[$day] = $opens . ' - ' . $closes;
+            }
+        }
+
         $update_data = [
             'business_name' => $business_name,
             'address' => $address,
             'phone' => $phone,
             'rating' => $rating,
             'total_count' => $total_count,
+            'periods' => $periods
         ];
 
         if ($this->api->update_location($place_id, $update_data)) {

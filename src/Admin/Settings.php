@@ -332,6 +332,14 @@ readonly class Settings
             'grp_seo'
         );
 
+        add_settings_field(
+            'grp_disable_seo_integration',
+            __('SEO Plugin Integration', 'google-reviews-pro'),
+            [$this, 'disable_seo_integration_html'],
+            'grp-settings',
+            'grp_seo'
+        );
+
         // --- ADVANCED & NOTIFICATIONS ---
         add_settings_section(
             'grp_advanced',
@@ -387,6 +395,7 @@ readonly class Settings
             'grp_address' => sanitize_textarea_field($input['grp_address'] ?? ''),
             'grp_phone' => sanitize_text_field($input['grp_phone'] ?? ''),
             'grp_price' => sanitize_text_field($input['grp_price'] ?? ''),
+            'grp_disable_seo_integration' => isset($input['grp_disable_seo_integration']) ? 1 : 0,
             'grp_layout' => sanitize_text_field($input['grp_layout'] ?? 'grid'),
             'grp_text_color' => sanitize_hex_color($input['grp_text_color'] ?? '#333333'),
             'grp_bg_color' => sanitize_hex_color($input['grp_bg_color'] ?? '#ffffff'),
@@ -433,16 +442,18 @@ readonly class Settings
 
     public function seo_section_desc(): void
     {
-        $provider = $this->seo->get_active_provider();
+        $provider   = $this->seo->get_active_provider();
+        $is_active  = $this->is_seo_integration_active();   // respects the toggle
 
-        if ($provider) {
+        if ($provider && $is_active) {
+            // Integration is ON and a SEO plugin was detected → read-only notice
             $name = match($provider) {
                 'rank_math' => 'Rank Math SEO',
-                'aioseo' => 'All in One SEO',
-                'seopress' => 'SEOPress',
-                'tsf' => 'The SEO Framework',
-                'yoast' => 'Yoast SEO',
-                default => 'SEO Plugin'
+                'aioseo'    => 'All in One SEO',
+                'seopress'  => 'SEOPress',
+                'tsf'       => 'The SEO Framework',
+                'yoast'     => 'Yoast SEO',
+                default     => 'SEO Plugin'
             };
 
             echo '<div class="notice notice-info inline" style="margin-left:0; margin-bottom:15px;"><p>';
@@ -451,7 +462,28 @@ readonly class Settings
                 $name
             );
             echo '</p></div>';
+
+        } elseif ($provider && !$is_active) {
+            // Integration is OFF but a SEO plugin IS present → warn the admin
+            $name = match($provider) {
+                'rank_math' => 'Rank Math SEO',
+                'aioseo'    => 'All in One SEO',
+                'seopress'  => 'SEOPress',
+                'tsf'       => 'The SEO Framework',
+                'yoast'     => 'Yoast SEO',
+                default     => 'SEO Plugin'
+            };
+
+            echo '<div class="notice notice-warning inline" style="margin-left:0; margin-bottom:15px;"><p>';
+            printf(
+            /* translators: %s = SEO plugin name */
+                __('<strong>%s detected but integration is disabled.</strong> Fields below use manual values only. Re-enable integration to sync automatically.', 'google-reviews-pro'),
+                $name
+            );
+            echo '</p></div>';
+
         } else {
+            // No SEO plugin detected (or irrelevant)
             echo '<p>' . __('Fill these fields to generate valid LocalBusiness Schema for Google.', 'google-reviews-pro') . '</p>';
         }
     }
@@ -756,7 +788,8 @@ readonly class Settings
                         <ul>
                             <li>
                                 <label for="edit-location-name">
-                                    <?php _e('Business Name', 'google-reviews-pro'); ?>: <input type="text" name="location_name" id="edit-location-name" class="regular-text edit-location">
+                                    <?php _e('Business Name', 'google-reviews-pro'); ?>:
+                                    <input type="text" name="location_name" id="edit-location-name" class="regular-text edit-location">
                                 </label>
                             </li>
                             <li>
@@ -765,21 +798,73 @@ readonly class Settings
                             </li>
                             <li>
                                 <label for="edit-location-phone">
-                                    <?php _e('Phone', 'google-reviews-pro'); ?>: <input type="text" name="location_phone" id="edit-location-phone" class="regular-text edit-location">
+                                    <?php _e('Phone', 'google-reviews-pro'); ?>:
+                                    <input type="text" name="location_phone" id="edit-location-phone" class="regular-text edit-location">
                                 </label>
                             </li>
                             <li>
                                 <label for="edit-reviews-total-count">
-                                    <?php _e('Reviews count', 'google-reviews-pro'); ?>: <input type="text" name="reviews_total_count" id="edit-reviews-total-count" class="regular-text edit-location">
+                                    <?php _e('Reviews count', 'google-reviews-pro'); ?>:
+                                    <input type="text" name="reviews_total_count" id="edit-reviews-total-count" class="regular-text edit-location">
                                 </label>
                             </li>
                             <li>
                                 <label for="edit-reviews-rating">
-                                    <?php _e('Reviews rating', 'google-reviews-pro'); ?>: <input type="text" name="reviews_rating" id="edit-reviews-rating" class="regular-text edit-location">
+                                    <?php _e('Reviews rating', 'google-reviews-pro'); ?>:
+                                    <input type="text" name="reviews_rating" id="edit-reviews-rating" class="regular-text edit-location">
                                 </label>
                             </li>
                         </ul>
-                        <input name="place_id" type="hidden" id="edit-location-place-id" >
+
+                        <!-- ── Working Hours ──────────────────────────────────────────────── -->
+                        <hr style="margin: 12px 0;">
+                        <h4 style="margin: 0 0 10px 0;"><?php _e('Working Hours (24h format)', 'google-reviews-pro'); ?></h4>
+                        <p class="description" style="margin-bottom: 10px;">
+                            <?php _e('Leave both fields empty to mark a day as Closed.', 'google-reviews-pro'); ?>
+                        </p>
+
+                        <table class="widefat fixed striped" id="edit-working-hours-table">
+                            <thead>
+                            <tr>
+                                <th style="width:30%;"><?php _e('Day', 'google-reviews-pro'); ?></th>
+                                <th style="width:35%;"><?php _e('Opens', 'google-reviews-pro'); ?> (HH:MM)</th>
+                                <th style="width:35%;"><?php _e('Closes', 'google-reviews-pro'); ?> (HH:MM)</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <?php
+                            $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                            foreach ($days as $day) : ?>
+                                <tr>
+                                    <td><?php echo esc_html(ucfirst(__($day, 'google-reviews-pro'))); ?></td>
+                                    <td>
+                                        <input type="text"
+                                               id="edit-hours-open-<?php echo esc_attr($day); ?>"
+                                               class="edit-location-hours small-text"
+                                               data-day="<?php echo esc_attr($day); ?>"
+                                               data-type="open"
+                                               maxlength="5"
+                                               pattern="^([01]\d|2[0-3]):[0-5]\d$"
+                                               style="width:70px;">
+                                        <span>Ex.: 09:00</span>
+                                    </td>
+                                    <td>
+                                        <input type="text"
+                                               id="edit-hours-close-<?php echo esc_attr($day); ?>"
+                                               class="edit-location-hours small-text"
+                                               data-day="<?php echo esc_attr($day); ?>"
+                                               data-type="close"
+                                               maxlength="5"
+                                               pattern="^([01]\d|2[0-3]):[0-5]\d$"
+                                               style="width:70px;">
+                                        <span>Ex.: 18:00</span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+
+                        <input name="place_id" type="hidden" id="edit-location-place-id">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -948,7 +1033,7 @@ readonly class Settings
     public function business_name_html(): void
     {
         $local_data = $this->seo->get_local_data();
-        $is_managed = !empty($local_data['name']);
+        $is_managed = $this->is_seo_integration_active() && !empty($local_data['name']);
         $val = $is_managed ? $local_data['name'] : esc_attr(get_option('grp_settings')['grp_business_name'] ?? '');
 
         printf(
@@ -964,7 +1049,7 @@ readonly class Settings
     public function latitude_html(): void
     {
         $local = $this->seo->get_local_data();
-        $is_managed = !empty($local['lat']);
+        $is_managed = $this->is_seo_integration_active() && !empty($local['lat']);
         $val = $is_managed ? $local['lat'] : esc_attr(get_option('grp_settings')['grp_latitude'] ?? '');
 
         printf(
@@ -979,7 +1064,7 @@ readonly class Settings
     public function longitude_html(): void
     {
         $local = $this->seo->get_local_data();
-        $is_managed = !empty($local['lng']);
+        $is_managed = $this->is_seo_integration_active() && !empty($local['lng']);
         $val = $is_managed ? $local['lng'] : esc_attr(get_option('grp_settings')['grp_longitude'] ?? '');
 
         printf(
@@ -995,7 +1080,7 @@ readonly class Settings
     public function address_html(): void
     {
         $local = $this->seo->get_local_data();
-        $is_managed = !empty($local['address']);
+        $is_managed = $this->is_seo_integration_active() && !empty($local['address']);
         $val = $is_managed ? $local['address'] : esc_textarea(get_option('grp_settings')['grp_address'] ?? '');
 
         printf(
@@ -1012,7 +1097,7 @@ readonly class Settings
     public function phone_html(): void
     {
         $local = $this->seo->get_local_data();
-        $is_managed = !empty($local['phone']);
+        $is_managed = $this->is_seo_integration_active() && !empty($local['phone']);
         $val = $is_managed ? $local['phone'] : esc_attr(get_option('grp_settings')['grp_phone'] ?? '');
 
         printf(
@@ -1030,7 +1115,7 @@ readonly class Settings
     {
         // Check for SEO plugin data (Priority #1)
         $local = $this->seo->get_local_data();
-        $is_managed = !empty($local['price_range']);
+        $is_managed = $this->is_seo_integration_active() && !empty($local['price_range']);
         $options = get_option('grp_settings');
 
         // If it is managed by an SEO plugin, we get its value.
@@ -1499,8 +1584,74 @@ readonly class Settings
                             $('input#edit-location-place-id').val($data.place_id || placeId);
                             $('#edit-reviews-rating').val($data.rating || '');
                             $('#edit-reviews-total-count').val($data.count || '');
+
+                            // ── Populate working-hours inputs ────────────────────────────────────
+                            // Reset all inputs first
+                            $('.edit-location-hours').val('');
+
+                            const periods = $data.periods || {};   // { monday: "09:00 - 18:00", … }
+
+                            const dayMapping = {
+                                "понеделник": "monday",
+                                "вторник": "tuesday",
+                                "сряда": "wednesday",
+                                "четвъртък": "thursday",
+                                "петък": "friday",
+                                "събота": "saturday",
+                                "неделя": "sunday"
+                            };
+
+                            const mappedPeriods = {};
+
+                            for (const [bgDay, hours] of Object.entries(periods)) {
+                                const englishDay = dayMapping[bgDay];
+                                mappedPeriods[englishDay] = hours;
+                            }
+
+                            const $workingDays = mappedPeriods.length ? mappedPeriods : periods;
+
+                            $.each($workingDays, function(day, range) {
+                                if (!range || typeof range !== 'string') {
+                                    return;
+                                }
+
+                                // Normalize Unicode dashes / spaces the same way PHP does
+                                var clean = range
+                                    .replace(/\u202F|\u2009/g, ' ')   // narrow/thin space → regular space
+                                    .replace(/\u2013|–/g, '-'); // en-dash → hyphen
+
+                                var parts = clean.split('-');
+                                if (parts.length !== 2) {
+                                    return;
+                                }
+
+                                var opens  = parts[0].trim().replace(/[^\d:]/g, '');
+                                var closes = parts[1].trim().replace(/[^\d:]/g, '');
+
+                                // If the API returns "9:00 AM / 6:00 PM" style, convert to 24 h
+                                function to24h(t) {
+                                    if (/AM|PM/i.test(t)) {
+                                        var d = new Date('1970-01-01 ' + t);
+                                        if (!isNaN(d)) {
+                                            var hh = String(d.getHours()).padStart(2, '0');
+                                            var mm = String(d.getMinutes()).padStart(2, '0');
+                                            return hh + ':' + mm;
+                                        }
+                                    }
+                                    // Already 24 h — ensure HH:MM
+                                    var m = t.match(/^(\d{1,2}):(\d{2})$/);
+                                    if (m) {
+                                        return String(m[1]).padStart(2, '0') + ':' + m[2];
+                                    }
+                                    return t;
+                                }
+
+                                $('#edit-hours-open-'  + dayMapping[day] ?? day).val(to24h(opens));
+                                $('#edit-hours-close-' + dayMapping[day] ?? day).val(to24h(closes));
+                            });
+
                             $('#grp-edit-loc-btn').prop('disabled', false);
-                            $editModal.css('display', 'flex'); // Flex to center
+                            $editModal.css('display', 'flex');
                             $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
                         } else {
                             $('#grp-edit-loc-btn').prop('disabled', true);
@@ -1520,6 +1671,7 @@ readonly class Settings
                     $editModal.hide();
                     $editModal.find('input').val('');
                     $editModal.find('textarea').text('').val('');
+                    $('.edit-location-hours').val('');
                     $('#update-location-fields').hide();
                 });
 
@@ -1534,6 +1686,47 @@ readonly class Settings
                     const location_rating = $('#edit-reviews-rating').val();
                     const location_total_reviews_count = $('#edit-reviews-total-count').val();
 
+                    let working_hours = {};
+                    let hours_valid = true;
+                    const time_re = /^([01]\d|2[0-3]):[0-5]\d$/;
+                    const days_list = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+
+                    $.each(days_list, function(_, day) {
+                        const opens  = $('#edit-hours-open-'  + day).val().trim();
+                        const closes = $('#edit-hours-close-' + day).val().trim();
+
+                        // Both empty → Closed (skip)
+                        if (opens === '' && closes === '') { return; }
+
+                        // One filled, one empty → validation error
+                        if (opens === '' || closes === '') {
+                            alert('<?php _e('Working hours error: both open and close time are required for', 'google-reviews-pro'); ?> ' + day);
+                            hours_valid = false;
+                            return false; // break $.each
+                        }
+
+                        // Format check
+                        if (!time_re.test(opens) || !time_re.test(closes)) {
+                            alert('<?php _e('Working hours error: invalid time format (use HH:MM) for', 'google-reviews-pro'); ?> ' + day);
+                            hours_valid = false;
+                            return false;
+                        }
+
+                        // Logical check: close must be after open
+                        if (opens >= closes) {
+                            alert('<?php _e('Working hours error: closing time must be after opening time for', 'google-reviews-pro'); ?> ' + day);
+                            hours_valid = false;
+                            return false;
+                        }
+
+                        working_hours[day] = opens + ' - ' + closes;
+                    });
+
+                    if (!hours_valid) {
+                        $btn.prop('disabled', false).text('<?php _e('Update', 'google-reviews-pro'); ?>');
+                        return;
+                    }
+
                     $('#update-location-response').text('').addClass('hidden').removeClass('error success');
                     $btn.prop('disabled', true).text('<?php _e('Updating data', 'google-reviews-pro'); ?>...');
 
@@ -1545,7 +1738,8 @@ readonly class Settings
                         address: location_address,
                         phone: location_phone,
                         rating: location_rating,
-                        total_count: location_total_reviews_count
+                        total_count: location_total_reviews_count,
+                        working_hours: working_hours
                     }, function(res) {
                         if (res.success) {
                             $('#update-location-response').text(res.data.message).addClass('success').removeClass('hidden error');
@@ -1928,5 +2122,51 @@ readonly class Settings
                 'https://revolut.me/velizaaj0s'
         );
         echo '</p></div>';
+    }
+
+    /**
+     * Returns true when the SEO-plugin integration is active.
+     * Integration is considered active when:
+     *   – a supported SEO plugin is installed, AND
+     *   – the admin has NOT explicitly disabled the integration.
+     */
+    private function is_seo_integration_active(): bool
+    {
+        $disabled = (bool) (get_option('grp_settings')['grp_disable_seo_integration'] ?? false);
+
+        if ($disabled) {
+            return false;
+        }
+
+        return (bool) $this->seo->get_active_provider();
+    }
+
+    /**
+     * Renders the "SEO Plugin Integration" checkbox field.
+     */
+    public function disable_seo_integration_html(): void
+    {
+        $provider  = $this->seo->get_active_provider();
+        $disabled  = (bool) (get_option('grp_settings')['grp_disable_seo_integration'] ?? false);
+        ?>
+        <label>
+            <input type="checkbox"
+                   name="grp_settings[grp_disable_seo_integration]"
+                   id="grp_disable_seo_integration"
+                   value="1"
+                    <?php checked(1, $disabled ? 1 : 0); ?>>
+            <?php _e('Disable SEO plugin integration (use manual values only)', 'google-reviews-pro'); ?>
+        </label>
+
+        <?php if (!$provider) : ?>
+        <p class="description">
+            <?php _e('No supported SEO plugin detected. This option has no effect until one is installed.', 'google-reviews-pro'); ?>
+        </p>
+    <?php else : ?>
+        <p class="description">
+            <?php _e('When checked, the fields above become editable and the SEO plugin data is ignored.', 'google-reviews-pro'); ?>
+        </p>
+    <?php endif; ?>
+        <?php
     }
 }
