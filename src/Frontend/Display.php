@@ -11,6 +11,7 @@ use GRP\Frontend\Layout\Grid;
 use GRP\Frontend\Layout\LayoutRender;
 use GRP\Frontend\Layout\ListLayout;
 use GRP\Frontend\Layout\Slider;
+use GRP\Utils\DateUtils;
 
 readonly class Display
 {
@@ -469,7 +470,7 @@ readonly class Display
         }
 
         if (!empty($auto_meta['periods'])) {
-            $schema_payload['openingHoursSpecification'] = $this->convert_periods_to_schema($auto_meta['periods']);
+            $schema_payload['openingHoursSpecification'] = DateUtils::convert_periods_to_schema($auto_meta['periods']);
         }
 
         if ($stats) {
@@ -483,62 +484,6 @@ readonly class Display
         }
 
         return '<script type="application/ld+json">' . json_encode($schema_payload, JSON_UNESCAPED_UNICODE) . '</script>';
-    }
-
-    /**
-     * Converts an associative array of hours to Schema.org OpeningHoursSpecification.
-     *
-     * @param string[] $hours e.g. ['monday' => '9:00 AM - 5:00 PM']
-     * @return array The structured data structure.
-     */
-    function convert_periods_to_schema(array $hours): array
-    {
-        $structured_data = [];
-        $days_l10n = [
-            __('monday', 'google-reviews-pro') => 'monday',
-            __('tuesday', 'google-reviews-pro') => 'tuesday',
-            __('wednesday', 'google-reviews-pro') => 'wednesday',
-            __('thursday', 'google-reviews-pro') => 'thursday',
-            __('friday', 'google-reviews-pro') => 'friday',
-            __('saturday', 'google-reviews-pro') => 'saturday',
-            __('sunday', 'google-reviews-pro') => 'sunday',
-        ];
-
-        foreach ($hours as $day => $time_range) {
-            // The input can contain Narrow No-Break Space (U+202F), Thin Space (U+2009),
-            // and En-dash (U+2013). We normalize them to standard ASCII.
-            $clean_range = str_replace(
-                ["\u{202F}", "\u{2009}", "\u{2013}", "–"],
-                [" ", " ", "-", "-"],
-                $time_range
-            );
-
-            // Handle "Closed" status
-            // Schema.org best practice is to simply omit closed days.
-            if (str_contains(strtolower($clean_range), 'closed')) {
-                continue;
-            }
-
-            // Separate Start and End times
-            $parts = explode('-', $clean_range);
-            if (!$parts || count($parts) !== 2) {
-                continue; // Skip malformed entries
-            }
-
-            // Convert to 24-hour format (required by Schema.org) - e.g., "9:00 AM" -> "09:00"
-            $opens = date("H:i", strtotime(preg_replace("/[^0-9APM:\s]/", "", trim($parts[0]))));
-            $closes = date("H:i", strtotime(preg_replace("/[^0-9APM:\s]/", "", trim($parts[1]))));
-
-            // Capitalize the array key (e.g., "monday" -> "Monday")
-            $structured_data[] = [
-                "@type" => "OpeningHoursSpecification",
-                "dayOfWeek" => "https://schema.org/" . ucfirst($days_l10n[$day] ?? $day),
-                "opens" => $opens,
-                "closes" => $closes
-            ];
-        }
-
-        return $structured_data;
     }
 
     /**

@@ -10,6 +10,7 @@ use GRP\Api\Handler as ApiHandler;
 use GRP\Core\SeoIntegrator;
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
+use GRP\Utils\DateUtils;
 
 readonly class Settings
 {
@@ -833,7 +834,7 @@ readonly class Settings
                             </thead>
                             <tbody>
                             <?php
-                            $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                            $days = array_values(DateUtils::get_days_of_week_l10n());
                             foreach ($days as $day) : ?>
                                 <tr>
                                     <td><?php echo esc_html(ucfirst(__($day, 'google-reviews-pro'))); ?></td>
@@ -1264,8 +1265,11 @@ readonly class Settings
         if ($screen->id !== 'settings_page_grp-settings') {
             return;
         }
+        $days_for_js = DateUtils::get_days_of_week_l10n();
         ?>
         <script type="text/javascript">
+            const localizedDays = <?php echo json_encode($days_for_js); ?>;
+
             jQuery(document).ready(function($) {
                 const $sourceSelect = $('#grp_data_source');
                 const $inputGoogleApiKey = $('input[name="grp_settings[google_api_key]"]');
@@ -1590,64 +1594,27 @@ readonly class Settings
                             $('.edit-location-hours').val('');
 
                             const periods = $data.periods || {};   // { monday: "09:00 - 18:00", … }
-
-                            const dayMapping = {
-                                "понеделник": "monday",
-                                "вторник": "tuesday",
-                                "сряда": "wednesday",
-                                "четвъртък": "thursday",
-                                "петък": "friday",
-                                "събота": "saturday",
-                                "неделя": "sunday"
-                            };
-
                             const mappedPeriods = {};
 
                             for (const [bgDay, hours] of Object.entries(periods)) {
-                                const englishDay = dayMapping[bgDay];
+                                const englishDay = localizedDays[bgDay];
                                 mappedPeriods[englishDay] = hours;
                             }
 
-                            const $workingDays = mappedPeriods.length ? mappedPeriods : periods;
+                            const $workingDays = convertScheduleTo24h(mappedPeriods.length ? mappedPeriods : periods);
 
                             $.each($workingDays, function(day, range) {
-                                if (!range || typeof range !== 'string') {
-                                    return;
-                                }
+                                const parts = range.split('-');
 
-                                // Normalize Unicode dashes / spaces the same way PHP does
-                                var clean = range
-                                    .replace(/\u202F|\u2009/g, ' ')   // narrow/thin space → regular space
-                                    .replace(/\u2013|–/g, '-'); // en-dash → hyphen
-
-                                var parts = clean.split('-');
                                 if (parts.length !== 2) {
                                     return;
                                 }
 
-                                var opens  = parts[0].trim().replace(/[^\d:]/g, '');
-                                var closes = parts[1].trim().replace(/[^\d:]/g, '');
-
-                                // If the API returns "9:00 AM / 6:00 PM" style, convert to 24 h
-                                function to24h(t) {
-                                    if (/AM|PM/i.test(t)) {
-                                        var d = new Date('1970-01-01 ' + t);
-                                        if (!isNaN(d)) {
-                                            var hh = String(d.getHours()).padStart(2, '0');
-                                            var mm = String(d.getMinutes()).padStart(2, '0');
-                                            return hh + ':' + mm;
-                                        }
-                                    }
-                                    // Already 24 h — ensure HH:MM
-                                    var m = t.match(/^(\d{1,2}):(\d{2})$/);
-                                    if (m) {
-                                        return String(m[1]).padStart(2, '0') + ':' + m[2];
-                                    }
-                                    return t;
-                                }
-
-                                $('#edit-hours-open-'  + dayMapping[day] ?? day).val(to24h(opens));
-                                $('#edit-hours-close-' + dayMapping[day] ?? day).val(to24h(closes));
+                                const opens  = parts[0].trim().replace(/[^\d:]/g, '');
+                                const closes = parts[1].trim().replace(/[^\d:]/g, '');
+                                const day_of_week = localizedDays[day] ?? day;
+                                $('#edit-hours-open-'  + day_of_week).val(opens);
+                                $('#edit-hours-close-' + day_of_week).val(closes);
                             });
 
                             $('#grp-edit-loc-btn').prop('disabled', false);
@@ -1689,14 +1656,16 @@ readonly class Settings
                     let working_hours = {};
                     let hours_valid = true;
                     const time_re = /^([01]\d|2[0-3]):[0-5]\d$/;
-                    const days_list = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+                    const days_list = Object.values(localizedDays);
 
                     $.each(days_list, function(_, day) {
                         const opens  = $('#edit-hours-open-'  + day).val().trim();
                         const closes = $('#edit-hours-close-' + day).val().trim();
 
                         // Both empty → Closed (skip)
-                        if (opens === '' && closes === '') { return; }
+                        if (opens === '' && closes === '') {
+                            return;
+                        }
 
                         // One filled, one empty → validation error
                         if (opens === '' || closes === '') {
@@ -1955,6 +1924,65 @@ readonly class Settings
                     win.print();
                     win.close();
                 }, 250);
+            }
+
+            function convertScheduleTo24h(schedule) {
+                // Quick check: If no "AM" or "PM" is found anywhere in the object, we assume it's already in 24h format (or just full of "Closed")
+                const hasAmPm = Object.values(schedule).some(val => /[ap]\.?m\.?/i.test(val));
+                if (!hasAmPm) {
+                    return schedule; // Return the exact original object
+                }
+
+                // Helper function to convert a single time string (e.g., "8:30 AM" or "5 PM")
+                const to24h = (timeStr) => {
+                    // Replace weird spaces (like narrow no-break space \u202F) with standard spaces
+                    const cleanStr = timeStr.replace(/[\u202F\u00A0]/g, ' ').trim();
+
+                    // Extract hours, optional minutes, and AM/PM
+                    const match = cleanStr.match(/^(\d{1,2})(?::(\d{2}))?\s*([AP]M)$/i);
+
+                    if (!match) {
+                        return cleanStr; // If it doesn't match the pattern, return as-is
+                    }
+
+                    let [, hours, minutes, modifier] = match;
+                    hours = parseInt(hours, 10);
+                    minutes = minutes || '00'; // Default to '00' if minutes are missing (e.g., "5 PM")
+                    modifier = modifier.toUpperCase();
+
+                    // Convert to 24-hour logic
+                    if (modifier === 'PM' && hours < 12) {
+                        hours += 12;
+                    } else if (modifier === 'AM' && hours === 12) {
+                        hours = 0;
+                    }
+
+                    // Pad hours with a leading zero so "8" becomes "08"
+                    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+                };
+
+                // Process the schedule object
+                const newSchedule = {};
+
+                for (const [day, timeRange] of Object.entries(schedule)) {
+                    if (timeRange.toLowerCase() === 'closed') {
+                        newSchedule[day] = timeRange;
+                        continue;
+                    }
+
+                    // Split by standard hyphen, en-dash, or em-dash, ignoring surrounding spaces
+                    const parts = timeRange.split(/\s*[-–—]\s*/);
+
+                    if (parts.length === 2) {
+                        // Convert both parts and join with a standard hyphen
+                        newSchedule[day] = `${to24h(parts[0])}-${to24h(parts[1])}`;
+                    } else {
+                        // Fallback if the string doesn't split into exactly two parts
+                        newSchedule[day] = timeRange;
+                    }
+                }
+
+                return newSchedule;
             }
         </script>
         <?php

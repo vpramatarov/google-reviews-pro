@@ -8,6 +8,7 @@ use GRP\Api\Handler\ApiHandler;
 use GRP\Api\Handler\Google;
 use GRP\Api\Handler\ScrapingDog;
 use GRP\Api\Handler\SerpApi;
+use GRP\Utils\DateUtils;
 
 readonly class Handler
 {
@@ -100,7 +101,13 @@ readonly class Handler
     public function get_location_metadata(string $place_id): ?array
     {
         $db = get_option('grp_locations_db', []);
-        return $db[$place_id] ?? null;
+        $location = $db[$place_id] ?? null;
+
+        if (!empty($location) && isset($location['periods'])) {
+            $location['periods'] = DateUtils::convert_periods_to_24hour_format($location['periods']);
+        }
+
+        return $location;
     }
 
     public function get_reviews(int $limit = 10, int $offset = 0, string $specific_place_id = ''): array
@@ -338,7 +345,7 @@ readonly class Handler
             if (!empty($meta) && !empty($meta['count']) && $meta['count'] > 0) {
                 return [
                     'reviewCount' => (int) $meta['count'],
-                    'ratingValue' => (float) ($meta['rating'] ?? 5.0)
+                    'ratingValue' =>  round((float) ($meta['rating'] ?? 5.0), 1)
                 ];
             }
         }
@@ -441,7 +448,7 @@ readonly class Handler
             // $data['periods'] is already validated & sanitized in the AJAX handler.
             // An empty array means the admin cleared all hours intentionally.
             if (array_key_exists('periods', $data)) {
-                $db[$place_id]['periods'] = $data['periods'];
+                $db[$place_id]['periods'] = DateUtils::convert_periods_to_24hour_format($data['periods']);
             }
 
             return update_option('grp_locations_db', $db);
@@ -514,7 +521,7 @@ readonly class Handler
             'price_level' => isset($meta['price_level']) ? (int)$meta['price_level'] : ($existing['price_level'] ?? null),
             'maps_url' => esc_url_raw($meta['maps_url'] ?? $existing['maps_url'] ?? null),
             'website' => esc_url_raw($meta['website'] ?? $existing['website'] ?? get_home_url()),
-            'periods' => $meta['periods'] ?? $existing['periods'] ?? null,
+            'periods' => DateUtils::convert_periods_to_24hour_format($meta['periods'] ?? $existing['periods'] ?? null),
             'rating' => !empty($meta['rating']) ? (float)$meta['rating'] : ($existing['rating'] ?? 0),
             'count' => !empty($meta['count']) ? (int)$meta['count'] : ($existing['count'] ?? 0),
             'updated' => time()
@@ -721,5 +728,4 @@ readonly class Handler
         $where .= " AND TRIM({$wpdb->posts}.post_content) != '' ";
         return $where;
     }
-
 }

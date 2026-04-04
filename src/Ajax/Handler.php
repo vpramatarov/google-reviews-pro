@@ -6,6 +6,7 @@ namespace GRP\Ajax;
 
 use GRP\Api\Handler as ApiHandler;
 use GRP\Frontend\Display;
+use GRP\Utils\DateUtils;
 
 readonly class Handler
 {
@@ -220,14 +221,14 @@ readonly class Handler
             wp_send_json_error(__('Rating must a positive number between 1 and 5.', 'google-reviews-pro'));
         }
 
-        $raw_hours   = $_POST['working_hours'] ?? [];
-        $periods     = [];
-        $allowed_days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-        $time_regex   = '/^([01]\d|2[0-3]):[0-5]\d$/';
+        $raw_hours = $_POST['working_hours'] ?? [];
+        $periods = [];
+        $allowed_days = array_values(DateUtils::get_days_of_week_l10n());
+        $time_regex = '/^([01]\d|2[0-3]):[0-5]\d$/';
 
         if (!empty($raw_hours) && is_array($raw_hours)) {
             foreach ($raw_hours as $day => $range) {
-                $day   = sanitize_text_field(strtolower(trim($day)));
+                $day = sanitize_text_field(strtolower(trim($day)));
                 $range = sanitize_text_field(trim($range));
 
                 if (!in_array($day, $allowed_days, true)) {
@@ -237,11 +238,11 @@ readonly class Handler
                 }
 
                 // Expected format from JS: "09:00 - 18:00"
-                $parts = array_map('trim', explode(' - ', $range));
+                $parts = array_map('trim', explode('-', $range));
 
                 if (count($parts) !== 2) {
                     wp_send_json_error(
-                        sprintf(__('Invalid time range format for %s. Expected HH:MM - HH:MM.', 'google-reviews-pro'), $day)
+                        sprintf(__('Invalid time range format for %s. Expected HH:MM - HH:MM or HH:MM-HH:MM.', 'google-reviews-pro'), $day)
                     );
                 }
 
@@ -259,7 +260,7 @@ readonly class Handler
                     );
                 }
 
-                $periods[$day] = $opens . ' - ' . $closes;
+                $periods[$day] = $opens . '-' . $closes;
             }
         }
 
@@ -326,6 +327,7 @@ readonly class Handler
             if (isset($meta['updated'])) {
                 $meta['updated_human'] = date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $meta['updated']);
             }
+
             wp_send_json_success($meta);
         } else {
             wp_send_json_error(__('No data found for this location.', 'google-reviews-pro'));
@@ -451,7 +453,7 @@ readonly class Handler
         }
 
         if (!empty($rating)) {
-            $meta['rating'] = (float)$rating;
+            $meta['rating'] = round((float)$rating, 1);
         }
 
         $meta['periods'] = $working_days;
