@@ -39,7 +39,8 @@ final class CronManager
      *     "grp_disable_seo_integration": bool|int
      * }|array{} $options
      */
-    public function __construct(array $options) {
+    public function __construct(array $options)
+    {
         $this->options = $options;
     }
 

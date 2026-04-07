@@ -132,4 +132,23 @@ class DateUtils
 
         return $structured_data;
     }
+
+    public static function normalize_hours(?array $hours): array
+    {
+        if (empty($hours)) {
+            return [];
+        }
+
+        if (isset($hours[0])) {
+            $working_hours = [];
+            foreach ($hours as $hourData) {
+                foreach ($hourData as $day => $hour) {
+                    $working_hours[strtolower($day)] = $hour;
+                }
+            }
+            return $working_hours;
+        } else {
+            return $hours;
+        }
+    }
 }

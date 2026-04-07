@@ -6,7 +6,6 @@ namespace GRP\Api\Handler;
 
 class Google implements ApiHandler
 {
-
     private const string SOURCE = 'google';
 
     private array $options;

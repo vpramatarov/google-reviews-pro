@@ -64,20 +64,21 @@ final readonly class SeoIntegrator
      *     "price_range": string,
      *     "address": string,
      *     "lat": string,
-     *     "lng": string
+     *     "lng": string,
+     *     "open_hours": string[]
      * }
      */
     public function get_local_data(): array
     {
         $provider = $this->get_active_provider();
         $data = [
-            'name'        => '',
-            'phone'       => '',
+            'name' => '',
+            'phone' => '',
             'price_range' => '',
-            'address'     => '',
-            'lat'         => '',
-            'lng'         => '',
-            'open_hours'  => [],
+            'address' => '',
+            'lat' => '',
+            'lng' => '',
+            'open_hours' => [],
         ];
 
         if ($provider === 'rank_math') {

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace GRP\Api\Handler;
 
+use GRP\Utils\DateUtils;
+use GRP\Utils\PriceUtils;
+
 class ScrapingDog implements ApiHandler
 {
     private const string SOURCE = 'scrapingdog';
@@ -86,8 +89,7 @@ class ScrapingDog implements ApiHandler
                         $unique_id = md5(($review['user']['name'] ?? 'Anon') . ($review['date'] ?? '') . substr($review['body'] ?? '', 0, 20));
                     }
 
-                    // ScrapingDog often returns a date as the text "2 months ago".
-                    // strtotime works well for these formats.
+                    // ScrapingDog often returns a date as the text "2 months ago". strtotime works well for these formats.
                     $time_str = $review['date'] ?? '';
                     $timestamp = !empty($time_str) ? strtotime($time_str) : time();
 
@@ -163,10 +165,10 @@ class ScrapingDog implements ApiHandler
                 'phone' => $place['phone'] ?? null,
                 'lat' => $place['gps_coordinates']['latitude'] ?? null,
                 'lng' => $place['gps_coordinates']['longitude'] ?? null,
-                'price_level' => $this->normalize_price($place['price'] ?? null),
+                'price_level' => PriceUtils::normalize_price($place['price'] ?? null),
                 'maps_url' => $place['google_maps_url'] ?? null,
                 'website' => $place['website'] ?? get_home_url(),
-                'periods' => $this->normalize_hours($place['hours'] ?? null),
+                'periods' => DateUtils::normalize_hours($place['hours'] ?? null),
                 'weekday_text'=> $place['open_state'] ?? null,
                 'icon' => $place['thumbnail'] ?? null,
                 'rating' => $place['rating'] ?? 0,
@@ -220,7 +222,7 @@ class ScrapingDog implements ApiHandler
                 'phone' => $place['phone'] ?? null,
                 'lat' => $place['gps_coordinates']['latitude'] ?? null,
                 'lng' => $place['gps_coordinates']['longitude'] ?? null,
-                'price_level' => $this->normalize_price($place['price'] ?? null), // $1–10
+                'price_level' => PriceUtils::normalize_price($place['price'] ?? null), // $1–10
                 'maps_url' => $place['google_maps_url'] ?? null,
                 'website' => $place['website'] ?? get_home_url(),
                 'periods' => $place['operating_hours'] ?? null,
@@ -244,52 +246,5 @@ class ScrapingDog implements ApiHandler
     public function supports(string $source): bool
     {
         return self::SOURCE === $source;
-    }
-
-    /**
-     * Normalizes the price to a number from 0 to 4.
-     * Supports formats: 2, "$$", "$1-10", "€€€"
-     */
-    private function normalize_price(?string $price): ?int
-    {
-        if (empty($price)) {
-            return null;
-        }
-
-        // if it's a number (Google API style)
-        if (is_numeric($price)) {
-            return (int)$price;
-        }
-
-        // If it's a string, count the currency symbols
-        // Ex: "$$" -> 2, "$1-10" -> 1, "€€€" -> 3
-        preg_match_all('/[\$\€\£\¥\₩]/', (string)$price, $matches);
-        $count = count($matches[0]);
-
-        if ($count > 0) {
-            // Limit to 4 (Google max)
-            return min(4, $count);
-        }
-
-        return null;
-    }
-
-    private function normalize_hours(?array $hours): array
-    {
-        if (empty($hours)) {
-            return [];
-        }
-
-        if (isset($hours[0])) {
-            $working_hours = [];
-            foreach ($hours as $hourData) {
-                foreach ($hourData as $day => $hour) {
-                    $working_hours[strtolower($day)] = $hour;
-                }
-            }
-            return $working_hours;
-        } else {
-            return $hours;
-        }
     }
 }
