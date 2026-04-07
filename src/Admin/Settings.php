@@ -2001,7 +2001,6 @@ readonly class Settings
                     <a href="#" class="nav-tab grp-nav-tab" data-tab="styling"><?php _e('Styling', 'google-reviews-pro'); ?></a>
                     <a href="#" class="nav-tab grp-nav-tab" data-tab="seo"><?php _e('SEO', 'google-reviews-pro'); ?></a>
                     <a href="#" class="nav-tab grp-nav-tab" data-tab="advanced"><?php _e('Advanced', 'google-reviews-pro'); ?></a>
-                    <a href="#" class="nav-tab grp-nav-tab" data-tab="backup"><?php _e('Backup & Migration', 'google-reviews-pro'); ?></a>
                 </nav>
 
                 <!-- API Sources -->
@@ -2093,14 +2092,15 @@ readonly class Settings
                         <tr><th scope="row"><?php _e('Uninstall Cleanup', 'google-reviews-pro'); ?></th><td><?php $this->wipe_html(); ?></td></tr>
                     </table>
                 </div>
-
-                <!-- Backup & Migration -->
-                <div id="grp-tab-backup" class="grp-tab-panel" style="background:#fff; border:1px solid #c3c4c7; border-top:none; padding:20px;">
-                    <h2><?php _e('Backup & Migration', 'google-reviews-pro'); ?></h2>
-                    <?php $this->backup_section_html(); ?>
-                </div>
-
             </form><!-- end settings form -->
+
+            <hr style="margin: 2em 0">
+
+            <!-- Backup & Migration -->
+            <div id="grp-tab-backup" style="background:#fff; border:1px solid #c3c4c7; border-top:none; padding:20px;">
+                <h2><?php _e('Backup & Migration', 'google-reviews-pro'); ?></h2>
+                <?php $this->backup_section_html(); ?>
+            </div>
 
             <!-- Support box -->
             <div class="grp-support-box" style="margin-top:20px; padding:10px; background:#fff; border-left:4px solid #7289da;">
