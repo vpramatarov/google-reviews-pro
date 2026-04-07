@@ -645,6 +645,10 @@ readonly class Settings
                             <?php _e('Edit', 'google-reviews-pro'); ?>
                         </button>
                         <hr>
+                        <button type="button" class="button button-link-refresh grp-refresh-loc-btn" data-place-id="<?php echo esc_attr($place_id); ?>">
+                            <?php _e('Refresh', 'google-reviews-pro'); ?>
+                        </button>
+                        <hr>
                         <button type="button" class="button button-link-delete grp-delete-loc-btn" data-place-id="<?php echo esc_attr($place_id); ?>">
                             <?php _e('Delete', 'google-reviews-pro'); ?>
                         </button>
@@ -1313,7 +1317,7 @@ readonly class Settings
                             $syncStatus.css('color', 'green').text('<?php _e('Reviews synced successfully!', 'google-reviews-pro'); ?>');
                             $lastSyncSpan.text(response.data.last_sync || '');
                         } else {
-                            $syncStatus.css('color', 'red').text('Error: ' + response.data);
+                            $syncStatus.css('color', 'red').text('<?php _e('Error', 'google-reviews-pro'); ?>: ' + response.data);
                         }
                     }).fail(function() {
                         $syncStatus.css('color', 'red').text('<?php _e('Server error occurred.', 'google-reviews-pro'); ?>');
@@ -1408,7 +1412,7 @@ readonly class Settings
                             queryInput.val('');
                             $saveApiDataBtn.show();
                         } else {
-                            $msg.css('color', 'red').text('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Not found', 'google-reviews-pro'); ?>'));
+                            $msg.css('color', 'red').text('<?php _e('Error', 'google-reviews-pro'); ?>: ' + (res.data || '<?php _e('Not found', 'google-reviews-pro'); ?>'));
                             $previewWrapper.hide();
                             $saveApiDataBtn.hide();
                         }
@@ -1471,7 +1475,7 @@ readonly class Settings
                             $msg.css('color', 'green').html('<?php _e('API data saved successfully.', 'google-reviews-pro'); ?>');
                             setTimeout(() => { window.location.href = res.data.redirect_url; }, 1000);
                         } else {
-                            $msg.css('color', 'red').text('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
+                            $msg.css('color', 'red').text('<?php _e('Error', 'google-reviews-pro'); ?>: ' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
                         }
                     }).fail(function(res) {
                         $spinner.removeClass('is-active');
@@ -1552,7 +1556,7 @@ readonly class Settings
                             $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
                         } else {
                             $('#grp-edit-loc-btn').prop('disabled', true);
-                            alert('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
+                            alert('<?php _e('Error', 'google-reviews-pro'); ?>: ' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
                             $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
                         }
                     }).fail(function() {
@@ -1648,13 +1652,39 @@ readonly class Settings
                             $btn.text('<?php _e('Edit', 'google-reviews-pro'); ?>');
                         } else {
                             $('#update-location-response')
-                                .text('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'))
+                                .text('<?php _e('Error', 'google-reviews-pro'); ?>: ' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'))
                                 .addClass('error').removeClass('hidden success');
                             $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
                         }
                     }).fail(function() {
                         $('#update-location-response').text('<?php _e('Server error', 'google-reviews-pro'); ?>.').removeClass('hidden success');
                         $btn.prop('disabled', false).text('<?php _e('Edit', 'google-reviews-pro'); ?>');
+                    });
+                });
+
+                // Refresh location
+                $('.grp-refresh-loc-btn').on('click', function(e) {
+                    e.preventDefault();
+                    const $btn = $(this);
+                    const placeId = $btn.data('place-id');
+
+                    $btn.prop('disabled', true).text('<?php _e('Refreshing...', 'google-reviews-pro'); ?>');
+                    $syncStatus.text('');
+
+                    $.post(ajaxurl, {
+                        action: 'grp_refresh_location',
+                        nonce: '<?php echo wp_create_nonce("grp_nonce"); ?>',
+                        place_id: placeId
+                    }, function(res) {
+                        if (res.success) {
+                            $syncStatus.css('color', 'green').text(res.data.message);
+                        } else {
+                            $syncStatus.css('color', 'red').text('<?php _e('Error', 'google-reviews-pro'); ?>: ' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
+                        }
+                    }).fail(function() {
+                        $syncStatus.css('color', 'red').text('<?php _e('Server error', 'google-reviews-pro'); ?>.');
+                    }).always(function() {
+                        $btn.prop('disabled', false).text('<?php _e('Refresh', 'google-reviews-pro'); ?>');
                     });
                 });
 
@@ -1680,7 +1710,7 @@ readonly class Settings
                                 $(this).remove();
                             });
                         } else {
-                            alert('<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
+                            alert('<?php _e('Error', 'google-reviews-pro'); ?>: ' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
                             $btn.prop('disabled', false).text('<?php _e('Delete', 'google-reviews-pro'); ?>');
                         }
                     }).fail(function() {
@@ -1713,7 +1743,7 @@ readonly class Settings
                         nonce: '<?php echo wp_create_nonce("grp_nonce"); ?>',
                         place_id: placeId
                     }, function(res) {
-                        $rawContent.text(res.success ? JSON.stringify(res.data, null, 4) : '<?php _e('Error: ', 'google-reviews-pro'); ?>' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
+                        $rawContent.text(res.success ? JSON.stringify(res.data, null, 4) : '<?php _e('Error', 'google-reviews-pro'); ?>: ' + (res.data || '<?php _e('Unknown error', 'google-reviews-pro'); ?>'));
                     }).fail(function() {
                         $rawContent.text('<?php _e('Server connection failed', 'google-reviews-pro'); ?>.');
                     });

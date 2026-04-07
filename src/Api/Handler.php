@@ -87,8 +87,9 @@ readonly class Handler
 
         return array_map(function($item) use ($cached_meta) {
             $pid = $item['place_id'];
+            $location = $cached_meta[$pid] ?? [];
             // if we have name in the cache, use it. Otherwise, use the place id.
-            $name = !empty($cached_meta[$pid]['name']) ? $cached_meta[$pid]['name'] : $pid;
+            $name = !empty($location['name']) ? $location['name'] : $pid;
 
             return [
                 'place_id' => $pid,

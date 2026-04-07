@@ -19,6 +19,7 @@ readonly class Handler
         add_action('wp_ajax_nopriv_grp_load_more', [$this, 'handle_load_more']);
         add_action('wp_ajax_grp_delete_location', [$this, 'handle_delete_location']);
         add_action('wp_ajax_grp_update_location', [$this, 'handle_update_location']);
+        add_action('wp_ajax_grp_refresh_location', [$this, 'handle_refresh_location']);
         add_action('wp_ajax_grp_get_location_details', [$this, 'handle_get_location_details']);
         add_action('wp_ajax_grp_get_schema_details', [$this, 'handle_get_schema_details']);
         add_action('wp_ajax_grp_get_seo_details', [$this, 'handle_get_seo_details']);
@@ -101,16 +102,8 @@ readonly class Handler
         $query = sanitize_text_field($_POST['query'] ?? '');
         $api_options = $this->api->get_api_options();
         $source = $api_options['data_source'] ?? '';
-        $api_key = '';
-        if ($source === 'google') {
-            $api_key = $api_options['google_api_key'];
-        } elseif ($source === 'serpapi') {
-            $api_key = $api_options['serpapi_key'];
-        } elseif ($source === 'scrapingdog') {
-            $api_key = $api_options['scrapingdog_api_key'];
-        }
 
-        if (!$query || !$source || !$api_key) {
+        if (!$query || !$source) {
             wp_send_json_error('Missing parameters');
         }
 
@@ -149,16 +142,8 @@ readonly class Handler
         $place_id = sanitize_text_field($_POST['query'] ?? '');
         $api_options = $this->api->get_api_options();
         $source = $api_options['data_source'] ?? '';
-        $api_key = '';
-        if ($source === 'google') {
-            $api_key = $api_options['google_api_key'];
-        } elseif ($source === 'serpapi') {
-            $api_key = $api_options['serpapi_key'];
-        } elseif ($source === 'scrapingdog') {
-            $api_key = $api_options['scrapingdog_api_key'];
-        }
 
-        if (!$place_id || !$source || !$api_key) {
+        if (!$place_id || !$source) {
             wp_send_json_error('Missing parameters');
         }
 
@@ -487,6 +472,86 @@ readonly class Handler
             'redirect_url' => admin_url('options-general.php?page=grp-settings&sync-success=1'),
             'inserted' => $stats['inserted'],
             'updated' => $stats['updated'],
+        ]);
+    }
+
+    public function handle_refresh_location(): void
+    {
+        if (function_exists('set_time_limit')) {
+            set_time_limit(300); // Allow time for API request
+        }
+
+        if (!check_ajax_referer('grp_nonce', 'nonce', false)) {
+            wp_send_json_error(__('Security check failed.', 'google-reviews-pro'));
+        }
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Unauthorized action.', 'google-reviews-pro'));
+        }
+
+        $place_id = sanitize_text_field($_POST['place_id'] ?? '');
+
+        if (empty($place_id)) {
+            wp_send_json_error(__('Invalid Place ID.', 'google-reviews-pro'));
+        }
+
+        $options = $this->api->get_api_options();
+        $source = $options['data_source'] ?? '';
+
+        if (empty($source) || $source === 'cpt') {
+            wp_send_json_error(__('API source not configured or is set to manual.', 'google-reviews-pro'));
+        }
+
+        $location_data = $this->api->get_location_metadata($place_id) ?? [];
+
+        if (empty($location_data)) {
+            wp_send_json_error(__('Location not found.', 'google-reviews-pro'));
+        }
+
+        // ScrapingDog / SerpApi might require a 'data_id' instead of standard 'place_id'
+        $id = $location_data['data_id'] ?? $place_id;
+
+        $handlers = $this->api->get_api_handlers();
+        $data = null;
+
+        foreach ($handlers as $handler) {
+            if (!$handler->supports($source)) {
+                continue;
+            }
+            $data = $handler->fetch($id);
+            break;
+        }
+
+        if (is_wp_error($data)) {
+            wp_send_json_error($data->get_error_message());
+        }
+
+        if ($data === null) {
+            wp_send_json_error(__('No data found for this location.', 'google-reviews-pro'));
+        }
+
+        $reviews = $data['reviews'] ?? [];
+        $meta = $data['meta'] ?? [];
+
+        if (!empty($meta)) {
+            // Retain the original data_id if the fetch didn't return it
+            if (isset($location_data['data_id'])) {
+                $meta['data_id'] = $location_data['data_id'];
+            }
+
+            $this->api->save_location_metadata($place_id, $meta);
+        }
+
+        $stats = $this->api->save_reviews($reviews, $place_id);
+        $location_name = $meta['name'] ?? $location_data['name'];
+
+        wp_send_json_success([
+            'message' => sprintf(
+                __('Location %s refreshed successfully. Inserted: %d, Updated: %d.', 'google-reviews-pro'),
+                $location_name,
+                $stats['inserted'],
+                $stats['updated']
+            )
         ]);
     }
 }
