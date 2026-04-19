@@ -523,7 +523,7 @@ readonly class Settings
         $locations = $this->api->get_stored_locations();
         ?>
         <select name="grp_settings[serpapi_data_id]" id="grp_serpapi_data_id" class="regular-text">
-            <option value=""><?php esc_html_e('&mdash; Select a Data ID &mdash;', 'google-reviews-pro'); ?></option>
+            <option value="">&mdash; <?php esc_html_e('Select a Data ID', 'google-reviews-pro'); ?> &mdash;</option>
             <?php
             if (!empty($locations)) {
                 foreach ($locations as $location) {
