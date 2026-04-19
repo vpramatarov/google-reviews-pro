@@ -472,13 +472,42 @@ readonly class Settings
 
     public function place_id_html(): void
     {
-        $placeId = esc_attr(get_option('grp_settings')['place_id'] ?? '');
-        printf('<p><input type="text" id="place_id" name="grp_settings[place_id]" value="%s" class="regular-text"></p>', $placeId);
+        $options = $this->api->get_api_options();
+        $val = $options['place_id'] ?? '';
+        $locations = $this->api->get_stored_locations();
+        ?>
+        <select name="grp_settings[place_id]" id="grp_place_id" class="regular-text">
+            <option value="">&mdash; <?php esc_html_e('Select a Place ID', 'google-reviews-pro'); ?> &mdash;</option>
+            <?php
+            if (!empty($locations)) {
+                foreach ($locations as $location) {
+                    $place_id = (string) ($location['place_id'] ?? '');
+                    $name = (string) ($location['name'] ?? __('Unknown Location', 'google-reviews-pro'));
+                    $count = (int) ($location['count'] ?? 0);
+
+                    if ($place_id === '') {
+                        continue;
+                    }
+                    ?>
+                    <option value="<?php echo esc_attr($place_id); ?>" <?php selected($val, $place_id); ?>>
+                        <?php echo esc_html(sprintf('%s (%s - %d reviews)', $name, $place_id, $count)); ?>
+                    </option>
+                    <?php
+                }
+            }
+            ?>
+        </select>
+        <?php
         printf(
             '<p class="description">%s <a href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder" target="_blank">%s</a>.</p>',
             __('Find your Place ID', 'google-reviews-pro'),
             __('here', 'google-reviews-pro')
         );
+        ?>
+        <p class="description">
+            <?php esc_html_e('Select the fallback Place ID for the Google source. Only locations with synced reviews are shown.', 'google-reviews-pro'); ?>
+        </p>
+        <?php
     }
 
     public function serpapi_key_html(): void
@@ -489,8 +518,35 @@ readonly class Settings
 
     public function serpapi_data_id_html(): void
     {
-        $dataId = esc_attr(get_option('grp_settings')['serpapi_data_id'] ?? '');
-        printf('<p><input type="text" id="serpapi_data_id" name="grp_settings[serpapi_data_id]" value="%s" class="regular-text"></p>', $dataId);
+        $options = $this->api->get_api_options();
+        $val = $options['serpapi_data_id'] ?? '';
+        $locations = $this->api->get_stored_locations();
+        ?>
+        <select name="grp_settings[serpapi_data_id]" id="grp_serpapi_data_id" class="regular-text">
+            <option value=""><?php esc_html_e('&mdash; Select a Data ID &mdash;', 'google-reviews-pro'); ?></option>
+            <?php
+            if (!empty($locations)) {
+                foreach ($locations as $location) {
+                    $place_id = (string) ($location['place_id'] ?? '');
+                    $name = (string) ($location['name'] ?? __('Unknown Location', 'google-reviews-pro'));
+                    $count = (int) ($location['count'] ?? 0);
+
+                    if ($place_id === '') {
+                        continue;
+                    }
+                    ?>
+                    <option value="<?php echo esc_attr($place_id); ?>" <?php selected($val, $place_id); ?>>
+                        <?php echo esc_html(sprintf('%s (%s - %d reviews)', $name, $place_id, $count)); ?>
+                    </option>
+                    <?php
+                }
+            }
+            ?>
+        </select>
+        <p class="description">
+            <?php esc_html_e('Select the fallback Data ID for the SerpApi source.', 'google-reviews-pro'); ?>
+        </p>
+        <?php
     }
 
     public function serpapi_pages_html(): void
