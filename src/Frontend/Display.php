@@ -384,10 +384,10 @@ readonly class Display
              * This is the ideal case for Multi-Location.
              */
             $site_name = !empty($auto_meta['name']) ? $auto_meta['name'] : $default_name;
-            $address = $auto_meta['address'];
-            $phone = $auto_meta['phone'];
-            $lat = $auto_meta['lat'];
-            $lng = $auto_meta['lng'];
+            $address = $auto_meta['address'] ?? '';
+            $phone = $auto_meta['phone'] ?? $default_phone;
+            $lat = $auto_meta['lat'] ?? '';
+            $lng = $auto_meta['lng'] ?? '';
         } elseif (empty($current_place_id) || $current_place_id === $global_place_id) {
             /**
              * This is the main location (or ID is not set).
