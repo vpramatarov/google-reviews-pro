@@ -527,7 +527,7 @@ readonly class Settings
             <?php
             if (!empty($locations)) {
                 foreach ($locations as $location) {
-                    $place_id = (string) ($location['place_id'] ?? '');
+                    $place_id = (string) ($location['data_id'] ?? '');
                     $name = (string) ($location['name'] ?? __('Unknown Location', 'google-reviews-pro'));
                     $count = (int) ($location['count'] ?? 0);
 
