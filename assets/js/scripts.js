@@ -56,7 +56,7 @@ jQuery(document).ready(function($) {
         const layout = $btn.data('layout');
         const container = $btn.closest('.grp-container').find('.grp-grid, .grp-list-view, .grp-slider-track');
 
-        if($btn.hasClass('loading')) {
+        if ($btn.hasClass('loading')) {
             return;
         }
 
@@ -81,7 +81,7 @@ jQuery(document).ready(function($) {
                 }
 
                 let has_more = res.data.has_more || '';
-                if(!has_more) {
+                if (!has_more) {
                     $btn.hide();
                 }
             } else {
