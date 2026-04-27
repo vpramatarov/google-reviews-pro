@@ -118,6 +118,9 @@ readonly class Display
                 font-weight: 600;
                 transition: all 0.3s;
             }
+            
+            .grp-load-more-btn:disabled { cursor: not-allowed; }
+            
             .grp-load-more-btn:hover {
                 background: {$accent_color};
                 color: #fff;

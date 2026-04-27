@@ -60,7 +60,7 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        $btn.addClass('loading').text(gprJs.loadingText);
+        $btn.prop('disabled', true).addClass('loading').text(gprJs.loadingText);
 
         $.post(gprJs.ajaxUrl, {
             action: 'grp_load_more',
@@ -70,7 +70,7 @@ jQuery(document).ready(function($) {
             place_id: placeId,
             layout: layout
         }, function(res) {
-            $btn.removeClass('loading').text(gprJs.buttonText);
+            $btn.prop('disabled', false).removeClass('loading').text(gprJs.buttonText);
             if (res.success) {
                 container.append(res.data.html);
                 $btn.data('offset', offset + limit);
